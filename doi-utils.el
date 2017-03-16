@@ -51,10 +51,14 @@
   (require 'cl-lib))
 (require 'bibtex)
 (require 'dash)
+(require 'f)
+(require 'ivy)
 (require 'json)
 (require 'org)                          ; org-add-link-type
 (require 'org-bibtex)                   ; org-bibtex-yank
+(require 'reftex-cite)
 (require 'url-http)
+
 (require 'org-ref-utils)
 
 ;;* Customization
@@ -144,7 +148,7 @@ Optional argument STATUS Unknown why this is optional."
 ;; To actually get the redirect we use url-retrieve like this.
 
 (defun doi-utils-get-redirect (doi)
-  "Get redirect url from `doi-utils-dx-doi-org-url'/doi."
+  "Get redirect url from `doi-utils-dx-doi-org-url'/DOI."
   ;; we are going to wait until the url-retrieve is done
   (setq *doi-utils-waiting* t)
   ;; start with no redirect. it will be set in the callback.
@@ -241,6 +245,7 @@ Argument REDIRECT-URL URL you are redirected to."
 ;;** Springer
 
 (defun springer-chapter-pdf-url (*doi-utils-redirect*)
+  "Get url to the pdf from *DOI-UTILS-REDIRECT*."
   (when (string-match "^http://link.springer.com/chapter/" *doi-utils-redirect*)
     (replace-regexp-in-string "/chapter" "/content/pdf"
 			      (concat *doi-utils-redirect* ".pdf"))))
@@ -481,6 +486,7 @@ REDIRECT-URL is where the pdf url will be in."
 
 ;;** Generic .full.pdf
 (defun generic-full-pdf-url (*doi-utils-redirect*)
+  "Get url to the pdf from *DOI-UTILS-REDIRECT*."
   (let ((pdf (concat *doi-utils-redirect* ".full.pdf")))
     (when (url-http-file-exists-p pdf)
       pdf)))
@@ -858,19 +864,20 @@ Also cleans entry using ‘org-ref’, and tries to download the corresponding p
   ;; set date added for the record
   (when doi-utils-timestamp-format-function
     (bibtex-set-field doi-utils-timestamp-field
-		      (funcall doi-utils-timestamp-format-function)))
+                      (funcall doi-utils-timestamp-format-function)))
+  ;; Clean the record
   (org-ref-clean-bibtex-entry)
   ;; try to get pdf
   (when doi-utils-download-pdf
     (doi-utils-get-bibtex-entry-pdf))
-
+  ;; Make notes
   (when (and doi-utils-make-notes org-ref-bibliography-notes)
     (save-excursion
       (when (f-file? org-ref-bibliography-notes)
-	(find-file-noselect org-ref-bibliography-notes)
-	(save-buffer))
+        (find-file-noselect org-ref-bibliography-notes)
+        (save-buffer))
       (let ((bibtex-completion-bibliography (list (buffer-file-name))))
-	(funcall doi-utils-make-notes-function)))))
+        (funcall doi-utils-make-notes-function)))))
 
 
 ;; It may be you are in some other place when you want to add a bibtex entry.
@@ -945,20 +952,20 @@ Argument BIBFILE the bibliography to use."
            ;; will have to type it in.
            (t
             nil)))))
-  
+
   (unless bibfile
     (setq bibfile (completing-read
-		   "Bibfile: "
-		   (-uniq
-		    (append
-		     ;; see if we should add it to a bib-file defined in the file
-		     (org-ref-find-bibliography)
-		     ;; or any bib-files that exist in the current directory
-		     (f-entries "." (lambda (f)
-				      (and (not (string-match "#" f))
-					   (f-ext? f "bib"))))
-		     ;; and last in the default bibliography
-		     org-ref-default-bibliography)))))
+                   "Bibfile: "
+                   (-uniq
+                    (append
+                     ;; see if we should add it to a bib-file defined in the file
+                     (org-ref-find-bibliography)
+                     ;; or any bib-files that exist in the current directory
+                     (f-entries "." (lambda (f)
+                                      (and (not (string-match "#" f))
+                                           (f-ext? f "bib"))))
+                     ;; and last in the default bibliography
+                     org-ref-default-bibliography)))))
   ;; Wrap in save-window-excursion to restore your window arrangement after this
   ;; is done.
   (save-window-excursion
@@ -969,13 +976,11 @@ Argument BIBFILE the bibliography to use."
       (if (word-search-forward (concat doi) nil t)
           (message "%s is already in this file" doi)
         (goto-char (point-max))
-	;; make sure we are at the beginning of a line
-	(when (not (= (point) (line-beginning-position)))
-	  (forward-char 1))
-
-	(when (not (looking-back "\n\n" (min 3 (point))))
-	  (insert "\n\n"))
-	
+        ;; make sure we are at the beginning of a line
+        (when (not (= (point) (line-beginning-position)))
+          (forward-char 1))
+        (when (not (looking-back "\n\n" (min 3 (point))))
+          (insert "\n\n"))
         (doi-utils-insert-bibtex-entry-from-doi doi)
         (save-buffer)))))
 
@@ -1161,10 +1166,9 @@ May be empty if none are found."
            "&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.related=yes")))
 
 
-
-
 ;;* A new doi link for org-mode
-;; The idea is to add a menu to the doi link, so rather than just clicking to open the article, you can do other things.
+;; The idea is to add a menu to the doi link, so rather than just clicking to
+;; open the article, you can do other things.
 ;; 1. open doi
 ;; 2. open in wos
 ;; 3. open citing articles
@@ -1320,7 +1324,7 @@ error."
   (interactive)
   (bibtex-beginning-of-entry)
   (let* ((entry (bibtex-parse-entry))
-	 (raw-json-string)
+         (raw-json-string)
          (json-string)
          (json-data)
          (doi))
@@ -1336,9 +1340,9 @@ error."
       	(goto-char (point-min))
       	(while (re-search-forward "<i>\\|</i>" nil t)
       	  (replace-match ""))
-	(goto-char (point-min))
-	(while (re-search-forward "&amp;" nil t)
-	  (replace-match "&"))
+        (goto-char (point-min))
+        (while (re-search-forward "&amp;" nil t)
+          (replace-match "&"))
       	(goto-char (point-min))
       	(while (re-search-forward "&quot;" nil t)
       	  (replace-match "\\\"" nil t)))
@@ -1443,23 +1447,23 @@ error."
                  (append (f-entries "." (lambda (f) (f-ext? f "bib")))
                          org-ref-default-bibliography))))
   (let* ((raw-json-string)
-	 (json-string)
-	 (json-data)
-	 (doi))
+         (json-string)
+         (json-data)
+         (doi))
 
     (with-current-buffer
-	(url-retrieve-synchronously
-	 (concat
-	  "http://search.crossref.org/dois?q="
-	  (url-hexify-string query)))
+        (url-retrieve-synchronously
+         (concat
+          "http://search.crossref.org/dois?q="
+          (url-hexify-string query)))
       ;; replace html entities
       (save-excursion
       	(goto-char (point-min))
       	(while (re-search-forward "<i>\\|</i>" nil t)
       	  (replace-match ""))
-	(goto-char (point-min))
-	(while (re-search-forward "&amp;" nil t)
-	  (replace-match "&"))
+        (goto-char (point-min))
+        (while (re-search-forward "&amp;" nil t)
+          (replace-match "&"))
       	(goto-char (point-min))
       	(while (re-search-forward "&quot;" nil t)
       	  (replace-match "\\\"" nil t)))
@@ -1498,4 +1502,5 @@ error."
 
 ;;* The end
 (provide 'doi-utils)
+
 ;;; doi-utils.el ends here

@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jkitchin/org-ref
 ;; Version: 0.1
 ;; Keywords: org-mode, bibtex
-;; Package-Requires: ((org-ref) (s) (dash) (doi-utils) (key-chord))
+;; Package-Requires: ((org-ref) (s) (dash) (doi-utils))
 
 ;; This file is not currently part of GNU Emacs.
 
@@ -53,10 +53,11 @@
 ;;
 ;; org-ref-bibtex :: a deprecated menu of actions
 
+;;; Code:
 (require 'bibtex)
 (require 'dash)
 (require 'hydra)
-(require 'key-chord nil 'no-error)
+(require 'ivy)
 (require 'message)
 (require 's)
 
@@ -68,7 +69,6 @@
 (defvar org-ref-default-bibliography)
 
 (declare-function reftex-get-bib-field "reftex-cite")
-(declare-function key-chord-define-global "key-chord")
 (declare-function org-ref-find-bibliography "org-ref-core")
 (declare-function org-ref-open-bibtex-pdf "org-ref-core")
 (declare-function org-ref-clean-bibtex-entry "org-ref-core")
@@ -83,67 +83,61 @@
 (declare-function parsebib-read-entry "parsebib")
 (declare-function helm-bibtex "helm-bibtex")
 
-
-;;; Code:
-
 ;; This is duplicated from org-ref-core to try to avoid a byte-compile error.
 (add-to-list 'load-path
-	     (expand-file-name
-	      "citeproc"
-	      (file-name-directory (or load-file-name (buffer-file-name)))))
+             (expand-file-name
+              "citeproc"
+              (file-name-directory (or load-file-name (buffer-file-name)))))
 
 (add-to-list 'load-path
-	     (expand-file-name
-	      "citeproc/csl"
-	      (file-name-directory (or load-file-name (buffer-file-name)))))
+             (expand-file-name
+              "citeproc/csl"
+              (file-name-directory (or load-file-name (buffer-file-name)))))
 
 ;;* Custom variables
 (defgroup org-ref-bibtex nil
   "Customization group for org-ref-bibtex."
   :group 'org-ref-bibtex)
 
-
-(defcustom org-ref-bibtex-hydra-key-chord
-  nil
-  "Key-chord to run `org-ref-bibtex-hydra'.
-I like \"jj\""
-  :type 'string
-  :group 'org-ref-bibtex)
-
-
-(defcustom org-ref-bibtex-hydra-key-binding
-  nil
-  "Key-binding to run `org-ref-bibtex-hydra'.
-I like \C-cj."
-  :type 'string
-  :group 'org-ref-bibtex)
-
-
-(defcustom org-ref-helm-cite-shorten-authors nil
-  "If non-nil show only last names in the helm selection buffer."
+(defcustom org-ref-ivy-cite-shorten-authors nil
+  "If non-nil show only last names in the ivy selection."
   :type 'boolean
   :group 'org-ref-bibtex)
 
-
 (defcustom org-ref-formatted-citation-formats
-  '(("text"  . (("article"  . "${author}, ${title}, ${journal}, ${volume}(${number}), ${pages} (${year}). ${doi}")
-		("inproceedings" . "${author}, ${title}, In ${editor}, ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-		("book" . "${author}, ${title} (${year}), ${address}: ${publisher}.")
-		("phdthesis" . "${author}, ${title} (Doctoral dissertation) (${year}). ${school}, ${address}.")
-		("inbook" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-		("incollection" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-		("proceedings" . "${editor} (Eds.), ${booktitle} (${year}). ${address}: ${publisher}.")
-		("unpublished" . "${author}, ${title} (${year}). Unpublished manuscript.")
-		(nil . "${author}, ${title} (${year}).")))
-    ("org"  . (("article"  . "${author}, /${title}/, ${journal}, *${volume}(${number})*, ${pages} (${year}). ${doi}")
-	       ("inproceedings" . "${author}, /${title}/, In ${editor}, ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-	       ("book" . "${author}, /${title}/ (${year}), ${address}: ${publisher}.")
-	       ("phdthesis" . "${author}, /${title}/ (Doctoral dissertation) (${year}). ${school}, ${address}.")
-	       ("inbook" . "${author}, /${title}/, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-	       ("incollection" . "${author}, /${title}/, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-	       ("proceedings" . "${editor} (Eds.), _${booktitle}_ (${year}). ${address}: ${publisher}.")
-	       ("unpublished" . "${author}, /${title}/ (${year}). Unpublished manuscript.")
-	       (nil . "${author}, /${title}/ (${year})."))))
+  '(("text"  .
+     (("article" .
+       "${author}, ${title}, ${journal}, ${volume}(${number}), ${pages} (${year}). ${doi}")
+      ("inproceedings" .
+       "${author}, ${title}, In ${editor}, ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
+      ("book" . "${author}, ${title} (${year}), ${address}: ${publisher}.")
+      ("phdthesis" .
+       "${author}, ${title} (Doctoral dissertation) (${year}). ${school}, ${address}.")
+      ("inbook" .
+       "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages})
+  (${year}). ${address}: ${publisher}.")
+      ("incollection" .
+       "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages})
+  (${year}). ${address}: ${publisher}.")
+      ("proceedings" . "${editor} (Eds.), ${booktitle} (${year}). ${address}: ${publisher}.")
+      ("unpublished" . "${author}, ${title} (${year}). Unpublished manuscript.")
+      (nil . "${author}, ${title} (${year}).")))
+    ("org"  .
+     (("article"  . "${author}, /${title}/, ${journal}, *${volume}(${number})*, ${pages} (${year}). ${doi}")
+      ("inproceedings" .
+       "${author}, /${title}/, In ${editor}, ${booktitle} (pp. ${pages})
+  (${year}). ${address}: ${publisher}.")
+      ("book" . "${author}, /${title}/ (${year}), ${address}: ${publisher}.")
+      ("phdthesis" . "${author}, /${title}/ (Doctoral dissertation) (${year}). ${school}, ${address}.")
+      ("inbook" .
+       "${author}, /${title}/, In ${editor} (Eds.), ${booktitle} (pp. ${pages})
+  (${year}). ${address}: ${publisher}.")
+      ("incollection" .
+       "${author}, /${title}/, In ${editor} (Eds.), ${booktitle} (pp. ${pages})
+  (${year}). ${address}: ${publisher}.")
+      ("proceedings" . "${editor} (Eds.), _${booktitle}_ (${year}). ${address}: ${publisher}.")
+      ("unpublished" . "${author}, /${title}/ (${year}). Unpublished manuscript.")
+      (nil . "${author}, /${title}/ (${year})."))))
   "Format strings for formatted bibtex entries for different citation backends.
 Used in `org-ref-format-entry'."
   :type '(alist)
@@ -158,8 +152,8 @@ Should be one of the cars of `org-ref-formatted-citation-formats'."
 ;;* Journal abbreviations
 (defvar org-ref-bibtex-journal-abbreviations
   '()
-  "List of (string journal-full-name journal-abbreviation). Find
-  new abbreviations at http://cassi.cas.org/search.jsp.")
+  "List of (string journal-full-name journal-abbreviation).
+Find new abbreviations at http://cassi.cas.org/search.jsp.")
 
 (defcustom org-ref-bibtex-assoc-pdf-with-entry-move-function 'rename-file
   "Function to use when associating pdf files with bibtex entries.
@@ -332,21 +326,20 @@ START and END allow you to use this with `bibtex-map-entries'"
 
 
 ;;;###autoload
-(defun org-ref-helm-set-journal-string ()
-  "Helm interface to set a journal string in a bibtex entry.
+(defun org-ref-ivy-set-journal-string ()
+  "Ivy interface to set a journal string in a bibtex entry.
 Entries come from `org-ref-bibtex-journal-abbreviations'."
   (interactive)
   (bibtex-set-field
    "journal"
-   (helm :sources
-	 `((name . "journal")
-	   (candidates . ,(mapcar
-			   (lambda (x)
-			     (cons (format "%s | %s"  (nth 1 x) (nth 2 x))
-				   (car x)))
-			   org-ref-bibtex-journal-abbreviations))
-	   (action . (lambda (x) (identity x))))
-         :input (s-trim (bibtex-autokey-get-field "journal")))
+   (ivy-read "Title: "
+             `((candidates . ,(mapcar
+                               (lambda (x)
+                                 (cons (format "%s | %s"  (nth 1 x) (nth 2 x))
+                                       (car x)))
+                               org-ref-bibtex-journal-abbreviations)))
+             :action 'identity
+             :initial-input (s-trim (bibtex-autokey-get-field "journal")))
    t)
   (bibtex-fill-entry)
   (bibtex-clean-entry))
@@ -381,82 +374,82 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
 
 (setq org-ref-nonascii-latex-replacements
       '(("í" . "{\\\\'i}")
-	("æ" . "{\\\\ae}")
-	("ć" . "{\\\\'c}")
-	("é" . "{\\\\'e}")
-	("ä" . "{\\\\\"a}")
-	("è" . "{\\\\`e}")
-	("à" . "{\\\\`a}")
-	("á" . "{\\\\'a}")
-	("ø" . "{\\\\o}")
-	("ë" . "{\\\\\"e}")
-	("ü" . "{\\\\\"u}")
-	("ñ" . "{\\\\~n}")
-	("ņ" . "{\\\\c{n}}")
-	("ñ" . "{\\\\~n}")
-	("å" . "{\\\\aa}")
-	("ö" . "{\\\\\"o}")
-	("Á" . "{\\\\'A}")
-	("í" . "{\\\\'i}")
-	("ó" . "{\\\\'o}")
-	("ó" . "{\\\\'o}")
-	("ú" . "{\\\\'u}")
-	("ú" . "{\\\\'u}")
-	("ý" . "{\\\\'y}")
-	("š" . "{\\\\v{s}}")
-	("č" . "{\\\\v{c}}")
-	("ř" . "{\\\\v{r}}")
-	("š" . "{\\\\v{s}}")
-	("İ" . "{\\\\.I}")
-	("ğ" . "{\\\\u{g}}")
-	("δ" . "$\\\\delta$")
-	("ç" . "{\\\\c{c}}")
-	("ß" . "{\\\\ss}")
-	("≤" . "$\\\\le$")
-	("≥" . "$\\\\ge$")
-	("<" . "$<$")
-	("θ" . "$\\\\theta$")
-	("μ" . "$\\\\mu$")
-	("→" . "$\\\\rightarrow$")
-	("⇌" . "$\\\\leftrightharpoons$")
-	("×" . "$\\\\times$")
-	("°" . "$\\\\deg$")
-	("ş" . "{\\\\c{s}}")
-	("γ" . "$\\\\gamma$")
-	("ɣ" . "$\\\\gamma$")
-	("º" . "degC")
-	("η" . "$\\\\eta$")
-	("µ" . "$\\\\mu$")
-	("α" . "$\\\\alpha$")
-	("β" . "$\\\\beta$")
-	("ɛ" . "$\\\\epsilon$")
-	("Ⅵ" . "\\textrm{VI}")
-	("Ⅲ" . "\\textrm{III}")
-	("Ⅴ" . "\\textrm{V}")
-	("λ" . "$\\\\lambda$")
-	("π" . "$\\\\pi$")
-	("∞" . "$\\\\infty$")
-	("χ" . "$\\\\chi$")
-	("∼" . "\\\\textasciitilde{}")
-	("‑" . "\\\\textemdash{}")
-	(" " . " ")
-	("…" . "...")
-	("•" . "\\\\textbullet ")
-	;; I think these are non-ascii spaces. there seems to be more than one.
-	(" " . " ")
-	(" " . " ")
-	(" " . " ")
-	("–" . "-")
-	("−" . "-")
-	("–" . "-")
-	("—" . "-")
-	("‒" . "\\\\textemdash{}")
-	("‘" . "'")
-	("’" . "'")
-	("’" . "'")
-	("“" . "\"")
-	("’" . "'")
-	("”" . "\"")))
+        ("æ" . "{\\\\ae}")
+        ("ć" . "{\\\\'c}")
+        ("é" . "{\\\\'e}")
+        ("ä" . "{\\\\\"a}")
+        ("è" . "{\\\\`e}")
+        ("à" . "{\\\\`a}")
+        ("á" . "{\\\\'a}")
+        ("ø" . "{\\\\o}")
+        ("ë" . "{\\\\\"e}")
+        ("ü" . "{\\\\\"u}")
+        ("ñ" . "{\\\\~n}")
+        ("ņ" . "{\\\\c{n}}")
+        ("ñ" . "{\\\\~n}")
+        ("å" . "{\\\\aa}")
+        ("ö" . "{\\\\\"o}")
+        ("Á" . "{\\\\'A}")
+        ("í" . "{\\\\'i}")
+        ("ó" . "{\\\\'o}")
+        ("ó" . "{\\\\'o}")
+        ("ú" . "{\\\\'u}")
+        ("ú" . "{\\\\'u}")
+        ("ý" . "{\\\\'y}")
+        ("š" . "{\\\\v{s}}")
+        ("č" . "{\\\\v{c}}")
+        ("ř" . "{\\\\v{r}}")
+        ("š" . "{\\\\v{s}}")
+        ("İ" . "{\\\\.I}")
+        ("ğ" . "{\\\\u{g}}")
+        ("δ" . "$\\\\delta$")
+        ("ç" . "{\\\\c{c}}")
+        ("ß" . "{\\\\ss}")
+        ("≤" . "$\\\\le$")
+        ("≥" . "$\\\\ge$")
+        ("<" . "$<$")
+        ("θ" . "$\\\\theta$")
+        ("μ" . "$\\\\mu$")
+        ("→" . "$\\\\rightarrow$")
+        ("⇌" . "$\\\\leftrightharpoons$")
+        ("×" . "$\\\\times$")
+        ("°" . "$\\\\deg$")
+        ("ş" . "{\\\\c{s}}")
+        ("γ" . "$\\\\gamma$")
+        ("ɣ" . "$\\\\gamma$")
+        ("º" . "degC")
+        ("η" . "$\\\\eta$")
+        ("µ" . "$\\\\mu$")
+        ("α" . "$\\\\alpha$")
+        ("β" . "$\\\\beta$")
+        ("ɛ" . "$\\\\epsilon$")
+        ("Ⅵ" . "\\textrm{VI}")
+        ("Ⅲ" . "\\textrm{III}")
+        ("Ⅴ" . "\\textrm{V}")
+        ("λ" . "$\\\\lambda$")
+        ("π" . "$\\\\pi$")
+        ("∞" . "$\\\\infty$")
+        ("χ" . "$\\\\chi$")
+        ("∼" . "\\\\textasciitilde{}")
+        ("‑" . "\\\\textemdash{}")
+        (" " . " ")
+        ("…" . "...")
+        ("•" . "\\\\textbullet ")
+        ;; I think these are non-ascii spaces. there seems to be more than one.
+        (" " . " ")
+        (" " . " ")
+        (" " . " ")
+        ("–" . "-")
+        ("−" . "-")
+        ("–" . "-")
+        ("—" . "-")
+        ("‒" . "\\\\textemdash{}")
+        ("‘" . "'")
+        ("’" . "'")
+        ("’" . "'")
+        ("“" . "\"")
+        ("’" . "'")
+        ("”" . "\"")))
 
 
 ;;;###autoload
@@ -467,8 +460,8 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
     (bibtex-narrow-to-entry)
     (goto-char (point-min))
     (dolist (char (mapcar (lambda (x)
-			    (car x))
-			  org-ref-nonascii-latex-replacements))
+                            (car x))
+                          org-ref-nonascii-latex-replacements))
       (while (re-search-forward char nil t)
         (replace-match (cdr (assoc char org-ref-nonascii-latex-replacements))))
       (goto-char (point-min)))))
@@ -480,18 +473,19 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
   "List of words to keep lowercase when changing case in a title.")
 
 (defcustom org-ref-title-case-types '("article" "book")
-  "List of bibtex entry types in which the title will be converted to
-title-case by org-ref-title-case."
+  "List of bibtex entry types in which the title will be converted to title-case by org-ref-title-case."
   :type '(repeat string)
   :group 'org-ref-bibtex)
 
 ;;;###autoload
 (defun org-ref-title-case (&optional key start end)
-  "Convert a bibtex entry title to title-case if the entry type
-is a member of the list org-ref-title-case-types. The arguments
-KEY, START and END are optional, and are only there so you can
-use this function with `bibtex-map-entries' to change all the
-title entries in articles and books."
+  "Convert a bibtex entry title to title-case.
+
+If the entry type is a member of the list
+org-ref-title-case-types. The arguments KEY, START and END are
+optional, and are only there so you can use this function with
+`bibtex-map-entries' to change all the title entries in articles
+and books."
   (interactive)
   (bibtex-beginning-of-entry)
 
@@ -500,32 +494,32 @@ title entries in articles and books."
          (start 0))
     (when
         (member (downcase
-		 (cdr (assoc "=type=" (bibtex-parse-entry))))
-		org-ref-title-case-types)
+                 (cdr (assoc "=type=" (bibtex-parse-entry))))
+                org-ref-title-case-types)
       (setq words (mapcar
                    (lambda (word)
-		     (cond
-		      ;; words containing more than one . are probably
-		      ;; abbreviations. We do not change those.
-		      ((with-temp-buffer
-			 (insert word)
-			 (goto-char (point-min))
-			 (> (count-matches "\\.") 1))
-		       word)
-		      ;; match words containing {} or \ which are probably
-		      ;; LaTeX or protected words, ignore
-		      ((string-match "\\$\\|{\\|}\\|(\\|)\\|\\\\" word)
-		       word)
-		      ;; these words should not be capitalized, unless they
-		      ;; are the first word
-		      ((-contains? org-ref-lower-case-words
-				   (s-downcase word))
-		       word)
-		      ;; Words that are quoted
-		      ((s-starts-with? "\"" word)
-		       (concat "\"" (s-capitalize (substring word 1))))
-		      (t
-		       (s-capitalize word))))
+                     (cond
+                      ;; words containing more than one . are probably
+                      ;; abbreviations. We do not change those.
+                      ((with-temp-buffer
+                         (insert word)
+                         (goto-char (point-min))
+                         (> (count-matches "\\.") 1))
+                       word)
+                      ;; match words containing {} or \ which are probably
+                      ;; LaTeX or protected words, ignore
+                      ((string-match "\\$\\|{\\|}\\|(\\|)\\|\\\\" word)
+                       word)
+                      ;; these words should not be capitalized, unless they
+                      ;; are the first word
+                      ((-contains? org-ref-lower-case-words
+                                   (s-downcase word))
+                       word)
+                      ;; Words that are quoted
+                      ((s-starts-with? "\"" word)
+                       (concat "\"" (s-capitalize (substring word 1))))
+                      (t
+                       (s-capitalize word))))
                    words))
 
       ;; Check if first word should be capitalized
@@ -573,9 +567,9 @@ all the title entries in articles."
          (start 0))
     (when
         (string= "article"
-		 (downcase
-		  (cdr (assoc "=type="
-			      (bibtex-parse-entry)))))
+                 (downcase
+                  (cdr (assoc "=type="
+                              (bibtex-parse-entry)))))
       (setq words (mapcar
                    (lambda (word)
                      (if
@@ -617,14 +611,11 @@ forward.  Negative numbers do nothing."
   (interactive "P")
   ;; Note if we start at the beginning of an entry, nothing
   ;; happens. We need to move forward a char, and call again.
-  (when (= (point) (save-excursion
-                     (bibtex-beginning-of-entry)))
+  (when (= (point) (save-excursion (bibtex-beginning-of-entry)))
     (forward-char)
     (org-ref-bibtex-next-entry))
-
   ;; search forward for an entry
-  (when
-      (re-search-forward bibtex-entry-head nil t (and (numberp n) n))
+  (when (re-search-forward bibtex-entry-head nil t (and (numberp n) n))
     ;; go to beginning of the entry
     (bibtex-beginning-of-entry)))
 
@@ -656,10 +647,10 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
   (save-excursion
     (bibtex-beginning-of-entry)
     (when (not (looking-at bibtex-any-valid-entry-type))
-      (error "This entry does not appear to be a valid type."))
+      (error "This entry does not appear to be a valid type"))
     (let ((entry (bibtex-parse-entry t)))
       (when (null entry)
-	(error "Unable to parse this bibtex entry."))
+        (error "Unable to parse this bibtex entry"))
       (reftex-get-bib-field "doi" entry))))
 
 ;; function that ensures that the url field of a bibtex entry is the
@@ -686,16 +677,14 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
 
 ;;;###autoload
 (defun org-ref-bibtex-wos-citing ()
-  "Open citing articles for bibtex entry in Web Of Science if
-there is a DOI."
+  "Open citing articles for bibtex entry in Web Of Science if there is a DOI."
   (interactive)
   (doi-utils-wos-citing (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
 (defun org-ref-bibtex-wos-related ()
-  "Open related articles for bibtex entry in Web Of Science if
-there is a DOI."
+  "Open related articles for bibtex entry in Web Of Science if there is a DOI."
   (interactive)
   (doi-utils-wos-related (org-ref-bibtex-entry-doi)))
 
@@ -736,16 +725,19 @@ calls functions with a DOI argument."
   (org-ref-open-bibtex-pdf))
 
 (defun org-ref-bibtex-get-file-move-func (prefix)
-  "Determine whether to use `rename-file' or `copy-file' for `org-ref-bibtex-assoc-pdf-with-entry'.
+  "Determine which function to use.
+The options are `rename-file' or `copy-file' for
+`org-ref-bibtex-assoc-pdf-with-entry'.
+
 When called with a PREFIX argument,
-`org-ref-bibtex-assoc-pdf-with-entry-move-function' switches to the
-opposite function from that which is defined in
+`org-ref-bibtex-assoc-pdf-with-entry-move-function' switches to the opposite
+function from that which is defined in
 `org-ref-assoc-pdf-with-entry-move-function'."
   (message (format "%s" prefix))
   (if (eq prefix nil)
       org-ref-bibtex-assoc-pdf-with-entry-move-function
     (if (eq org-ref-bibtex-assoc-pdf-with-entry-move-function 'rename-file)
-	'copy-file
+        'copy-file
       'rename-file)))
 
 ;;;###autoload
@@ -847,15 +839,6 @@ _n_: Open notes                               _T_: Title case
   ("S" org-ref-sentence-case-article)
   ("q" nil))
 
-;; create key-chord and key binding for hydra
-(when (and (featurep 'key-chord) org-ref-bibtex-hydra-key-chord)
-  (key-chord-define-global
-   org-ref-bibtex-hydra-key-chord
-   'org-ref-bibtex-hydra/body))
-
-
-(when org-ref-bibtex-hydra-key-binding
-  (define-key bibtex-mode-map org-ref-bibtex-hydra-key-binding 'org-ref-bibtex-hydra/body))
 
 ;;** Hydra menu for new bibtex entries
 ;; A hydra for adding new bibtex entries.
@@ -1069,12 +1052,12 @@ It is an alist of (=type= . s-format-string).")
   "Clear the cache and delete `orhc-bibtex-cache-file'."
   (interactive)
   (setq orhc-bibtex-cache-data '((hashes . nil)
-				 (candidates . nil)))
+                                 (candidates . nil)))
   (when (find-buffer-visiting orhc-bibtex-cache-file)
     (kill-buffer (find-buffer-visiting orhc-bibtex-cache-file)))
   (when (file-exists-p orhc-bibtex-cache-file)
     (delete-file orhc-bibtex-cache-file))
-  (message "org-ref-helm-cite cache cleared."))
+  (message "org-ref-ivy-cite cache cleared."))
 
 
 (defun orhc-bibtex-cache-up-to-date ()
@@ -1082,15 +1065,16 @@ It is an alist of (=type= . s-format-string).")
 This means the hash of each bibfile is equal to the one for it in
 the cache."
   (-all? 'identity
-	 (cl-loop
-	  for bibfile in org-ref-bibtex-files
-	  collect
-	  (string= (with-temp-buffer
-		     (insert-file-contents bibfile)
-		     (secure-hash 'sha256 (current-buffer)))
-		   (or (cdr (assoc
-			     bibfile
-			     (cdr (assoc 'hashes orhc-bibtex-cache-data)))) "")))))
+         (cl-loop
+          for bibfile in org-ref-bibtex-files
+          collect
+          (string=
+           (with-temp-buffer
+             (insert-file-contents bibfile)
+             (secure-hash 'sha256 (current-buffer)))
+           (or (cdr (assoc
+                     bibfile
+                     (cdr (assoc 'hashes orhc-bibtex-cache-data)))) "")))))
 
 (defun orhc-bibtex-field-formatter (field entry)
   "Format FIELD in a bibtex parsed ENTRY.
@@ -1098,48 +1082,49 @@ A few fields are treated specially, e.g. authors are replaced by
 comma-separated list, and I put :: around keywords to make it
 easier to search specifically for them."
   (let ((s (replace-regexp-in-string
-	    "^{\\|}$" ""
-	    (replace-regexp-in-string
-	     "[\n\\|\t\\|\s]+" " "
-	     (or (cdr (assoc field entry))
-		 (and (string= field "author")
-		      (cdr (assoc "editor" entry)))
-		 "")))))
+            "^{\\|}$" ""
+            (replace-regexp-in-string
+             "[\n\\|\t\\|\s]+" " "
+             (or (cdr (assoc field entry))
+                 (and (string= field "author")
+                      (cdr (assoc "editor" entry)))
+                 "")))))
     (cond
      ((string= field "author")
-      (if org-ref-helm-cite-shorten-authors
-	  ;; copied from `helm-bibtex-shorten-authors'
-	  (cl-loop for a in (s-split " and " s)
-		   for p = (s-split "," a t)
-		   for sep = "" then ", "
-		   concat sep
-		   if (eq 1 (length p))
-		   concat (-last-item (s-split " +" (car p) t))
-		   else
-		   concat (car p))
-	(mapconcat 'identity (s-split " and " s) ", ")))
+      (if org-ref-ivy-cite-shorten-authors
+          ;; copied from `helm-bibtex-shorten-authors'
+          (cl-loop for a in (s-split " and " s)
+                   for p = (s-split "," a t)
+                   for sep = "" then ", "
+                   concat sep
+                   if (eq 1 (length p))
+                   concat (-last-item (s-split " +" (car p) t))
+                   else
+                   concat (car p))
+        (mapconcat 'identity (s-split " and " s) ", ")))
      ((string= field "keywords")
       (if (> (length s) 0)
-	  (mapconcat (lambda (keyword)
-		       (concat ":" (s-trim keyword) ":"))
-		     (s-split "," s)
-		     " ")
-	""))
+          (mapconcat (lambda (keyword)
+                       (concat ":" (s-trim keyword) ":"))
+                     (s-split "," s)
+                     " ")
+        ""))
      ((string= field "pdf")
       (if (file-exists-p (expand-file-name
-			  (concat (cdr (assoc "=key=" entry)) ".pdf")
-			  org-ref-pdf-directory))
-	  "⌘"
-	" "))
+                          (concat (cdr (assoc "=key=" entry)) ".pdf")
+                          org-ref-pdf-directory))
+          "⌘"
+        " "))
      ((string= field "notes")
       (if (file-exists-p (expand-file-name
-			  (concat (cdr (assoc "=key=" entry)) ".org")
-			  org-ref-notes-directory))
-	  "✎"
-	" "))
+                          (concat (cdr (assoc "=key=" entry)) ".org")
+                          org-ref-notes-directory))
+          "✎"
+        " "))
      ;; catch all the other fields and just return them.
      (t
       s))))
+
 
 (defun orhc-update-bibfile-cache (bibfile)
   "Update cache for BIBFILE.
@@ -1250,8 +1235,8 @@ Update the cache if necessary."
   (orhc-update-bibtex-cache)
   (let ((candidates (cdr (assoc 'candidates orhc-bibtex-cache-data))))
     (apply 'append
-	   (cl-loop for bibfile in org-ref-bibtex-files
-		    collect (cdr (assoc bibfile candidates))))))
+           (cl-loop for bibfile in org-ref-bibtex-files
+                    collect (cdr (assoc bibfile candidates))))))
 
 
 ;; Now load files and update them if needed. We do this when you load the
@@ -1261,9 +1246,8 @@ Update the cache if necessary."
 
 
 ;;* org-ref bibtex formatted citation
-
 (defun org-ref-format-bibtex-entry (entry)
-  "Return a formatted citation for the bibtex entry at point.
+  "Return a formatted citation for the bibtex ENTRY at point.
 Formats are from `org-ref-formatted-citation-formats'. The
 variable `org-ref-formatted-citation-backend' determines the set
 of format strings used."
@@ -1281,7 +1265,7 @@ of format strings used."
 
 
 (defun org-ref-format-entry (key)
-  "Returns a formatted bibtex entry for KEY."
+  "Return a formatted bibtex entry for KEY."
   (let* ((bibtex-completion-bibliography (org-ref-find-bibliography)))
     (org-ref-format-bibtex-entry (ignore-errors (bibtex-completion-get-entry key)))))
 
@@ -1329,12 +1313,13 @@ of format strings used."
 			 ""))
       (buffer-string))))
 
+
 ;; * Extract bibtex blocks from an org-file
 ;;;###autoload
 (defun org-ref-extract-bibtex-blocks (bibfile)
   "Extract all bibtex blocks in buffer to BIBFILE.
-If BIBFILE exists, append, unless you use a prefix arg (C-u), which
-will clobber the file."
+If BIBFILE exists, append, unless you use a prefix arg, which will clobber the
+file."
   (interactive
    (list (read-file-name "Bibfile: " nil nil nil
 			 (file-name-nondirectory

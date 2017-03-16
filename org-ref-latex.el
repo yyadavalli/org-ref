@@ -18,10 +18,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary: Make cites in LaTeX documents clickable, and with tooltips.
-;; We use font-lock to add some functionality to the
+;;; Commentary:
 
-;;
+;; Make cites in LaTeX documents clickable, and with tooltips.
+;; We use font-lock to add some functionality to the
 
 ;;; Code:
 (require 'org-ref-core)
@@ -61,6 +61,7 @@ The clickable part are the keys.")
 
 ;;;###autoload
 (defun org-ref-latex-debug ()
+  "Debug org-ref-latex."
   (interactive)
   (message-box "%S\n%S\n%S\n%S"
 	       (org-ref-latex-get-key)
@@ -119,7 +120,7 @@ The clickable part are the keys.")
 
 
 (defun org-ref-next-latex-cite (&optional limit)
-  "Font-lock function to make cites in LaTeX documents clickable."
+  "Font-lock function to make citations in LaTeX documents clickable."
   (when (re-search-forward org-ref-latex-cite-re limit t)
     (setq font-lock-extra-managed-props (delq 'help-echo font-lock-extra-managed-props))
     (add-text-properties

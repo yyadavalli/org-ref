@@ -18,35 +18,45 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary: This is a bare-bones completion engine using only org-mode and
-;;; vanilla Emacs functions. It is not being further developed.
+;;; Commentary:
 
-;;
+;; This is a bare-bones completion engine using only org-mode and
+;; vanilla Emacs functions. It is not being further developed.
 
 ;;; Code:
-(require 'reftex)
-(require 'reftex-cite)
-(require 'org-ref-utils)
-
-(declare-function 'org-ref-find-bibliography "org-ref-core.el")
-(declare-function 'org-ref-get-bibtex-key-and-file "org-ref-core.el")
-(declare-function 'org-ref-bib-citation "org-ref-core.el")
+(declare-function org-ref-find-bibliography "org-ref-core.el")
+(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
+(declare-function org-ref-bib-citation "org-ref-core.el")
 
 (defvar org-ref-cite-types)
+(defvar org-ref-cite-onclick-function)
+(defvar org-ref-bibliography-notes)
+(defvar org-ref-default-citation-link)
 (defvar org-ref-open-notes-function)
 (defvar org-ref-get-pdf-filename-function)
 (defvar org-ref-open-pdf-function)
+(defvar org-ref-show-citation-on-enter)
+
+(require 'bibtex)
+(require 'cl-lib)
+(require 'dash)
+(require 'org-element)
+(require 'parsebib)
+(require 'reftex)
+(require 'reftex-cite)
+
+(require 'org-ref-utils)
 
 ;;;###autoload
 (defun org-ref-reftex-completion ()
-  "Use reftex and org-mode for completion."
+  "Use reftex and `org-mode' for completion."
   (interactive)
   ;; Define core functions for org-ref
   (setq org-ref-insert-link-function 'org-ref-insert-cite-link
-	org-ref-insert-cite-function 'org-ref-insert-cite-link
-	org-ref-insert-label-function 'org-insert-link
-	org-ref-insert-ref-function 'org-insert-link
-	org-ref-cite-onclick-function 'org-ref-cite-onclick-minibuffer-menu)
+        org-ref-insert-cite-function 'org-ref-insert-cite-link
+        org-ref-insert-label-function 'org-insert-link
+        org-ref-insert-ref-function 'org-insert-link
+        org-ref-cite-onclick-function 'org-ref-cite-onclick-minibuffer-menu)
   (message "reftex completion in org-ref loaded."))
 
 (org-ref-reftex-completion)

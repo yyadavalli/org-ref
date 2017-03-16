@@ -8,19 +8,21 @@
 ;;
 
 ;;; Commentary:
+
 ;;
 
-(declare-function org-ref-get-bibtex-key-and-file "org-ref-core")
-(declare-function org-ref-get-bibtex-keys "org-ref-core")
-(declare-function parsebib-find-bibtex-dialect "parsebib")
+;;; Code:
+(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
+(declare-function org-ref-get-bibtex-keys "org-ref-core.el")
+
 (defvar org-export-current-backend)
 (defvar org-ref-cite-types)
 
+(require 'dash)
 (require 'org-element)
+(require 'parsebib)
+(require 's)
 
-
-
-;;; Code:
 (defvar *orcp-citation-links* '()
   "List of citation links in the text.
 A link may have more than one citation in it.  These links get

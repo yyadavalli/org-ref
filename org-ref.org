@@ -459,7 +459,7 @@ These functions are compatible with ~bibtex-map-entries~, so it is possible to c
 You will want to bind the hydra menus to a key. You only need to bind the first one, as the second and third can be accessed from the first hydra. You can do that like this before you require ~org-ref-bibtex~:
 
 #+BEGIN_SRC emacs-lisp
-(setq org-ref-bibtex-hydra-key-binding "\C-cj")
+(define-key bibtex-mode-map (kbd "C-cj") 'org-ref-bibtex-hydra/body)
 #+END_SRC
 
 Or this if you like key-chord:

@@ -21,26 +21,37 @@
 ;;; Commentary:
 
 ;;
-(require 'org)
-(require 'org-ref-pdf)  		; for pdftotext-executable
 
-(defcustom org-ref-bib-html "<h1 class='org-ref-bib-h1'>Bibliography</h1>\n"
-  "HTML header to use for bibliography in HTML export."
-  :type 'string
-  :group 'org-ref)
-
+;;; Code:
+(defvar org-latex-pdf-process)
+(defvar org-ref-bibliography-notes)
 (defvar org-ref-cite-types)
+(defvar org-ref-default-bibliography)
 (defvar org-ref-get-pdf-filename-function)
 (defvar org-ref-notes-function)
 (defvar org-ref-bibliography-entry-format)
+(defvar org-ref-pdf-directory)
+(defvar pdftotext-executable)
+(defvar reftex-comment-citations)
+(defvar reftex-cite-comment-format)
 
+(declare-function doi-utils-crossref "doi-utils.el")
+(declare-function doi-utils-pubmed "doi-utils.el")
+(declare-function doi-utils-wos "doi-utils.el")
+(declare-function doi-utils-wos-citing "doi-utils.el")
+(declare-function doi-utils-wos-related "doi-utils.el")
+(declare-function org-ref-format-entry "org-ref-bibtex.el")
 (declare-function 'org-ref-get-bibtex-key-and-file "org-ref-core.el")
 (declare-function 'org-ref-key-in-file-p "org-ref-core.el")
 (declare-function 'org-ref-find-bibliography "org-ref-core.el")
 (declare-function 'org-ref-bib-citation "org-ref-core.el")
 (declare-function 'org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
-;;; Code:
+(defcustom org-ref-bib-html "<h1 class='org-ref-bib-h1'>Bibliography</h1>\n"
+  "HTML header to use for bibliography in HTML export."
+  :type 'string
+  :group 'org-ref)
+
 ;;;###autoload
 (defun org-ref-version ()
   "Provide a version string for org-ref.
@@ -48,31 +59,31 @@ Copies the string to the clipboard."
   (interactive)
   ;; version in the el file.
   (let* ((org-ref-el (concat
-		      (file-name-sans-extension
-		       (locate-library "org-ref"))
-		      ".el"))
-	 (org-ref-dir (file-name-directory org-ref-el))
-	 org-version
-	 git-commit
-	 version-string)
+                      (file-name-sans-extension
+                       (locate-library "org-ref"))
+                      ".el"))
+         (org-ref-dir (file-name-directory org-ref-el))
+         org-version
+         git-commit
+         version-string)
 
     (setq org-version (with-temp-buffer
-			(insert-file-contents org-ref-el)
-			(goto-char (point-min))
-			(re-search-forward ";; Version:")
-			(s-trim (buffer-substring (point)
-						  (line-end-position)))))
+                        (insert-file-contents org-ref-el)
+                        (goto-char (point-min))
+                        (re-search-forward ";; Version:")
+                        (s-trim (buffer-substring (point)
+                                                  (line-end-position)))))
 
     (setq git-commit
-	  ;; If in git, get current commit
-	  (let ((default-directory org-ref-dir))
-	    (when (= 0 (shell-command "git rev-parse --git-dir"))
-	      (s-trim (shell-command-to-string "git rev-parse HEAD")))))
+          ;; If in git, get current commit
+          (let ((default-directory org-ref-dir))
+            (when (= 0 (shell-command "git rev-parse --git-dir"))
+              (s-trim (shell-command-to-string "git rev-parse HEAD")))))
 
     (setq version-string (format "org-ref: Version %s%s" org-version
-				 (if git-commit
-				     (format " (git-commit %s)" git-commit)
-				   "")))
+                                 (if git-commit
+                                     (format " (git-commit %s)" git-commit)
+                                   "")))
     (kill-new version-string)
     (message version-string)))
 
@@ -101,7 +112,8 @@ Opens https://github.com/jkitchin/org-ref/issues/new."
   (erase-buffer)
   (org-mode)
   (insert
-   (s-format "#+TITLE: org-ref debug
+   (s-format
+    "#+TITLE: org-ref debug
 
 ${org-ref-version}
 
@@ -121,9 +133,6 @@ org-version: ${org-version}
 * about org-ref
 org-ref installed in ${org-ref-location}.
 
-** Dependencies
-helm-bibtex ${helm-bibtex-path}
-
 * org-ref-pdf (loaded: ${org-ref-pdf-p})
 system pdftotext: ${pdftotext}
 You set pdftotext-executable to ${pdftotext-executable} (exists: ${pdftotext-executable-p})
@@ -132,43 +141,39 @@ You set pdftotext-executable to ${pdftotext-executable} (exists: ${pdftotext-exe
 
 * export variables
 org-latex-pdf-process:
-${org-latex-pdf-process}
-"
-	     'aget
-	     `(("org-ref-completion-library" . ,(format "%s" org-ref-completion-library))
-	       ("org-ref-bibliography-notes" . ,(format "%s"  org-ref-bibliography-notes))
-	       ("orbn-p" . ,(format "%s" (file-exists-p org-ref-bibliography-notes)))
-	       ("org-ref-version" . ,(org-ref-version))
-	       ("org-latex-pdf-process" . ,(format "%S" org-latex-pdf-process))
-	       ("org-ref-default-bibliography" . ,(format "%s" org-ref-default-bibliography))
-	       ("ordb-p" . ,(format "%s" (mapcar 'file-exists-p org-ref-default-bibliography)))
-	       ("ordb-listp" . ,(ords (listp org-ref-default-bibliography)))
-	       ("org-ref-pdf-directory" . ,(format "%s" org-ref-pdf-directory))
-	       ("orpd-p" . ,(format "%s" (file-exists-p org-ref-pdf-directory)))
-	       ("org-ref-location" . ,(format "%s" (locate-library "org-ref")))
+${org-latex-pdf-process}"
+    'aget
+    `(("org-ref-completion-library" . ,(format "%s"  org-ref-completion-library))
+      ("org-ref-bibliography-notes" . ,(format "%s"org-ref-bibliography-notes))
+      ("orbn-p" . ,(format "%s" (file-exists-p org-ref-bibliography-notes)))
+      ("org-ref-version" . ,(org-ref-version))
+      ("org-latex-pdf-process" . ,(format "%S" org-latex-pdf-process))
+      ("org-ref-default-bibliography" . ,(format "%s" org-ref-default-bibliography))
+      ("ordb-p" . ,(format "%s" (mapcar 'file-exists-p org-ref-default-bibliography)))
+      ("ordb-listp" . ,(ords (listp org-ref-default-bibliography)))
+      ("org-ref-pdf-directory" . ,(format "%s" org-ref-pdf-directory))
+      ("orpd-p" . ,(format "%s" (file-exists-p org-ref-pdf-directory)))
+      ("org-ref-location" . ,(format "%s" (locate-library "org-ref")))
 
-	       ("system" . ,(format "System: %s" system-type))
-	       ("system-configuration" . ,(ords system-configuration))
-	       ("window-system" . ,(format "Window system: %s" window-system))
-	       ("emacs-version" . ,(ords (emacs-version)))
-	       ("org-version" . ,(org-version))
+      ("system" . ,(format "System: %s" system-type))
+      ("system-configuration" . ,(ords system-configuration))
+      ("window-system" . ,(format "Window system: %s" window-system))
+      ("emacs-version" . ,(ords (emacs-version)))
+      ("org-version" . ,(org-version))
 
-	       ("helm-bibtex-path" . ,(ords (locate-library "helm-bibtex")))
-
-	       ("org-ref-pdf-p" . ,(ords (featurep 'org-ref-pdf)))
-	       ("pdftotext" . ,(ords (if (featurep 'org-ref-pdf)
-					 (executable-find "pdftotext")
-				       "org-ref-pdf not loaded")))
-	       ("pdftotext-executable" . ,(ords (if (featurep 'org-ref-pdf)
-						    pdftotext-executable
-						  "org-ref-pdf not loaded")))
-	       ("pdftotext-executable-p" . ,(ords (if (featurep 'org-ref-pdf)
-						      (or
-						       (executable-find pdftotext-executable)
-						       (file-exists-p pdftotext-executable))
-						    "org-ref-pdf not loaded")))
-	       ("org-ref-url-p" . ,(ords (featurep 'org-ref-url)))))))
-
+      ("org-ref-pdf-p" . ,(ords (featurep 'org-ref-pdf)))
+      ("pdftotext" . ,(ords (if (featurep 'org-ref-pdf)
+                                (executable-find "pdftotext")
+                              "org-ref-pdf not loaded")))
+      ("pdftotext-executable" . ,(ords (if (featurep 'org-ref-pdf)
+                                           pdftotext-executable
+                                         "org-ref-pdf not loaded")))
+      ("pdftotext-executable-p" . ,(ords (if (featurep 'org-ref-pdf)
+                                             (or
+                                              (executable-find pdftotext-executable)
+                                              (file-exists-p pdftotext-executable))
+                                           "org-ref-pdf not loaded")))
+      ("org-ref-url-p" . ,(ords (featurep 'org-ref-url)))))))
 
 
 (defun org-ref-reftex-get-bib-field (field entry &optional format)
@@ -342,21 +347,19 @@ Format according to the type in `org-ref-bibliography-entry-format'."
   "Return the bibtex entry as a string."
   (let ((org-ref-bibliography-files (org-ref-find-bibliography))
         (file) (entry) (bibtex-entry) (entry-type) (format))
-
     (setq file (catch 'result
                  (cl-loop for file in org-ref-bibliography-files do
                           (if (org-ref-key-in-file-p key (file-truename file))
                               (throw 'result file)
                             (message "%s not found in %s"
                                      key (file-truename file))))))
-
     (with-temp-buffer
       (insert-file-contents file)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (bibtex-search-entry key nil 0)
       (save-restriction
-	(bibtex-narrow-to-entry)
-	(setq entry (buffer-string)))
+        (bibtex-narrow-to-entry)
+        (setq entry (buffer-string)))
       entry)))
 
 
@@ -458,17 +461,7 @@ Can also be called with THEKEY in a program."
 (defun org-ref-citation-at-point ()
   "Give message of current citation at point."
   (interactive)
-  (org-ref-format-entry (org-ref-get-bibtex-key-under-cursor))
-  ;; (let* ((results (org-ref-get-bibtex-key-and-file))
-  ;;        (key (car results))
-  ;;        (bibfile (cdr results)))
-  ;;   (message "%s" (progn
-  ;;                   (with-temp-buffer
-  ;;                     (insert-file-contents bibfile)
-  ;;                     (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
-  ;;                     (bibtex-search-entry key)
-  ;;                     (org-ref-bib-citation)))))
-  )
+  (org-ref-format-entry (org-ref-get-bibtex-key-under-cursor)))
 
 
 ;;;###autoload
@@ -488,7 +481,6 @@ Each entry is a list of (key menu-name function).  The function
 must take no arguments and work on the key at point.  Do not
 modify this variable, it is set to empty in the menu click
 function, and functions are conditionally added to it.")
-
 
 (defvar org-ref-user-cite-menu-funcs
   '(("C" "rossref" org-ref-crossref-at-point)
@@ -579,15 +571,15 @@ directory.  You can also specify a new file."
    (format
     "http://scholar.google.com/scholar?q=%s"
     (let* ((key-file (org-ref-get-bibtex-key-and-file))
-	   (key (car key-file))
-	   (file (cdr key-file))
-	   entry)
+           (key (car key-file))
+           (file (cdr key-file))
+           entry)
       (with-temp-buffer
-	(insert-file-contents file)
-	(bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
-	(bibtex-search-entry key nil 0)
-	(setq entry (bibtex-parse-entry))
-	(org-ref-reftex-get-bib-field "title" entry))))))
+        (insert-file-contents file)
+        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
+        (bibtex-search-entry key nil 0)
+        (setq entry (bibtex-parse-entry))
+        (org-ref-reftex-get-bib-field "title" entry))))))
 
 
 ;;;###autoload
@@ -649,27 +641,28 @@ Entries are formatted according to the bibtex entry type in
 `org-ref-bibliography-entry-format', and the actual entries are
 generated by `org-ref-reftex-format-citation'."
   (interactive)
-  (let ((bib (mapconcat
-              'identity
-              (cl-loop for i from 1
-		       for citation in
-		       (mapcar
-			(lambda (key)
-			  (let* ((results (org-ref-get-bibtex-key-and-file key))
-				 (key (car results))
-				 (bibfile (cdr results)))
-			    (format "cite:%s %s" key
-				    (if bibfile
-					(save-excursion
-					  (with-temp-buffer
-					    (insert-file-contents bibfile)
-					    (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
-					    (bibtex-search-entry key)
-					    (org-ref-bib-citation)))
-				      "!!! No entry found !!!"))))
-			(org-ref-get-bibtex-keys sort))
-		       collect (format "%3s. %s" i citation))
-              "\n\n")))
+  (let ((bib
+         (mapconcat
+          'identity
+          (cl-loop for i from 1
+                   for citation in
+                   (mapcar
+                    (lambda (key)
+                      (let* ((results (org-ref-get-bibtex-key-and-file key))
+                             (key (car results))
+                             (bibfile (cdr results)))
+                        (format "cite:%s %s" key
+                                (if bibfile
+                                    (save-excursion
+                                      (with-temp-buffer
+                                        (insert-file-contents bibfile)
+                                        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
+                                        (bibtex-search-entry key)
+                                        (org-ref-bib-citation)))
+                                  "!!! No entry found !!!"))))
+                    (org-ref-get-bibtex-keys sort))
+                   collect (format "%3s. %s" i citation))
+          "\n\n")))
 
     (switch-to-buffer-other-window (format "%s-bibliography" (buffer-file-name)))
     (erase-buffer)
@@ -747,13 +740,12 @@ If SORT is non-nil the bibliography is sorted alphabetically by key."
     (when keys
       (concat "* Bibliography\n"
               (mapconcat (lambda (x)
-			   (org-ref-get-bibtex-entry-org x)) keys "\n")
+                           (org-ref-get-bibtex-entry-org x)) keys "\n")
               "\n"))))
 
 
 (defun org-ref-get-bibtex-entry-ascii (key)
   "Return an ascii string for the bibliography entry corresponding to KEY."
-
   (format "[%s] %s" key (org-ref-get-bibtex-entry-citation key)))
 
 
@@ -795,15 +787,16 @@ if SORT is non-nil the bibliography is sorted alphabetically by key."
        "\n"))))
 
 (defun org-ref-get-odt-bibliography (&optional sort)
-  "Create an ascii bibliography ofr odt export when there are keys.
+  "Create an ascii bibliography for odt export when there are keys.
 if SORT is non-nil the bibliography is sorted alphabetically by
 key.  This is a variant of `org-ref-get-ascii-bibliography' where
 some things are escaped since odt is an xml format."
   (let ((keys (org-ref-get-bibtex-keys sort)))
     (when keys
       (mapconcat (lambda (x)
-		   (xml-escape-string (org-ref-get-bibtex-entry-ascii x)))
-		 keys "\n"))))
+                   (xml-escape-string (org-ref-get-bibtex-entry-ascii x)))
+                 keys "\n"))))
+
 
 (defun org-ref-pdf-p (filename)
   "Check if FILENAME is PDF file.

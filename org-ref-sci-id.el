@@ -20,7 +20,9 @@
 
 ;;; Commentary:
 
-;; New org-mode links for scientific IDs like orcid (http://orcid.org) and researcherid (http://www.researcherid.com)
+;; New org-mode links for scientific IDs like orcid (http://orcid.org) and
+;; researcherid (http://www.researcherid.com)
+
 ;; orcid:0000-0003-2625-9232
 ;; researcherid:A-2363-2010
 
