@@ -83,13 +83,12 @@ The clickable part are the keys.")
 (defun org-ref-latex-click ()
   "Jump to entry clicked on."
   (interactive)
-  (helm :sources '(((name . "Actions")
-		    (candidates . (("Open Bibtex entry" . org-ref-latex-jump-to-bibtex)
-				   ("Bibtex entry menu" . (lambda ()
-							    (org-ref-latex-jump-to-bibtex)
-							    (org-ref-bibtex-hydra/body)))))
-		      (action . (lambda (f)
-				  (funcall f)))))))
+  (ivy-read "Action: "
+            '(("Open Bibtex entry" . org-ref-latex-jump-to-bibtex)
+              ("Bibtex entry menu" . (lambda ()
+                                       (org-ref-latex-jump-to-bibtex)
+                                       (org-ref-bibtex-hydra/body))))
+            :action (lambda (x) (funcall (cdr x)))))
 
 
 (defun org-ref-latex-help-echo (_window _object position)

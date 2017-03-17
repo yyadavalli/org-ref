@@ -399,7 +399,7 @@ Argument KEY is the bibtex key."
                    "%s.pdf")
                   key))))))
 
-(defun org-ref-get-pdf-filename-helm-bibtex (key)
+(defun org-ref-get-pdf-filename-bibtex (key)
   "Use helm-bibtex to retrieve a PDF filename for KEY.
 helm-bibtex looks in both the configured directory
 `bibtex-completion-library-path' and in the fields of the bibtex

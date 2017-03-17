@@ -1351,31 +1351,20 @@ error."
       (setq json-string (decode-coding-string (string-make-unibyte raw-json-string) 'utf-8))
       (setq json-data (json-read-from-string json-string)))
 
-    (let* ((name (format "Crossref hits for %s" (org-ref-bib-citation)))
-           (helm-candidates (mapcar (lambda (x)
-                                      (cons
-                                       (concat
-                                        (cdr (assoc 'fullCitation x)))
-                                       (cdr (assoc 'doi x))))
-                                    json-data))
-
-           (source `((name . ,name)
-                     (candidates . ,helm-candidates)
-                     ;; just return the candidate
-                     (action . (("Insert doi and url field" . (lambda (doi)
-                                                                (bibtex-make-field "doi" t)
-                                                                (backward-char)
-                                                                ;; crossref returns doi url, but I prefer only a doi for the doi field
-                                                                (insert (replace-regexp-in-string "^https?://\\(dx.\\)?doi.org/" "" doi))
-                                                                (when (string= ""(reftex-get-bib-field "url" entry))
-                                                                  (bibtex-make-field "url" t)
-                                                                  (backward-char)
-                                                                  (insert doi))))
-                                ("Open url" . (lambda (doi)
-                                                (browse-url doi))))))))
-      (helm :sources source
-	    :buffer "*doi utils*"))))
-
+    (let* ((ivy-candidates (mapcar (lambda (x)
+                                     (cons
+                                      (concat
+                                       (cdr (assoc 'fullCitation x)))
+                                      (cdr (assoc 'doi x))))
+                                   json-data)))
+      (ivy-read "CrossRef hits: " 'ivy-candidates
+                :action '(1
+                          ("i" (lambda (entry) (doi-utils-add-bibtex-entry-from-doi
+                                           (replace-regexp-in-string
+                                            "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
+                                           bibtex-file))
+                           "Save entry to bibliography")
+                          ("o" (lambda (doi) (browse-url doi))))))))
 
 
 ;;* Debugging a DOI
@@ -1472,30 +1461,21 @@ error."
       (setq json-string (decode-coding-string (string-make-unibyte raw-json-string) 'utf-8))
       (setq json-data (json-read-from-string json-string)))
 
-    (let* ((name (format "Crossref hits for %s"
-			 ;; remove carriage returns. they cause problems in helm.
-			 (replace-regexp-in-string "\n" " " query)))
-	   (helm-candidates (mapcar (lambda (x)
-				      (cons
-				       (concat
-					(cdr (assoc 'fullCitation x)))
-				       (cdr (assoc 'doi x))))
-				    json-data))
-	   (source `((name . ,name)
-		     (candidates . ,helm-candidates)
-		     ;; just return the candidate
-		     (action . (("Insert bibtex entry" .  (lambda (doi)
-							    (with-current-buffer (find-file-noselect bibtex-file)
-							      (cl-loop for doi in (helm-marked-candidates)
-								       do
-								       (doi-utils-add-bibtex-entry-from-doi
-									(replace-regexp-in-string
-									 "^https?://\\(dx.\\)?doi.org/" "" doi)
-									,bibtex-file)))))
-				("Open url" . (lambda (doi)
-						(browse-url doi))))))))
-      (helm :sources source
-	    :buffer "*doi utils*"))))
+    (let* ((ivy-candidates (mapcar (lambda (x)
+                                     (cons
+                                      (concat
+                                       (cdr (assoc 'fullCitation x)))
+                                      (cdr (assoc 'doi x))))
+                                   json-data)))
+      (ivy-read "CrossRef hits: " ivy-candidates
+                :action '(1
+                          ("i" (lambda (entry) (doi-utils-add-bibtex-entry-from-doi
+                                           (replace-regexp-in-string
+                                            "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
+                                           bibtex-file))
+                           "Save entry to bibliography")
+                          ("o" (lambda (entry) (browse-url (cdr entry)))
+                           "Open URL"))))))
 
 (defalias 'crossref-add-bibtex-entry 'doi-utils-add-entry-from-crossref-query
   "Alias function for convenience.")

@@ -808,7 +808,10 @@ _n_: Open notes                               _T_: Title case
 	 (kill-new
 	  (org-ref-format-entry
 	   (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
-  ("k" helm-tag-bibtex-entry)
+  ("k" (lambda ()
+         (interactive)
+         (org-ref-set-bibtex-keywords
+          (read-string "Keywords: "))))
   ("K" (lambda ()
          (interactive)
          (org-ref-set-bibtex-keywords
@@ -831,7 +834,6 @@ _n_: Open notes                               _T_: Title case
   ("U" (doi-utils-update-bibtex-entry-from-doi (org-ref-bibtex-entry-doi)))
   ("u" doi-utils-update-field)
   ("F" org-ref-bibtex-file/body)
-  ("h" helm-bibtex)
   ("A" org-ref-bibtex-assoc-pdf-with-entry)
   ("a" org-ref-replace-nonascii)
   ("s" org-ref-sort-bibtex-entry)
@@ -1013,7 +1015,7 @@ Stored persistently in `orhc-bibtex-cache-file'.")
 
 
 (defvar orhc-bibtex-cache-file
-  "~/.orhc-bibtex-cache"
+  "~/.cache/orhc-bibtex-cache"
   "File to store cached data in.")
 
 

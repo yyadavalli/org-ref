@@ -1379,15 +1379,6 @@ A number greater than one means multiple labels!"
 (defun org-ref-ref-follow (label)
   "On clicking goto the LABEL.
 Navigate back with \`\\[org-mark-ring-goto]'."
-  ;; Suppress minibuffer message in helm. See `org-ref-browser'.
-  (if (and (boundp 'helm-alive-p) helm-alive-p)
-      (lambda (&optional pos buffer)
-	(setq pos (or pos (point)))
-	(setq org-mark-ring (nthcdr (1- org-mark-ring-length) org-mark-ring))
-	(move-marker (car org-mark-ring)
-		     (or pos (point))
-		     (or buffer (current-buffer))))
-    (org-mark-ring-push))
   ;; next search from beginning of the buffer it is possible you would not find
   ;; the label if narrowing is in effect
   (widen)
@@ -1439,10 +1430,7 @@ Navigate back with \`\\[org-mark-ring-goto]'."
     ;; we did not find anything, so go back to where we came
     (org-mark-ring-goto)
     (error "%s not found" label))
-  (org-show-entry)
-  (unless (and (boundp 'helm-alive-p) helm-alive-p)
-    (substitute-command-keys
-     "Go back with (org-mark-ring-goto) \`\\[org-mark-ring-goto]'.")))
+  (org-show-entry))
 
 
 (defun org-ref-complete-link (&optional arg)
