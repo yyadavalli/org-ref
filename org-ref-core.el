@@ -22,7 +22,7 @@
 ;;; Commentary:
 
 ;; Lisp code to setup bibliography, cite, ref and label org-mode links.
-;; Also sets up reftex and helm for org-mode citations.  The links are
+;; Also sets up reftex and ivy for org-mode citations.  The links are
 ;; clickable and do things that are useful.  You should really read
 ;; org-ref.org in this package for details.
 
@@ -105,26 +105,17 @@ Put a trailing / in the name."
   :group 'org-ref)
 
 (defcustom org-ref-completion-library
-  'org-ref-helm-bibtex
+  'ivy-cite
   "Symbol for library to define completion functions.
 The completion library should provide functions for
-`org-ref-insert-link-function', `org-ref-insert-cite-function',
-`org-ref-insert-label-function', `org-ref-insert-ref-function',
+ `org-ref-insert-cite-function',
+ `org-ref-insert-label-function',
+ `org-ref-insert-ref-function',
 and `org-ref-cite-onclick-function', and set those variables to
 the values of those functions."
   :type 'symbol
-  :options '(org-ref-ivy-cite           ; completion with ivy
-             org-ref-reftex)            ; org-completion
-  :group 'org-ref)
-
-(defcustom org-ref-insert-link-function
-  nil
-  "Generic function for inserting org-ref links.
-The function should take a prefix arg.
-No arg means insert a cite link
-1 arg means insert a ref link
-2 args means insert a label."
-  :type 'function
+  :options '(ivy-cite  ; completion with ivy
+             reftex)   ; org-completion
   :group 'org-ref)
 
 (defcustom org-ref-insert-cite-function
@@ -569,18 +560,13 @@ Optional argument NODELIM see `bibtex-make-field'."
 ;;;###autoload
 (defun org-ref-change-completion ()
   "Change the completion backend.
-Options are \"org-ref-helm-bibtex\", \"org-ref-helm-cite\",
-\"org-ref-ivy-cite\" and \"org-ref-reftex\"."
+Options are \"org-ref-ivy-cite\" and \"org-ref-reftex\"."
   (interactive)
   (require
    (intern
-    (completing-read "Backend: " '("org-ref-helm-bibtex"
-                                   "org-ref-helm-cite"
-                                   "org-ref-ivy-cite"
-                                   "org-ref-reftex")
+    (completing-read "Backend: " '("org-ref-ivy-cite" "org-ref-reftex")
                      nil
-                     t
-                     "org-ref-helm-cite"))))
+                     t))))
 
 
 (defun org-ref-can-move-p ()
@@ -3343,9 +3329,7 @@ A blank string deletes pre/post text."
 KEYS is a list of bibtex keys. If point is at : or earlier,
 insert at the beginning. Otherwise, insert after the key at
 point. Leaves point at end of added keys."
-  (interactive
-   (list
-    (funcall org-ref-cite-completion-function)))
+  (interactive)
   (let* ((cite (org-element-context))
          (type (org-element-property :type cite))
          (p (point))

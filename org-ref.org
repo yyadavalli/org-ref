@@ -306,7 +306,7 @@ org-ref provides an alternative to reftex and helm with ivy as the backend compl
 
 You can set this backend in your init file like this
 #+BEGIN_SRC emacs-lisp
-(setq org-ref-completion-library 'org-ref-ivy-cite)
+(setq org-ref-completion-library 'ivy-cite)
 (require 'org-ref)
 #+END_SRC
 
@@ -659,17 +659,15 @@ Here is my minimal setup:
       org-ref-pdf-directory "~/Dropbox/bibliography/bibtex-pdfs/")
 #+END_SRC
 
-You can also specify different completion backends. The default is `org-ref-helm-bibtex'.
+You can also specify different completion backends. The default is `ivy-cite'.
 
-- org-ref-helm-bibtex :: The default backend that uses helm-bibtex
-- org-ref-reftex :: A backend that uses reftex
-- org-ref-helm-cite :: An alternative helm completion backend (does not use helm-bibtex)
-- org-ref-ivy-cite :: uses ivy for the backend
+- reftex :: A backend that uses reftex
+- ivy-cite :: uses ivy for the backend
 
 To use one of these, add a line like this before you "require" org-ref.
 
 #+BEGIN_SRC emacs-lisp
-(setq org-ref-completion-library 'org-ref-ivy-cite)
+(setq org-ref-completion-library 'ivy-cite)
 #+END_SRC
 
 ** Customizing how PDFs are opened

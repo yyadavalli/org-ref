@@ -39,18 +39,6 @@
   "Holds entries marked in `org-ref-ivy-insert-cite-link'.")
 
 
-;;;###autoload
-(defun org-ref-ivy-cite-completion ()
-  "Use ivy for completion."
-  (interactive)
-  ;; Define core functions for org-ref
-  (setq org-ref-insert-link-function 'org-ref-insert-link
-        org-ref-insert-cite-function 'org-ref-ivy-insert-cite-link
-        org-ref-insert-label-function 'org-ref-ivy-insert-label-link
-        org-ref-insert-ref-function 'org-ref-ivy-insert-ref-link
-        org-ref-cite-onclick-function (lambda (_) (org-ref-cite-hydra/body))))
-
-
 (defun org-ref-looking-forward-cite ()
   "Return if point is in the position before a citation."
   (save-excursion
@@ -343,8 +331,8 @@ If candidate is already in, remove it."
                                   (beginning-of-line)
                                   (kill-visual-line)
                                   (setf (ivy-state-collection ivy-last)
-                                        (org-ref-bibtex-candidates))
-                                  (setf (ivy-state-preselect ivy-last)
+                                        (org-ref-bibtex-candidates)
+                                        (ivy-state-preselect ivy-last)
                                         (ivy-state-current ivy-last))
                                   (ivy--reset-state ivy-last)))
     (define-key map (kbd "C-<return>")
@@ -356,9 +344,7 @@ If candidate is already in, remove it."
     map)
   "A key map for `org-ref-ivy-insert-cite-link'.")
 
-(ivy-set-actions
- 'org-ref-ivy-insert-cite-link
- org-ref-ivy-cite-actions)
+(ivy-set-actions 'org-ref-ivy-insert-cite-link org-ref-ivy-cite-actions)
 
 
 (defun org-ref-ivy-insert-cite-link (&optional arg)
@@ -393,9 +379,8 @@ prefix ARG is used, which uses `org-ref-default-bibliography'."
         (propertize wrapped-s 'face 'font-lock-warning-face)
       (propertize wrapped-s 'face nil))))
 
-(ivy-set-display-transformer
- 'org-ref-ivy-insert-cite-link
- 'org-ref-ivy-cite-transformer)
+(ivy-set-display-transformer 'org-ref-ivy-insert-cite-link
+                             'org-ref-ivy-cite-transformer)
 
 
 (defun org-ref-ivy-insert-label-link ()
@@ -497,9 +482,8 @@ a bibtex entry that matches the key in `org-ref-bibtex-candidates'. Set
                                       (list key))
                                   ", ")))))
 
-(ivy-set-display-transformer
- 'org-ref-ivy-set-keywords
- 'org-ref-ivy-cite-transformer)
+(ivy-set-display-transformer 'org-ref-ivy-set-keywords
+                             'org-ref-ivy-cite-transformer)
 
 (provide 'org-ref-ivy-cite)
 

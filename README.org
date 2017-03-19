@@ -50,7 +50,7 @@ org-ref has been added to Melpa. This is the recommended way to install org-ref 
 (add-to-list 'package-archives
 	     '("melpa" . "http://melpa.org/packages/") t)
 (when (< emacs-major-version 24)
-  ;; For compatibility 
+  ;; For compatibility
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
 #+END_SRC
@@ -89,8 +89,8 @@ You may want to set some convenient keys for working in your bibtex file. These
 commands operate on the citation key at point.
 
 There are alternative citation key completion methods.
-- org-ref-ivy-cite :: Uses ivy for key completion
-- org-ref-reftex :: Uses reftex and org-mode for completion (no longer developed)
+- ivy-cite :: Uses ivy for key completion
+- reftex :: Uses reftex and org-mode for completion (no longer developed)
 
 Finally, add this to your init.el files.
 #+BEGIN_SRC emacs-lisp

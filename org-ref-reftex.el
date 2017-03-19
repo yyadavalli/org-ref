@@ -1,4 +1,4 @@
-;;; org-ref-reftex.el --- org-ref completion setup with reftex  -*- lexical-binding: t; -*-
+;;; org-ref-reftex.el -- org-ref completion setup with reftex
 
 ;; Copyright (C) 2016  John Kitchin
 
@@ -29,7 +29,6 @@
 (declare-function org-ref-bib-citation "org-ref-core.el")
 
 (defvar org-ref-cite-types)
-(defvar org-ref-cite-onclick-function)
 (defvar org-ref-bibliography-notes)
 (defvar org-ref-default-citation-link)
 (defvar org-ref-open-notes-function)
@@ -46,19 +45,6 @@
 (require 'reftex-cite)
 
 (require 'org-ref-utils)
-
-;;;###autoload
-(defun org-ref-reftex-completion ()
-  "Use reftex and `org-mode' for completion."
-  (interactive)
-  ;; Define core functions for org-ref
-  (setq org-ref-insert-link-function 'org-ref-insert-cite-link
-        org-ref-insert-cite-function 'org-ref-insert-cite-link
-        org-ref-insert-label-function 'org-insert-link
-        org-ref-insert-ref-function 'org-insert-link
-        org-ref-cite-onclick-function 'org-ref-cite-onclick-minibuffer-menu)
-  (message "reftex completion in org-ref loaded."))
-
 
 ;; Messages in the minbuffer conflict with the minibuffer menu. So we turn them
 ;; off.
@@ -94,7 +80,7 @@
                          (?n . "nocite:%l"))))))
 
 
-(defun org-ref-insert-cite-link (alternative-cite)
+(defun org-ref-reftex-insert-cite-link (alternative-cite)
   "Insert a default citation link using reftex.
 If you are on a link, it appends to the end of the link,
 otherwise, a new link is inserted.  Use a prefix
@@ -147,11 +133,10 @@ arg (ALTERNATIVE-CITE) to get a menu of citation types."
    (format "[[#%s]]" (car (reftex-citation t))))
   (funcall org-ref-open-notes-function))
 
-(defalias 'ornr 'org-ref-open-notes-from-reftex)
 
 ;;*** Minibuffer menu
 ;;;###autoload
-(defun org-ref-cite-onclick-minibuffer-menu (&optional _link-string)
+(defun org-ref-reftex-onclick-minibuffer-menu (&optional _link-string)
   "Action when a cite link is clicked on.
 Provides a menu of context sensitive actions.  If the bibtex entry
 has a pdf, you get an option to open it.  If there is a doi, you
@@ -235,4 +220,5 @@ get a lot of options.  LINK-STRING is used by the link function."
 
 
 (provide 'org-ref-reftex)
+
 ;;; org-ref-reftex.el ends here

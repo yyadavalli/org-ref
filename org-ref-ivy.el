@@ -33,7 +33,21 @@
 
 ;;; Code:
 (require 'org-ref-core)
-(require org-ref-completion-library)
+(require 'org-ref-ivy-cite)
+
+;;;###autoload
+(defun org-ref-setup-completion ()
+  "Setup completion for org-ref."
+  (interactive)
+  (if (equal org-ref-completion-library 'reftex)
+      (setq org-ref-insert-cite-function 'org-ref-reftex-insert-cite-link
+            org-ref-insert-label-function 'org-insert-link
+            org-ref-insert-ref-function 'org-insert-link
+            org-ref-cite-onclick-function 'org-ref-reftex-onclick-minibuffer-menu)
+    (setq org-ref-insert-cite-function 'org-ref-ivy-insert-cite-link
+          org-ref-insert-label-function 'org-ref-ivy-insert-label-link
+          org-ref-insert-ref-function 'org-ref-ivy-insert-ref-link
+          org-ref-cite-onclick-function (lambda (_) (org-ref-cite-hydra/body)))))
 
 (provide 'org-ref-ivy)
 
