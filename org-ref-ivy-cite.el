@@ -428,36 +428,33 @@ Use a prefix ARG to select the ref type."
 (require 'hydra)
 (setq hydra-is-helpful t)
 
-(defhydra org-ref-cite-hydra (:color blue)
+
+(defhydra org-ref-cite-hydra (:color blue :hint nil)
   "
 _p_: Open pdf     _w_: WOS          _g_: Google Scholar _K_: Copy citation to clipboard
 _u_: Open url     _r_: WOS related  _P_: Pubmed         _k_: Copy key to clipboard
 _n_: Open notes   _c_: WOS citing   _C_: Crossref       _f_: Copy formatted entry
 _o_: Open entry   _e_: Email entry  ^ ^                 _q_: quit
 "
-  ("o" org-ref-open-citation-at-point nil)
-  ("p" org-ref-open-pdf-at-point nil)
-  ("n" org-ref-open-notes-at-point nil)
-  ("u" org-ref-open-url-at-point nil)
-  ("w" org-ref-wos-at-point nil)
-  ("r" org-ref-wos-related-at-point nil)
-  ("c" org-ref-wos-citing-at-point nil)
-  ("g" org-ref-google-scholar-at-point nil)
-  ("P" org-ref-pubmed-at-point nil)
-  ("C" org-ref-crossref-at-point nil)
-  ("K" org-ref-copy-entry-as-summary nil)
+  ("o" org-ref-open-citation-at-point)
+  ("p" org-ref-open-pdf-at-point)
+  ("n" org-ref-open-notes-at-point)
+  ("u" org-ref-open-url-at-point)
+  ("w" org-ref-wos-at-point)
+  ("r" org-ref-wos-related-at-point)
+  ("c" org-ref-wos-citing-at-point)
+  ("g" org-ref-google-scholar-at-point)
+  ("P" org-ref-pubmed-at-point)
+  ("C" org-ref-crossref-at-point)
+  ("K" org-ref-copy-entry-as-summary)
   ("k" (progn
          (kill-new
-          (car (org-ref-get-bibtex-key-and-file))))
-   nil)
+          (car (org-ref-get-bibtex-key-and-file)))))
   ("f" (kill-new
-        (org-ref-format-entry (org-ref-get-bibtex-key-under-cursor)))
-   nil)
-
+        (org-ref-format-entry (org-ref-get-bibtex-key-under-cursor))))
   ("e" (kill-new (save-excursion
                    (org-ref-open-citation-at-point)
-                   (org-ref-email-bibtex-entry)))
-   nil)
+                   (org-ref-email-bibtex-entry))))
   ("q" nil))
 
 
