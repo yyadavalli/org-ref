@@ -333,20 +333,20 @@ C-u C-u C-c ] will insert a label link. You should see a list of all the current
 
 These are mostly functions for adding entries to bibtex files, modifying entries or for operating on bibtex files. Some new org-mode links are defined.
 
-** doi-utils
+** org-ref-doi-utils
 index:doi
 
 This library adds two extremely useful tools for getting bibtex entries and pdf files of journal manuscripts. Add this to your emacs setup:
 #+BEGIN_SRC emacs-lisp
-(require 'doi-utils)
+(require 'org-ref-doi-utils)
 #+END_SRC
 
 This provides two important commands:
 
-- ~doi-utils-add-bibtex-entry-from-doi~
+- ~org-ref-doi-utils-add-bibtex-entry-from-doi~
 This will prompt you for a DOI, and a bibtex file, and then try to get the bibtex entry, and pdf of the article.
 
-- ~doi-utils-add-entry-from-crossref-query~
+- ~org-ref-doi-utils-add-entry-from-crossref-query~
 This will prompt you for a query string, which is usually the title of an article, or a free-form text citation of an article. Then you will get a helm buffer of matching items, which you can choose from to insert a new bibtex entry into a bibtex file.
 
 This library also redefines the org-mode doi link. Now, when you click on this link you will get a menu of options, e.g. to open a bibtex entry or a pdf if you have it, or to search the doi in some scientific search engines. Try it out  doi:10.1021/jp511426q.
@@ -367,8 +367,7 @@ The settings I use are:
 	bibtex-autokey-titleword-length 5)
 #+END_SRC
 
-*** Troubleshooting doi-utils
-
+*** Troubleshooting org-ref-doi-utils
 Occasionally weird things happen with a DOI. The first thing you should check is if the json data for the DOI can be retrieved. You can do that at the command line, or in a sh block like this:
 
 #+BEGIN_SRC sh
@@ -378,12 +377,12 @@ curl -LH "Accept: application/citeproc+json" "http://doi.org/10.1021/jp511426q"
 #+RESULTS:
 | indexed":{"date-parts | 12 | 19]] | 2015-12-19T19:18:29Z | timestamp:1450552709286} | reference-count:52 | American Chemical Society (ACS) | 9 | award":["DE-SC0004031 | publisher | Basic Energy Sciences | 10.13039\/100006151 | award":["DMR 0843934 | publisher | Division of Materials Research | 10.13039\/100000078 | date-parts | 3 | 5]]} | 10.1021\/jp511426q | journal-article | date-parts | 2 | 10]] | 2015-02-10T03:10:55Z | timestamp:1423537855000} | 4827-4833 | CrossRef | A Linear Response DFT+ U Study of Trends in the Oxygen Evolution Activity of Transition Metal Rutile Dioxides | [[http:\/\/id.crossref.org\/prefix\/10.1021]] | 119 | affiliation | Xu | Zhongnan | affiliation | Rossmeisl | Jan | affiliation | Kitchin | John R. | [[http:\/\/id.crossref.org\/member\/316]] | J. Phys. Chem. C | intended-application":"unspecified | vor | application\/pdf | [[http:\/\/pubs.acs.org\/doi\/pdf\/10.1021\/jp511426q]] | date-parts | 3 | 5]] | 2015-03-05T10:30:59Z | timestamp:1425551459000} | score:1.0 | subtitle:[] | date-parts | 3 | 5]]} | 10.1021\/jp511426q | [[http:\/\/dx.doi.org\/10.1021\/jp511426q]] | 1932-7447 | 1932-7455] | Energy(all) | Physical and Theoretical Chemistry | Electronic, Optical and Magnetic Materials | Surfaces, Coatings and Films]} |
 
-If you do not get json data, doi-utils will not be able to generate the bibtex entry.
+If you do not get json data, org-ref-doi-utils will not be able to generate the bibtex entry.
 
-Not all PDFs can be retrieved. doi-utils uses a set of functions to attempt this. Here is the list.
+Not all PDFs can be retrieved. org-ref-doi-utils uses a set of functions to attempt this. Here is the list.
 
 #+BEGIN_SRC emacs-lisp
-doi-utils-pdf-url-functions
+org-ref-doi-utils-pdf-url-functions
 #+END_SRC
 
 #+RESULTS:
@@ -391,7 +390,7 @@ doi-utils-pdf-url-functions
 
 You can check if a url for the PDF can be found like this:
 #+BEGIN_SRC emacs-lisp
-(doi-utils-get-pdf-url "10.1021/jp511426q")
+(org-ref-doi-utils-get-pdf-url "10.1021/jp511426q")
 #+END_SRC
 
 #+RESULTS:

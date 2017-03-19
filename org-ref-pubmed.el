@@ -39,7 +39,7 @@
 ;; For PMID there is one interactive function that inserts a bibtex entry:
 ;; pubmed-insert-bibtex-from-pmid.
 
-;; This library is complementary to [[./doi-utils.org]].
+;; This library is complementary to [[./org-ref-doi-utils.org]].
 
 ;;; Code:
 

@@ -43,7 +43,7 @@
 (declare-function 'org-ref-bib-citation "org-ref-core.el")
 (declare-function 'org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
-(require 'doi-utils)
+(require 'org-ref-doi-utils)
 (require 'f)
 (eval-when-compile
   (require 'cl-lib))
@@ -98,9 +98,8 @@ a misc entry, with a prompt for a key."
         (cond
          ;; One doi found. Assume it is what we want.
          ((= 1 (length dois))
-          (doi-utils-add-bibtex-entry-from-doi
-           (car dois)
-           (buffer-file-name))
+          (org-ref-doi-utils-add-bibtex-entry-from-doi (car dois)
+                                                       (buffer-file-name))
           action)
          ;; Multiple DOIs found
          ((> (length dois) 1)
@@ -127,7 +126,7 @@ a misc entry, with a prompt for a key."
                                          dois
                                          :test #'equal)))
                              (reverse dois))))
-           :action 'doi-utils-add-bibtex-entry-from-doi)
+           :action 'org-ref-doi-utils-add-bibtex-entry-from-doi)
           action)
          ;; No DOIs found, add a misc entry.
          (t
@@ -160,7 +159,7 @@ A doi will be either doi:10.xxx  or 10.xxx. It is handled using ACTION."
         (string-match "\\(?:DOI\\|doi\\)?:? *\\(10.*\\)" doi)
         (setq doi (match-string 1 doi))
         (when doi
-          (doi-add-bibtex-entry doi (buffer-file-name))
+          (org-ref-doi-utils-add-bibtex-entry-from-doi doi (buffer-file-name))
           (save-buffer)
           action))
     ;; not on a bib file
@@ -202,7 +201,7 @@ A doi will be either doi:10.xxx  or 10.xxx. It is handled using ACTION."
   (cl-loop for doi in (org-ref-url-scrape-dois url)
            do
            (ignore-errors
-             (doi-utils-add-bibtex-entry-from-doi
+             (org-ref-doi-utils-add-bibtex-entry-from-doi
               doi
               (buffer-file-name))
              ;; this removes two blank lines before each entry.
@@ -226,7 +225,7 @@ not perfect, and some hits are not actually DOIs."
          (doi (car dois)))
     (if doi
         (progn
-          (doi-utils-add-bibtex-entry-from-doi
+          (org-ref-doi-utils-add-bibtex-entry-from-doi
            doi
            (buffer-file-name))
           ;; this removes two blank lines before each entry.

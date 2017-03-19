@@ -35,17 +35,17 @@
 (defvar reftex-comment-citations)
 (defvar reftex-cite-comment-format)
 
-(declare-function doi-utils-crossref "doi-utils.el")
-(declare-function doi-utils-pubmed "doi-utils.el")
-(declare-function doi-utils-wos "doi-utils.el")
-(declare-function doi-utils-wos-citing "doi-utils.el")
-(declare-function doi-utils-wos-related "doi-utils.el")
+(declare-function org-ref-doi-utils-crossref "org-ref-doi-utils.el")
+(declare-function org-ref-doi-utils-pubmed "org-ref-doi-utils.el")
+(declare-function org-ref-doi-utils-wos "org-ref-doi-utils.el")
+(declare-function org-ref-doi-utils-wos-citing "org-ref-doi-utils.el")
+(declare-function org-ref-doi-utils-wos-related "org-ref-doi-utils.el")
+(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
+(declare-function org-ref-key-in-file-p "org-ref-core.el")
+(declare-function org-ref-find-bibliography "org-ref-core.el")
+(declare-function org-ref-bib-citation "org-ref-core.el")
+(declare-function org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 (declare-function org-ref-format-entry "org-ref-bibtex.el")
-(declare-function 'org-ref-get-bibtex-key-and-file "org-ref-core.el")
-(declare-function 'org-ref-key-in-file-p "org-ref-core.el")
-(declare-function 'org-ref-find-bibliography "org-ref-core.el")
-(declare-function 'org-ref-bib-citation "org-ref-core.el")
-(declare-function 'org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
 (defcustom org-ref-bib-html "<h1 class='org-ref-bib-h1'>Bibliography</h1>\n"
   "HTML header to use for bibliography in HTML export."
@@ -546,21 +546,21 @@ directory.  You can also specify a new file."
 (defun org-ref-wos-at-point ()
   "Open the doi in wos for bibtex key under point."
   (interactive)
-  (doi-utils-wos (org-ref-get-doi-at-point)))
+  (org-ref-doi-utils-wos (org-ref-get-doi-at-point)))
 
 
 ;;;###autoload
 (defun org-ref-wos-citing-at-point ()
   "Open the doi in wos citing articles for bibtex key under point."
   (interactive)
-  (doi-utils-wos-citing (org-ref-get-doi-at-point)))
+  (org-ref-doi-utils-wos-citing (org-ref-get-doi-at-point)))
 
 
 ;;;###autoload
 (defun org-ref-wos-related-at-point ()
   "Open the doi in wos related articles for bibtex key under point."
   (interactive)
-  (doi-utils-wos-related (org-ref-get-doi-at-point)))
+  (org-ref-doi-utils-wos-related (org-ref-get-doi-at-point)))
 
 
 ;;;###autoload
@@ -586,14 +586,14 @@ directory.  You can also specify a new file."
 (defun org-ref-pubmed-at-point ()
   "Open the doi in pubmed for bibtex key under point."
   (interactive)
-  (doi-utils-pubmed (org-ref-get-doi-at-point)))
+  (org-ref-doi-utils-pubmed (org-ref-get-doi-at-point)))
 
 
 ;;;###autoload
 (defun org-ref-crossref-at-point ()
   "Open the doi in crossref for bibtex key under point."
   (interactive)
-  (doi-utils-crossref (org-ref-get-doi-at-point)))
+  (org-ref-doi-utils-crossref (org-ref-get-doi-at-point)))
 
 
 ;;* General org-ref utilities

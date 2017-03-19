@@ -147,7 +147,7 @@ Requires `*scopus-api-key*' to be defined."
   "Global variable to pass an EID from an ‘org-mode’ link to a hydra function.")
 
 
-(defhydra scopus-hydra (:color blue)
+(defhydra org-ref-scopus-hydra (:color blue)
   ("o" (scopus-open-eid *hydra-eid*) "Open in Scopus")
   ("a" (browse-url (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=aut&zone=relatedDocuments" *hydra-eid*))
    "Related by author")
@@ -163,7 +163,7 @@ Requires `*scopus-api-key*' to be defined."
   :follow (lambda (eid)
             "Opens the hydra menu."
             (setq *hydra-eid* eid)
-            (scopus-hydra/body))
+            (org-ref-scopus-hydra/body))
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)

@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jkitchin/org-ref
 ;; Version: 0.1
 ;; Keywords: org-mode, bibtex
-;; Package-Requires: ((org-ref) (s) (dash) (doi-utils))
+;; Package-Requires: ((org-ref) (s) (dash) (org-ref-doi-utils))
 
 ;; This file is not currently part of GNU Emacs.
 
@@ -62,7 +62,7 @@
 (require 's)
 
 (require 'org-ref-citeproc)
-(require 'doi-utils)
+(require 'org-ref-doi-utils)
 
 (defvar org-ref-pdf-directory)
 (defvar org-ref-notes-directory)
@@ -536,7 +536,7 @@ and books."
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
 
-      ;; this is defined in doi-utils
+      ;; this is defined in org-ref-doi-utils
       (bibtex-set-field
        "title"
        title)
@@ -594,7 +594,7 @@ all the title entries in articles."
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
 
-      ;; this is defined in doi-utils
+      ;; this is defined in org-ref-doi-utils
       (bibtex-set-field
        "title" title)
 
@@ -672,28 +672,28 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
 (defun org-ref-bibtex-wos ()
   "Open bibtex entry in Web Of Science if there is a DOI."
   (interactive)
-  (doi-utils-wos (org-ref-bibtex-entry-doi)))
+  (org-ref-doi-utils-wos (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
 (defun org-ref-bibtex-wos-citing ()
   "Open citing articles for bibtex entry in Web Of Science if there is a DOI."
   (interactive)
-  (doi-utils-wos-citing (org-ref-bibtex-entry-doi)))
+  (org-ref-doi-utils-wos-citing (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
 (defun org-ref-bibtex-wos-related ()
   "Open related articles for bibtex entry in Web Of Science if there is a DOI."
   (interactive)
-  (doi-utils-wos-related (org-ref-bibtex-entry-doi)))
+  (org-ref-doi-utils-wos-related (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
 (defun org-ref-bibtex-crossref ()
   "Open the bibtex entry in Crossref by its doi."
   (interactive)
-  (doi-utils-crossref (org-ref-bibtex-entry-doi)))
+  (org-ref-doi-utils-crossref (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
@@ -701,7 +701,7 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
   "Open the bibtex entry at point in google-scholar by its doi."
   (interactive)
   (let ((doi (org-ref-bibtex-entry-doi)))
-    (doi-utils-google-scholar
+    (org-ref-doi-utils-google-scholar
      (if (string= "" doi)
 	 (save-excursion
 	   (bibtex-beginning-of-entry)
@@ -713,7 +713,7 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
 (defun org-ref-bibtex-pubmed ()
   "Open the bibtex entry at point in Pubmed by its doi."
   (interactive)
-  (doi-utils-pubmed (org-ref-bibtex-entry-doi)))
+  (org-ref-doi-utils-pubmed (org-ref-bibtex-entry-doi)))
 
 
 ;;;###autoload
@@ -831,8 +831,8 @@ _n_: Open notes                               _T_: Title case
          (save-buffer)
          (kill-buffer)))
   ("e" org-ref-email-bibtex-entry)
-  ("U" (doi-utils-update-bibtex-entry-from-doi (org-ref-bibtex-entry-doi)))
-  ("u" doi-utils-update-field)
+  ("U" (org-ref-doi-utils-update-bibtex-entry-from-doi (org-ref-bibtex-entry-doi)))
+  ("u" org-ref-doi-utils-update-field)
   ("F" org-ref-bibtex-file/body)
   ("A" org-ref-bibtex-assoc-pdf-with-entry)
   ("a" org-ref-replace-nonascii)
@@ -884,12 +884,12 @@ I prefer the hydra interfaces above.")
         ("C" "opy" (lambda (doi)
                      (kill-new (org-ref-bib-citation))
                      (bury-buffer)))
-        ("w" "os" doi-utils-wos)
-        ("c" "iting articles" doi-utils-wos-citing)
-        ("r" "elated articles" doi-utils-wos-related)
-        ("s" "Google Scholar" doi-utils-google-scholar)
-        ("P" "Pubmed" doi-utils-pubmed)
-        ("f" "CrossRef" doi-utils-crossref)))
+        ("w" "os" org-ref-doi-utils-wos)
+        ("c" "iting articles" org-ref-doi-utils-wos-citing)
+        ("r" "elated articles" org-ref-doi-utils-wos-related)
+        ("s" "Google Scholar" org-ref-doi-utils-google-scholar)
+        ("P" "Pubmed" org-ref-doi-utils-pubmed)
+        ("f" "CrossRef" org-ref-doi-utils-crossref)))
 
 ;;;###autoload
 (defun org-ref-bibtex ()
@@ -1005,17 +1005,17 @@ keywords.  Optional argument ARG prefix arg to replace keywords."
 
 
 ;;* org-ref bibtex cache
-(defvar orhc-bibtex-cache-data
+(defvar org-ref-bibtex-cache-data
   '((hashes . ())
     (candidates . ()))
   "Cache data as an alist.
 'hashes is a list of cons cells (bibfile . hash)
 'candidates is a list of cons cells (bibfile . candidates).
-Stored persistently in `orhc-bibtex-cache-file'.")
+Stored persistently in `org-ref-bibtex-cache-file'.")
 
 
-(defvar orhc-bibtex-cache-file
-  "~/.cache/orhc-bibtex-cache"
+(defvar org-ref-bibtex-cache-file
+  "~/.cache/org-ref-bibtex-cache"
   "File to store cached data in.")
 
 
@@ -1024,7 +1024,7 @@ Stored persistently in `orhc-bibtex-cache-file'.")
 This is set internally.")
 
 
-(defvar orhc-candidate-formats
+(defvar org-ref-candidate-formats
   '(("article" . "${pdf}${notes}|${=key=}| ${author}, ${title}, ${journal} (${year}). ${keywords}")
     ("book" . "  |${=key=}| ${author}, ${title} (${year}) ${keywords}.")
     ("inbook" . "  |${=key=}| ${author}, ${chapter} in ${title} (${year}) ${keywords}")
@@ -1040,29 +1040,29 @@ It is an alist of (=type= . s-format-string).")
 
 
 ;; when you load, we should check the hashes and files
-(defun orhc-load-cache-file ()
-  "Load the cache file to set `orhc-bibtex-cache-data'."
-  (when (file-exists-p orhc-bibtex-cache-file)
-    (with-current-buffer (find-file-noselect orhc-bibtex-cache-file)
+(defun org-ref-load-cache-file ()
+  "Load the cache file to set `org-ref-bibtex-cache-data'."
+  (when (file-exists-p org-ref-bibtex-cache-file)
+    (with-current-buffer (find-file-noselect org-ref-bibtex-cache-file)
       (goto-char (point-min))
-      (setq orhc-bibtex-cache-data (read (current-buffer))))
-    (when (find-buffer-visiting orhc-bibtex-cache-file)
-      (kill-buffer (find-buffer-visiting orhc-bibtex-cache-file)))))
+      (setq org-ref-bibtex-cache-data (read (current-buffer))))
+    (when (find-buffer-visiting org-ref-bibtex-cache-file)
+      (kill-buffer (find-buffer-visiting org-ref-bibtex-cache-file)))))
 
 
-(defun orhc-clear-cache ()
-  "Clear the cache and delete `orhc-bibtex-cache-file'."
+(defun org-ref-clear-bibtex-cache ()
+  "Clear the cache and delete `org-ref-bibtex-cache-file'."
   (interactive)
-  (setq orhc-bibtex-cache-data '((hashes . nil)
+  (setq org-ref-bibtex-cache-data '((hashes . nil)
                                  (candidates . nil)))
-  (when (find-buffer-visiting orhc-bibtex-cache-file)
-    (kill-buffer (find-buffer-visiting orhc-bibtex-cache-file)))
-  (when (file-exists-p orhc-bibtex-cache-file)
-    (delete-file orhc-bibtex-cache-file))
+  (when (find-buffer-visiting org-ref-bibtex-cache-file)
+    (kill-buffer (find-buffer-visiting org-ref-bibtex-cache-file)))
+  (when (file-exists-p org-ref-bibtex-cache-file)
+    (delete-file org-ref-bibtex-cache-file))
   (message "org-ref-ivy-cite cache cleared."))
 
 
-(defun orhc-bibtex-cache-up-to-date ()
+(defun org-ref-bibtex-cache-up-to-date ()
   "Return if bibtex caches are up to date.
 This means the hash of each bibfile is equal to the one for it in
 the cache."
@@ -1076,9 +1076,9 @@ the cache."
              (secure-hash 'sha256 (current-buffer)))
            (or (cdr (assoc
                      bibfile
-                     (cdr (assoc 'hashes orhc-bibtex-cache-data)))) "")))))
+                     (cdr (assoc 'hashes org-ref-bibtex-cache-data)))) "")))))
 
-(defun orhc-bibtex-field-formatter (field entry)
+(defun org-ref-bibtex-field-formatter (field entry)
   "Format FIELD in a bibtex parsed ENTRY.
 A few fields are treated specially, e.g. authors are replaced by
 comma-separated list, and I put :: around keywords to make it
@@ -1128,7 +1128,7 @@ easier to search specifically for them."
       s))))
 
 
-(defun orhc-update-bibfile-cache (bibfile)
+(defun org-ref-update-bibfile-cache (bibfile)
   "Update cache for BIBFILE.
 This generates the candidates for the file. Some of this code is
 adapted from `helm-bibtex-parse-bibliography'. This function runs
@@ -1140,66 +1140,66 @@ when called, it resets the cache for the BIBFILE."
       (bibtex-beginning-of-first-entry)
       (message "Updating cache for %s" bibfile)
       (let ((hash (secure-hash 'sha256 (current-buffer)))
-	    (entries
-	     (cl-loop
-	      for entry-type = (parsebib-find-next-item)
-	      while entry-type
-	      unless (member-ignore-case entry-type
-					 '("preamble" "string" "comment"))
-	      collect
-	      (let* ((entry (cl-loop for cons-cell in (parsebib-read-entry entry-type)
-				     ;; we remove all properties too. they
-				     ;; cause errors in reading/writing.
-				     collect
-				     (cons (substring-no-properties
-					    (downcase (car cons-cell)))
-					   (substring-no-properties
-					    ;; clumsy way to remove surrounding
-					    ;; brackets
-					    (let ((s (cdr cons-cell)))
-					      (if (or (and (s-starts-with? "{" s)
-							   (s-ends-with? "}" s))
-						      (and (s-starts-with? "\"" s)
-							   (s-ends-with? "\"" s)))
-						  (substring s 1 -1)
-						s))))))
-		     ;; (key (cdr (assoc "=key=" entry)))
-		     )
-		(cons
-		 ;; this is the display string for helm. We try to use the formats
-		 ;; in `orhc-candidate-formats', but if there isn't one we just put
-		 ;; all the fields in.
-		 (s-format
-		  (or (cdr (assoc (downcase entry-type) orhc-candidate-formats))
-		      (format "%s: %s" (cdr (assoc "=key=" entry)) entry))
-		  'orhc-bibtex-field-formatter
-		  entry)
-		 ;; this is the candidate that is returned, the entry a-list +
-		 ;; file and position.
-		 (append entry (list (cons "bibfile" (buffer-file-name))
-				     (cons "position" (point)))))))))
+            (entries
+             (cl-loop
+              for entry-type = (parsebib-find-next-item)
+              while entry-type
+              unless (member-ignore-case entry-type
+                                         '("preamble" "string" "comment"))
+              collect
+              (let* ((entry (cl-loop for cons-cell in (parsebib-read-entry entry-type)
+                                     ;; we remove all properties too. they
+                                     ;; cause errors in reading/writing.
+                                     collect
+                                     (cons (substring-no-properties
+                                            (downcase (car cons-cell)))
+                                           (substring-no-properties
+                                            ;; clumsy way to remove surrounding
+                                            ;; brackets
+                                            (let ((s (cdr cons-cell)))
+                                              (if (or (and (s-starts-with? "{" s)
+                                                           (s-ends-with? "}" s))
+                                                      (and (s-starts-with? "\"" s)
+                                                           (s-ends-with? "\"" s)))
+                                                  (substring s 1 -1)
+                                                s))))))
+                     ;; (key (cdr (assoc "=key=" entry)))
+                     )
+                (cons
+                 ;; this is the display string for helm. We try to use the formats
+                 ;; in `orhc-candidate-formats', but if there isn't one we just put
+                 ;; all the fields in.
+                 (s-format
+                  (or (cdr (assoc (downcase entry-type) org-ref-candidate-formats))
+                      (format "%s: %s" (cdr (assoc "=key=" entry)) entry))
+                  'orhc-bibtex-field-formatter
+                  entry)
+                 ;; this is the candidate that is returned, the entry a-list +
+                 ;; file and position.
+                 (append entry (list (cons "bibfile" (buffer-file-name))
+                                     (cons "position" (point)))))))))
 
-	;; Now update the cache variables for hash and entries
-	(if (assoc bibfile (cdr (assoc 'candidates orhc-bibtex-cache-data)))
-	    (setf (cdr (assoc bibfile
-			      (cdr (assoc 'candidates orhc-bibtex-cache-data))))
-		  entries)
-	  (cl-pushnew (cons bibfile entries)
-		      (cdr (assoc 'candidates orhc-bibtex-cache-data))))
-	(if (assoc bibfile (cdr (assoc 'hashes orhc-bibtex-cache-data)))
-	    (setf (cdr (assoc
-			bibfile
-			(cdr (assoc 'hashes orhc-bibtex-cache-data))))
-		  hash)
-	  (cl-pushnew (cons bibfile hash)
-		      (cdr (assoc 'hashes orhc-bibtex-cache-data))))
+        ;; Now update the cache variables for hash and entries
+        (if (assoc bibfile (cdr (assoc 'candidates org-ref-bibtex-cache-data)))
+            (setf (cdr (assoc bibfile
+                              (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
+                  entries)
+          (cl-pushnew (cons bibfile entries)
+                      (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
+        (if (assoc bibfile (cdr (assoc 'hashes org-ref-bibtex-cache-data)))
+            (setf (cdr (assoc
+                        bibfile
+                        (cdr (assoc 'hashes org-ref-bibtex-cache-data))))
+                  hash)
+          (cl-pushnew (cons bibfile hash)
+                      (cdr (assoc 'hashes org-ref-bibtex-cache-data))))
 
-	;; And save it to disk for persistent use
-	(with-temp-file orhc-bibtex-cache-file
-	  (print orhc-bibtex-cache-data (current-buffer)))))
+        ;; And save it to disk for persistent use
+        (with-temp-file org-ref-bibtex-cache-file
+          (print org-ref-bibtex-cache-data (current-buffer)))))
     (unless bibfile-open (kill-buffer (find-buffer-visiting bibfile)))))
 
-(defun orhc-update-bibtex-cache ()
+(defun org-ref-update-bibtex-cache ()
   "Conditionally update cache for all files in `org-ref-bibtex-files'.
 Files that have the same hash as in the cache are not updated."
   (cl-loop for bibfile in org-ref-bibtex-files
@@ -1209,17 +1209,17 @@ Files that have the same hash as in the cache are not updated."
 			   (or (cdr
 				(assoc bibfile
 				       (cdr
-					(assoc 'hashes orhc-bibtex-cache-data))))
+					(assoc 'hashes org-ref-bibtex-cache-data))))
 			       ""))
 	   do
-	   (orhc-update-bibfile-cache bibfile)))
+	   (org-ref-update-bibfile-cache bibfile)))
 
 
-(defun orhc-helm-cite-describe-cache ()
+(defun org-ref-describe-bibtex-cache ()
   "Show what is in the cache."
   (interactive)
-  (let ((hash-cache (cdr (assoc 'hashes orhc-bibtex-cache-data)))
-	(candidates-cache (cdr (assoc 'candidates orhc-bibtex-cache-data))))
+  (let ((hash-cache (cdr (assoc 'hashes org-ref-bibtex-cache-data)))
+	(candidates-cache (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
     (message "%s\n\n%s"
 	     (mapconcat (lambda (h)
 			  (format "%s - %s" (car h) (cdr h)))
@@ -1229,13 +1229,13 @@ Files that have the same hash as in the cache are not updated."
 			candidates-cache "\n"))))
 
 
-(defun orhc-bibtex-candidates ()
+(defun org-ref-bibtex-candidates ()
   "Return the candidates from cache for files listed in `org-ref-bibtex-files'.
 Update the cache if necessary."
   ;; this only does something when the cache is out of date
   (org-ref-save-all-bibtex-buffers)
-  (orhc-update-bibtex-cache)
-  (let ((candidates (cdr (assoc 'candidates orhc-bibtex-cache-data))))
+  (org-ref-update-bibtex-cache)
+  (let ((candidates (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
     (apply 'append
            (cl-loop for bibfile in org-ref-bibtex-files
                     collect (cdr (assoc bibfile candidates))))))
@@ -1243,8 +1243,8 @@ Update the cache if necessary."
 
 ;; Now load files and update them if needed. We do this when you load the
 ;; library so they are available later.
-(orhc-load-cache-file)
-(orhc-update-bibtex-cache)
+(org-ref-load-cache-file)
+(org-ref-update-bibtex-cache)
 
 
 ;;* org-ref bibtex formatted citation
@@ -1280,7 +1280,7 @@ of format strings used."
 
 
 ;; ** using citeproc
-(defun orhc-formatted-citation (entry)
+(defun org-ref-formatted-citation (entry)
   "Get a formatted string for ENTRY."
   (require 'unsrt)
   (let* ((adaptive-fill-function '(lambda () "    "))

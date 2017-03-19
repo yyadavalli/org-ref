@@ -116,7 +116,7 @@ Go forth and citate.
 
 Note many of these have been renamed with an org-ref prefix.
 
-- [[./doi-utils.el][doi-utils]] :: Download bibtex entries and PDFs from doi and crossref queries.
+- [[./org-ref-doi-utils.el][org-ref-doi-utils]] :: Download bibtex entries and PDFs from doi and crossref queries.
 - [[./org-ref-pdf.el][org-ref-pdf]] :: Add drag-n-drop PDF to create bibtex entries
 - [[./org-ref-url-utils.el][org-ref-url-utils]] :: Add drag-n-drop urls to create bibtex entries
 - [[./org-ref-bibtex.el][org-ref-bibtex]] :: Utility functions for bibtex

@@ -40,7 +40,7 @@
 (require 'reftex-cite)
 (require 's)
 
-(require 'doi-utils)
+(require 'org-ref-doi-utils)
 (require 'org-ref-bibtex)
 (require 'org-ref-utils)
 (require 'org-ref-glossary)
@@ -1582,7 +1582,7 @@ This is used to complete ref links."
   :help-echo #'org-ref-ref-help-echo)
 
 
-(defun org-pageref-complete-link (&optional arg)
+(defun org-ref-pageref-complete-link (&optional arg)
   "Completion function for ref links.
 Optional argument ARG Does nothing."
   (let ((label))
@@ -1591,10 +1591,10 @@ Optional argument ARG Does nothing."
 
 
 ;;;###autoload
-(defun org-pageref-insert-ref-link ()
+(defun org-ref-pageref-insert-ref-link ()
   "Insert a pageref link with completion."
   (interactive)
-  (insert (org-pageref-complete-link)))
+  (insert (org-ref-pageref-complete-link)))
 
 
 (defun org-ref-export-nameref (path desc format)

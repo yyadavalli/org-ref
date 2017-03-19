@@ -11,7 +11,7 @@
 (require 'org-ref-utils)
 
 ;;;###autoload
-(defun nist-webbook-formula (formula)
+(defun org-ref-nist-webbook-formula (formula)
   "Search NIST webbook for FORMULA."
   (interactive "sFormula: ")
   (browse-url
@@ -21,7 +21,7 @@
     "&NoIon=on&Units=SI")))
 
 ;;;###autoload
-(defun nist-webbook-name (name)
+(defun org-ref-nist-webbook-name (name)
   "Search NIST webbook for NAME."
   (interactive "sChemical Name: ")
   (browse-url
@@ -31,11 +31,11 @@
 
 (org-ref-link-set-parameters "nist-wb-name"
   :follow (lambda (name)
-            (nist-webbook-name name)))
+            (org-ref-nist-webbook-name name)))
 
 (org-ref-link-set-parameters "nist-wb-formula"
   :follow (lambda (formula)
-            (nist-webbook-formula formula)))
+            (org-ref-nist-webbook-formula formula)))
 
 (provide 'nist-webbook)
 

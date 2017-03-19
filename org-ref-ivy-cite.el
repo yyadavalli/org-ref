@@ -52,7 +52,7 @@
 (org-ref-ivy-cite-completion)
 
 
-(defun or-looking-forward-cite ()
+(defun org-ref-looking-forward-cite ()
   "Return if point is in the position before a citation."
   (save-excursion
     (forward-char)
@@ -62,7 +62,7 @@
                  (org-element-context)))))
 
 
-(defun or-looking-back-cite ()
+(defun org-ref-looking-back-cite ()
   "Return if point is in the position after a citation."
   (save-excursion
     (forward-char -1)
@@ -72,10 +72,10 @@
                  (org-element-context)))))
 
 
-(defun or-ivy-bibtex-insert-cite (entry)
+(defun org-ref-ivy-bibtex-insert-cite (entry)
   "Insert a citation for ENTRY.
 If `org-ref-ivy-cite-marked-candidates' is non-nil then they are added instead
-of ENTRY.  ENTRY is selected from `orhc-bibtex-candidates'."
+of ENTRY.  ENTRY is selected from `org-ref-bibtex-candidates'."
   (with-ivy-window
     (if org-ref-ivy-cite-marked-candidates
         (cl-loop for entry in org-ref-ivy-cite-marked-candidates
@@ -90,9 +90,9 @@ of ENTRY.  ENTRY is selected from `orhc-bibtex-candidates'."
         (org-ref-insert-key-at-point (list (cdr (assoc "=key=" entry))))))))
 
 
-(defun or-ivy-bibtex-open-pdf (entry)
+(defun org-ref-ivy-bibtex-open-pdf (entry)
   "Open the pdf associated with ENTRY.
-ENTRY is selected from `orhc-bibtex-candidates'."
+ENTRY is selected from `org-ref-bibtex-candidates'."
   (with-ivy-window
     (let ((pdf (expand-file-name
                 (format "%s.pdf"
@@ -103,9 +103,9 @@ ENTRY is selected from `orhc-bibtex-candidates'."
         (message "No pdf found for %s" (cdr (assoc "=key=" entry)))))))
 
 
-(defun or-ivy-bibtex-open-notes (entry)
+(defun org-ref-ivy-bibtex-open-notes (entry)
   "Open the notes associated with ENTRY.
-ENTRY is selected from `orhc-bibtex-candidates'."
+ENTRY is selected from `org-ref-bibtex-candidates'."
   (with-ivy-window
     (find-file (expand-file-name
                 (format "%s.org"
@@ -113,48 +113,48 @@ ENTRY is selected from `orhc-bibtex-candidates'."
                 org-ref-notes-directory))))
 
 
-(defun or-ivy-bibtex-open-entry (entry)
+(defun org-ref-ivy-bibtex-open-entry (entry)
   "Open the bibtex file at ENTRY.
-ENTRY is selected from `orhc-bibtex-candidates'."
+ENTRY is selected from `org-ref-bibtex-candidates'."
   (find-file (cdr (assoc "bibfile" entry)))
   (goto-char (cdr (assoc "position" entry)))
   (bibtex-beginning-of-entry))
 
 
-(defun or-ivy-bibtex-copy-entry (entry)
+(defun org-ref-ivy-bibtex-copy-entry (entry)
   "Copy selected bibtex ENTRY to the clipboard."
   (with-temp-buffer
     (save-window-excursion
-      (or-ivy-bibtex-open-entry entry)
+      (org-ref-ivy-bibtex-open-entry entry)
       (bibtex-copy-entry-as-kill))
     (bibtex-yank)
     (kill-region (point-min) (point-max))))
 
 
-(defun or-ivy-bibtex-open-url (entry)
+(defun org-ref-ivy-bibtex-open-url (entry)
   "Open the URL associated with ENTRY.
-ENTRY is selected from `orhc-bibtex-candidates'."
+ENTRY is selected from `org-ref-bibtex-candidates'."
   (let ((url (cdr (assoc "url" entry))))
     (if url
         (browse-url url)
       (message "No url found for %s" (cdr (assoc "=key=" entry))))))
 
 
-(defun or-ivy-bibtex-open-doi (entry)
+(defun org-ref-ivy-bibtex-open-doi (entry)
   "Open the DOI associated with ENTRY.
-ENTRY is selected from `orhc-bibtex-candidates'."
+ENTRY is selected from `org-ref-bibtex-candidates'."
   (let ((doi (cdr (assoc "doi" entry))))
     (if doi
         (browse-url (format "http://dx.doi.org/%s" doi))
       (message "No doi found for %s" (cdr (assoc "=key=" entry))))))
 
 
-(defun or-ivy-bibtex-set-keywords (entry)
+(defun org-ref-ivy-bibtex-set-keywords (entry)
   "Prompt for keywords, and put them on the selected ENTRY."
   (let ((keywords (read-string "Keyword(s) comma-separated: " ))
         entry-keywords)
     (save-window-excursion
-      (or-ivy-bibtex-open-entry entry)
+      (org-ref-ivy-bibtex-open-entry entry)
       (setq entry-keywords (bibtex-autokey-get-field "keywords"))
       (bibtex-set-field
        "keywords"
@@ -163,7 +163,7 @@ ENTRY is selected from `orhc-bibtex-candidates'."
          keywords)))))
 
 
-(defun or-ivy-bibtex-email-entry (entry)
+(defun org-ref-ivy-bibtex-email-entry (entry)
   "Insert selected ENTRY and attach pdf file to an email.
 Create email unless called from an email."
   (with-ivy-window
@@ -173,7 +173,7 @@ Create email unless called from an email."
         (compose-mail)
         (message-goto-body))
       (save-window-excursion
-        (or-ivy-bibtex-open-entry entry)
+        (org-ref-ivy-bibtex-open-entry entry)
         (bibtex-copy-entry-as-kill))
       (insert (pop bibtex-entry-kill-ring))
       (insert "\n")
@@ -187,7 +187,7 @@ Create email unless called from an email."
         (message-goto-to)))))
 
 
-(defun or-ivy-bibtex-formatted-citation (entry)
+(defun org-ref-ivy-bibtex-formatted-citation (entry)
   "Return string containing formatted citations for ENTRY.
 This uses a citeproc library."
   (let ((enable-recursive-minibuffers t))
@@ -195,12 +195,12 @@ This uses a citeproc library."
               :action 'load-library
               :require-match t
               :preselect "unsrt"
-              :caller 'or-ivy-formatted-citation)
-    (format "%s\n\n" (orhc-formatted-citation entry))))
+              :caller 'org-ref-ivy-formatted-citation)
+    (format "%s\n\n" (org-ref-formatted-citation entry))))
 
 
-(defun or-ivy-bibtex-insert-formatted-citation (_)
-  "Insert formatted citations at point for selected entries."
+(defun org-ref-ivy-bibtex-insert-formatted-citation (entry)
+  "Insert formatted citations at point for selected ENTRY."
   (with-ivy-window
     (insert (mapconcat
              'identity
@@ -209,19 +209,19 @@ This uses a citeproc library."
              "\n\n"))))
 
 
-(defun or-ivy-bibtex-copy-formatted-citation (entry)
+(defun org-ref-ivy-bibtex-copy-formatted-citation (entry)
   "Copy formatted citation to clipboard for ENTRY."
   (kill-new (org-ref-format-entry entry)))
 
 
-(defun or-ivy-bibtex-add-entry (_)
+(defun org-ref-ivy-bibtex-add-entry (_)
   "Open a bibliography file and move point to the end.
 In order to add a new bibtex entry. The arg is selected from
-`orhc-bibtex-candidates' but ignored."
+`org-ref-bibtex-candidates' but ignored."
   (ivy-read "bibtex file: " org-ref-bibtex-files
             :require-match t
             :action 'find-file
-            :caller 'or-ivy-bibtex-add-entry)
+            :caller 'org-ref-ivy-bibtex-add-entry)
   (widen)
   (goto-char (point-max))
   (unless (bolp)
@@ -229,17 +229,17 @@ In order to add a new bibtex entry. The arg is selected from
 
 
 (defvar org-ref-ivy-cite-actions
-  '(("b" or-ivy-bibtex-open-entry "Open bibtex entry")
-    ("B" or-ivy-bibtex-copy-entry "Copy bibtex entry")
-    ("p" or-ivy-bibtex-open-pdf "Open pdf")
-    ("n" or-ivy-bibtex-open-notes "Open notes")
-    ("u" or-ivy-bibtex-open-url "Open url")
-    ("d" or-ivy-bibtex-open-doi "Open doi")
-    ("k" or-ivy-bibtex-set-keywords "Add keywords")
-    ("e" or-ivy-bibtex-email-entry "Email entry")
-    ("f" or-ivy-bibtex-insert-formatted-citation "Insert formatted citation")
-    ("F" or-ivy-bibtex-copy-formatted-citation "Copy formatted citation")
-    ("a" or-ivy-bibtex-add-entry "Add bibtex entry"))
+  '(("b" org-ref-ivy-bibtex-open-entry "Open bibtex entry")
+    ("B" org-ref-ivy-bibtex-copy-entry "Copy bibtex entry")
+    ("p" org-ref-ivy-bibtex-open-pdf "Open pdf")
+    ("n" org-ref-ivy-bibtex-open-notes "Open notes")
+    ("u" org-ref-ivy-bibtex-open-url "Open url")
+    ("d" org-ref-ivy-bibtex-open-doi "Open doi")
+    ("k" org-ref-ivy-bibtex-set-keywords "Add keywords")
+    ("e" org-ref-ivy-bibtex-email-entry "Email entry")
+    ("f" org-ref-ivy-bibtex-insert-formatted-citation "Insert formatted citation")
+    ("F" org-ref-ivy-bibtex-copy-formatted-citation "Copy formatted citation")
+    ("a" org-ref-ivy-bibtex-add-entry "Add bibtex entry"))
   "List of additional actions for `org-ref-ivy-insert-cite-link'.
 The default action being to insert a citation.")
 
@@ -328,7 +328,7 @@ If candidate is already in, remove it."
   "Show all the candidates."
   (interactive)
   (setf (ivy-state-collection ivy-last)
-        (orhc-bibtex-candidates))
+        (org-ref-bibtex-candidates))
   (ivy--reset-state ivy-last))
 
 
@@ -347,7 +347,7 @@ If candidate is already in, remove it."
                                   (beginning-of-line)
                                   (kill-visual-line)
                                   (setf (ivy-state-collection ivy-last)
-                                        (orhc-bibtex-candidates))
+                                        (org-ref-bibtex-candidates))
                                   (setf (ivy-state-preselect ivy-last) ivy--current)
                                   (ivy--reset-state ivy-last)))
     (define-key map (kbd "C-<return>")
@@ -374,11 +374,11 @@ prefix ARG is used, which uses `org-ref-default-bibliography'."
                                (org-ref-find-bibliography)))
   (setq org-ref-ivy-cite-marked-candidates '())
 
-  (ivy-read "Open: " (orhc-bibtex-candidates)
+  (ivy-read "Open: " (org-ref-bibtex-candidates)
             :require-match t
             :keymap org-ref-ivy-cite-keymap
             :re-builder org-ref-ivy-cite-re-builder
-            :action 'or-ivy-bibtex-insert-cite
+            :action 'org-ref-ivy-bibtex-insert-cite
             :caller 'org-ref-ivy-insert-cite-link))
 
 
@@ -464,7 +464,7 @@ _o_: Open entry   _e_: Email entry  ^ ^                 _q_: quit
 (defun org-ref-ivy-onclick-actions ()
   "An alternate click function using ivy for action selection.
 Each action is taken from `org-ref-ivy-cite-actions'. Each action should act on
-a bibtex entry that matches the key in `orhc-bibtex-candidates'. Set
+a bibtex entry that matches the key in `org-ref-bibtex-candidates'. Set
 `org-ref-cite-onclick-function' to this function to use it."
   (interactive)
   (ivy-read
@@ -475,7 +475,7 @@ a bibtex entry that matches the key in `orhc-bibtex-candidates'. Set
             collect (cons (format "%2s. %s" i s) func))
    :action (lambda (f)
              (let* ((key (car (org-ref-get-bibtex-key-and-file)))
-                    (entry (cdr (elt (orhc-bibtex-candidates)
+                    (entry (cdr (elt (org-ref-bibtex-candidates)
                                      (-elem-index
                                       key
                                       (cl-loop for entry in (orhc-bibtex-candidates)

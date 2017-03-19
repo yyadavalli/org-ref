@@ -27,8 +27,8 @@
 ;; get a doi. This needs a reliable title/citation.
 
 ;;; Code:
-(declare-function doi-utils-add-bibtex-entry-from-doi "doi-utils.el")
-(declare-function doi-utils-get-json-metadata "doi-utils.el")
+(declare-function org-ref-doi-utils-add-bibtex-entry-from-doi "org-ref-doi-utils.el")
+(declare-function org-ref-doi-utils-get-json-metadata "org-ref-doi-utils.el")
 
 (defvar org-ref-pdf-directory)
 
@@ -96,7 +96,7 @@ Used when multiple dois are found in a pdf file."
            collect
            (condition-case nil
                (cons
-                (plist-get (doi-utils-get-json-metadata doi) :title)
+                (plist-get (org-ref-doi-utils-get-json-metadata doi) :title)
                 doi)
              (error (cons (format "%s read error" doi) doi)))))
 
@@ -187,7 +187,7 @@ This function should only apply when in a bibtex file."
            ((= 1 (length dois))
             ;; we do not need to get the pdf, since we have one.
             (let ()
-              (doi-utils-add-bibtex-entry-from-doi
+              (org-ref-doi-utils-add-bibtex-entry-from-doi
                (car dois)
                (buffer-file-name))
               ;; we should copy the pdf to the pdf directory though
@@ -235,7 +235,7 @@ This function should only apply when in a bibtex file."
               ((null dois)
                (insert (format "%% No doi found to create entry in %s.\n" pdf)))
               ((= 1 (length dois))
-               (doi-utils-add-bibtex-entry-from-doi
+               (org-ref-doi-utils-add-bibtex-entry-from-doi
                 (car dois)
                 (buffer-file-name))
                (bibtex-beginning-of-entry)

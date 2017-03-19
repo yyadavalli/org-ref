@@ -71,8 +71,7 @@
 ;; Acp:label (exports to \Glspl{label})
 
 (require 'cl-lib)
-(require 'org-element)
-(require 'org-ref-utils)
+(require 'org-ref-core)
 
 (declare-function helm-build-sync-source "helm-source")
 
@@ -93,7 +92,7 @@
   :group 'org-ref)
 
 
-(defun or-find-closing-curly-bracket (&optional limit)
+(defun org-ref-find-closing-curly-bracket (&optional limit)
   "Find closing bracket for the bracket at point and move point to it.
 Go up to LIMIT or `point-max'. This is a parsing function. I
 wrote this because using `forward-list' does not always work if
@@ -115,7 +114,7 @@ there is an escaped \" for example. This seems pretty robust."
 
 
 ;;* Glossary
-(defun or-parse-glossary-entry (entry)
+(defun org-ref-parse-glossary-entry (entry)
   "Parse glossary ENTRY definition to a p-list of key=value.
 Typically:
   (:name name :description description)
@@ -131,7 +130,7 @@ but there could be other :key value pairs."
         (re-search-forward "{")
         (save-excursion
           (backward-char)
-          (or-find-closing-curly-bracket)
+          (org-ref-find-closing-curly-bracket)
           (setq end-of-entry (point)))
 
         (while (re-search-forward "\\(\\w+?\\)=" end-of-entry t)
@@ -142,7 +141,7 @@ but there could be other :key value pairs."
           (if (looking-at "{")
               ;; value is wrapped in {}
               (progn
-                (or-find-closing-curly-bracket)
+                (org-ref-find-closing-curly-bracket)
                 (setq p2 (point)
                       value (buffer-substring (+ 1 p1) p2)))
             ;; value is up to the next comma
@@ -179,7 +178,7 @@ Entry gets added after the last #+latex_header line."
 
 
 ;;** Glossary links
-(defun or-follow-glossary (entry)
+(defun org-ref-follow-glossary (entry)
   "Goto beginning of the glossary ENTRY."
   (org-mark-ring-push)
   (goto-char (point-min))
@@ -194,9 +193,9 @@ Entry gets added after the last #+latex_header line."
 (dolist (command org-ref-glossary-gls-commands)
   (org-ref-link-set-parameters
    command
-   :follow #'or-follow-glossary
+   :follow #'org-ref-follow-glossary
    :face 'org-ref-glossary-face
-   :help-echo 'or-glossary-tooltip
+   :help-echo 'org-ref-glossary-tooltip
    :export (lambda (path _ format)
              (cond
               ((eq format 'latex)
@@ -204,16 +203,17 @@ Entry gets added after the last #+latex_header line."
               (t
                (format "%s" path))))))
 
-(org-ref-link-set-parameters "glslink"
-  :follow #'or-follow-glossary
-  :face 'org-ref-glossary-face
-  :help-echo 'or-glossary-tooltip
-  :export (lambda (path desc format)
-            (cond
-             ((eq format 'latex)
-              (format "\\glslink{%s}{%s}" path desc))
-	     (t
-	      (format "%s" path)))))
+(org-ref-link-set-parameters
+ "glslink"
+ :follow #'org-ref-follow-glossary
+ :face 'org-ref-glossary-face
+ :help-echo 'org-ref-glossary-tooltip
+ :export (lambda (path desc format)
+           (cond
+            ((eq format 'latex)
+             (format "\\glslink{%s}{%s}" path desc))
+            (t
+             (format "%s" path)))))
 
 
 ;;** Tooltips on glossary entries
@@ -222,15 +222,15 @@ Entry gets added after the last #+latex_header line."
   "Face for glossary links.")
 
 
-(defun or-glossary-tooltip (_window _object position)
+(defun org-ref-glossary-tooltip (_window _object position)
   "Return tooltip for the glossary entry.
 The entry is in WINDOW and OBJECT at POSITION.
 Used in fontification."
   (save-excursion
     (goto-char position)
     (let* ((label (org-element-property :path (org-element-context)))
-           (data (or (or-parse-glossary-entry label)
-                     (or-parse-acronym-entry label)))
+           (data (or (org-ref-parse-glossary-entry label)
+                     (org-ref-parse-acronym-entry label)))
            (name (or (plist-get data :name)
                      (plist-get data :abbrv)))
            (description (or (plist-get data :description)
@@ -245,7 +245,7 @@ Used in fontification."
 
 
 (unless (fboundp 'org-link-set-parameters)
-  (defun or-next-glossary-link (limit)
+  (defun org-ref-next-glossary-link (limit)
     "Search to next glossary link up to LIMIT.
 Adds a tooltip to the link that is found."
     (when (and (re-search-forward
@@ -271,7 +271,7 @@ Adds a tooltip to the link that is found."
                (- (org-element-property :end next-link)
                   (org-element-property :post-blank next-link))
                (list
-                'help-echo 'or-glossary-tooltip))
+                'help-echo 'org-ref-glossary-tooltip))
               (goto-char (org-element-property :end next-link)))
           (goto-char limit)
           nil)))))
@@ -296,7 +296,7 @@ FULL is the expanded acronym."
                     label abbrv full))))
 
 
-(defun or-parse-acronym-entry (label)
+(defun org-ref-parse-acronym-entry (label)
   "Parse an acronym entry LABEL to a plist.
 \(:abbrv abbrv :full full)
 \newacronym{<label>}{<abbrv>}{<full>}"
@@ -314,7 +314,7 @@ FULL is the expanded acronym."
         (list :abbrv abbrv :full full)))))
 
 ;;** Acronym links
-(defun or-follow-acronym (label)
+(defun org-ref-follow-acronym (label)
   "Go to the definition of the acronym LABEL."
   (org-mark-ring-push)
   (goto-char (point-min))
@@ -333,16 +333,17 @@ FULL is the expanded acronym."
 
 
 (dolist (mapping org-ref-glossary-acr-commands-mapping)
-  (org-ref-link-set-parameters (car mapping)
-    :follow #'or-follow-acronym
-    :face 'org-ref-acronym-face
-    :help-echo 'or-acronym-tooltip
-    :export (lambda (path _ format)
-	      (cond
-	       ((eq format 'latex)
-		(format "\\%s{%s}" (cdr mapping) path))
-	       (t
-		(format "%s" (upcase path)))))))
+  (org-ref-link-set-parameters
+   (car mapping)
+   :follow #'org-ref-follow-acronym
+   :face 'org-ref-acronym-face
+   :help-echo 'org-ref-acronym-tooltip
+   :export (lambda (path _ format)
+             (cond
+              ((eq format 'latex)
+               (format "\\%s{%s}" (cdr mapping) path))
+              (t
+               (format "%s" (upcase path)))))))
 
 
 ;;** Tooltips on acronyms
@@ -351,7 +352,7 @@ FULL is the expanded acronym."
   "Face for acronym links.")
 
 
-(defun or-acronym-tooltip (_window _object position)
+(defun org-ref-acronym-tooltip (_window _object position)
   "Return tooltip for the acronym entry.
 The entry is in WINDOW and OBJECT at POSITION.
 Used in fontification.
@@ -359,7 +360,7 @@ WINDOW and OBJECT are ignored."
   (save-excursion
     (goto-char position)
     (let* ((label (org-element-property :path (org-element-context)))
-           (acronym-data (or-parse-acronym-entry label))
+           (acronym-data (org-ref-parse-acronym-entry label))
            (abbrv (plist-get acronym-data :abbrv))
            (full (plist-get acronym-data :full)))
       (if acronym-data
@@ -372,7 +373,7 @@ WINDOW and OBJECT are ignored."
 ;; We use search instead of a regexp to match links with descriptions. These are
 ;; hard to do with regexps.
 (unless (fboundp 'org-link-set-parameters)
-  (defun or-next-acronym-link (limit)
+  (defun org-ref-next-acronym-link (limit)
     "Search to next acronym link up to LIMIT and add a tooltip."
     (when (and (re-search-forward
                 (concat
@@ -395,7 +396,7 @@ WINDOW and OBJECT are ignored."
                  (- (org-element-property :end next-link)
                     (org-element-property :post-blank next-link))
                  (list
-                  'help-echo 'or-acronym-tooltip))
+                  'help-echo 'org-ref-acronym-tooltip))
                 (goto-char (org-element-property :end next-link)))
             (goto-char limit)
             nil))))))
@@ -408,45 +409,45 @@ WINDOW and OBJECT are ignored."
   (interactive)
   ;; gather entries
   (let ((glossary-candidates '())
-	(acronym-candidates '())
-	key
-	entry)
+        (acronym-candidates '())
+        key
+        entry)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward
-	      "\\\\newglossaryentry{\\([[:ascii:]]+?\\)}" nil t)
-	(setq key (match-string 1)
-	      entry (or-parse-glossary-entry key))
-	(setq glossary-candidates
-	      (append
-	       glossary-candidates
-	       (list
-		(cons
-		 (format "%s: %s."
-			 (plist-get entry :name)
-			 (plist-get entry :description))
-		 ;; the returned candidate
-		 (list key
-		       (plist-get entry :name))))))))
+              "\\\\newglossaryentry{\\([[:ascii:]]+?\\)}" nil t)
+        (setq key (match-string 1)
+              entry (org-ref-parse-glossary-entry key))
+        (setq glossary-candidates
+              (append
+               glossary-candidates
+               (list
+                (cons
+                 (format "%s: %s."
+                         (plist-get entry :name)
+                         (plist-get entry :description))
+                 ;; the returned candidate
+                 (list key
+                       (plist-get entry :name))))))))
 
     ;; acronym candidates
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward
-	      "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
-	(setq key (match-string 1)
-	      entry (or-parse-acronym-entry key))
-	(setq acronym-candidates
-	      (append
-	       acronym-candidates
-	       (list
-		(cons
-		 (format "%s (%s)."
-			 (plist-get entry :full)
-			 (plist-get entry :abbrv))
-		 ;; the returned candidate
-		 (list key
-		       (plist-get entry :abbrv))))))))
+              "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
+        (setq key (match-string 1)
+              entry (org-ref-parse-acronym-entry key))
+        (setq acronym-candidates
+              (append
+               acronym-candidates
+               (list
+                (cons
+                 (format "%s (%s)."
+                         (plist-get entry :full)
+                         (plist-get entry :abbrv))
+                 ;; the returned candidate
+                 (list key
+                       (plist-get entry :abbrv))))))))
 
     (helm :sources
 	  `(,(helm-build-sync-source "Insert glossary term"
