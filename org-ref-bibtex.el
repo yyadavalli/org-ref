@@ -765,6 +765,47 @@ name '[bibtexkey].pdf'. If the file does not exist, rename it to
 	  (message (format "Created file %s" pdf)))))))
 
 
+(defun org-ref-bibtex-edit-notes (key)
+  "Open the notes associated with the selected KEY using `find-file'.
+This function is copied from `ivy-bibtex'."
+  (if (and org-ref-notes-directory
+           (f-directory? org-ref-notes-directory))
+      ;; One notes file per publication:
+      (let* ((path (f-join org-ref-notes-directory
+                           (s-concat key ".org"))))
+        (find-file path)
+        (unless (f-exists? path)
+          (insert (s-format "#+TITLE: Notes on: ${author} (${year}): ${title}"
+                            'reftex-get-bib-field
+                            (bibtex-search-entry key)))))
+                                        ; One file for all notes:
+    (unless (and buffer-file-name
+                 (f-same? org-ref-bibliography-notes buffer-file-name))
+      (find-file-other-window org-ref-bibliography-notes))
+    (widen)
+    (outline-show-all)
+    (goto-char (point-min))
+    (if (re-search-forward
+         (format ":Custom_ID: +%s\\( \\|$\\)" (regexp-quote key)) nil t)
+        ;; Existing entry found:
+        (when (eq major-mode 'org-mode)
+          (org-narrow-to-subtree)
+          (re-search-backward "^\*+ " nil t)
+          (org-cycle-hide-drawers nil))
+                                        ; Create a new entry:
+      (let ((entry (bibtex-parse-entry (bibtex-search-entry key))))
+        (goto-char (point-max))
+        (insert
+         (s-format "\n* ${author} (${year}): ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :END:\n\n"
+                   'reftex-get-bib-field
+                   entry)))
+      (when (eq major-mode 'org-mode)
+        (org-narrow-to-subtree)
+        (re-search-backward "^\*+ " nil t)
+        (org-cycle-hide-drawers nil)
+        (goto-char (point-max))))))
+
+
 ;;* Hydra menus
 ;;** Hydra menu for bibtex entries
 ;; hydra menu for actions on bibtex entries
@@ -789,9 +830,9 @@ _n_: Open notes                               _T_: Title case
   ("g" org-ref-bibtex-google-scholar)
   ("N" org-ref-bibtex-new-entry/body)
   ("n" (progn
-	 (bibtex-beginning-of-entry)
-	 (bibtex-completion-edit-notes
-	  (list (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
+         (bibtex-beginning-of-entry)
+         (org-ref-bibtex-edit-notes
+          (list (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
   ("o" (lambda ()
 	 (interactive)
 	 (bibtex-copy-entry-as-kill)
@@ -1255,21 +1296,25 @@ variable `org-ref-formatted-citation-backend' determines the set
 of format strings used."
   (save-excursion
     (bibtex-beginning-of-entry)
-    (let* ((formats (cdr (assoc org-ref-formatted-citation-backend  org-ref-formatted-citation-formats)))
-	   (format-string)
-	   (ref))
+    (let* ((formats (cdr (assoc org-ref-formatted-citation-backend
+                                org-ref-formatted-citation-formats)))
+           (format-string)
+           (ref))
       (if (null entry)
-	  "!!! No entry found !!!"
-	(setq format-string (or (cdr (assoc (downcase (bibtex-completion-get-value "=type=" entry)) formats))
-				"${author}, /${title}/ (${year})."))
-	(setq ref (s-format format-string 'bibtex-completion-apa-get-value entry))
-	(replace-regexp-in-string "\\([.?!]\\)\\." "\\1" ref)))))
+          "!!! No entry found !!!"
+        (setq format-string
+              (or (cdr (assoc (downcase (reftex-get-bib-field "=type=" entry))
+                              formats))
+                  "${author}, /${title}/ (${year})."))
+        (setq ref (s-format format-string 'reftex-get-bib-field entry))
+        (replace-regexp-in-string "\\([.?!]\\)\\." "\\1" ref)))))
 
 
 (defun org-ref-format-entry (key)
   "Return a formatted bibtex entry for KEY."
-  (let* ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-    (org-ref-format-bibtex-entry (ignore-errors (bibtex-completion-get-entry key)))))
+  (let* ((bibtex-files (org-ref-find-bibliography)))
+    (org-ref-format-bibtex-entry
+     (ignore-errors (bibtex-parse-entry (bibtex-search-entry key t))))))
 
 
 (defun org-ref-format-bibtex-entry-at-point ()
