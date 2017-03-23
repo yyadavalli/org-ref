@@ -806,40 +806,58 @@ This function is copied from `ivy-bibtex'."
         (goto-char (point-max))))))
 
 
+(defun org-ref-bibtex-refile-entry ()
+  "Refile bibtex entry at point."
+  (interactive)
+  (bibtex-beginning-of-entry)
+  (bibtex-kill-entry)
+  (find-file (completing-read
+              "Bibtex file: "
+              (f-entries "." (lambda (f) (f-ext? f "bib")))))
+  (goto-char (point-max))
+  (bibtex-yank)
+  (save-buffer)
+  (kill-buffer))
+
+
 ;;* Hydra menus
 ;;** Hydra menu for bibtex entries
 ;; hydra menu for actions on bibtex entries
 (defhydra org-ref-bibtex-hydra (:color blue)
   "
-_p_: Open pdf     _y_: Copy key               _N_: New entry            _w_: WOS
-_b_: Open url     _f_: Copy formatted entry   _o_: Copy entry           _c_: WOS citing
-_r_: Refile entry _k_: Add keywords           _d_: delete entry         _a_: WOS related
-_e_: Email entry  _K_: Edit keywords          _L_: clean entry          _P_: Pubmed
-_U_: Update entry _N_: New entry              _R_: Crossref             _g_: Google Scholar
-_s_: Sort entry   _a_: Remove nonascii        _h_: helm-bibtex          _q_: quit
-_u_: Update field _F_: file funcs             _A_: Assoc pdf with entry
-_n_: Open notes                               _T_: Title case
-                                              _S_: Sentence case
+_p_: Open pdf      _N_: New entry      _y_: Copy key              _w_: WOS
+_b_: Open url      _Y_: Copy entry     _f_: Copy formatted entry  _c_: WOS citing
+_n_: Open notes    _d_: Delete entry   _k_: Add keywords          _a_: WOS related
+_e_: Email entry   _l_: Clean entry    _K_: Edit keywords         _P_: Pubmed
+_s_: Sort entry    _a_: Associate pdf  _r_: Refile entry          _g_: Google Scholar
+_u_: Update entry  _T_: Title case     _A_: Remove nonascii       _r_: Crossref
+_U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
 "
+
   ("p" org-ref-open-bibtex-pdf)
-  ("P" org-ref-bibtex-pubmed)
-  ("w" org-ref-bibtex-wos)
-  ("c" org-ref-bibtex-wos-citing)
-  ("a" org-ref-bibtex-wos-related)
-  ("R" org-ref-bibtex-crossref)
-  ("g" org-ref-bibtex-google-scholar)
-  ("N" org-ref-bibtex-new-entry/body)
+  ("b" org-ref-open-in-browser)
   ("n" (progn
          (bibtex-beginning-of-entry)
          (org-ref-bibtex-edit-notes
           (list (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
-  ("o" (lambda ()
-	 (interactive)
-	 (bibtex-copy-entry-as-kill)
-	 (message "Use %s to paste the entry"
-		  (substitute-command-keys (format "\\[bibtex-yank]")))))
+  ("e" org-ref-email-bibtex-entry)
+  ("s" org-ref-sort-bibtex-entry)
+  ("u" (org-ref-doi-utils-update-bibtex-entry-from-doi
+        (org-ref-bibtex-entry-doi)))
+  ("U" org-ref-doi-utils-update-field)
+
+  ("N" org-ref-bibtex-new-entry/body)
+  ("Y" (lambda ()
+         (interactive)
+         (bibtex-copy-entry-as-kill)
+         (message "Use %s to paste the entry"
+                  (substitute-command-keys (format "\\[bibtex-yank]")))))
   ("d" bibtex-kill-entry)
-  ("L" org-ref-clean-bibtex-entry)
+  ("l" org-ref-clean-bibtex-entry)
+  ("a" org-ref-bibtex-assoc-pdf-with-entry)
+  ("T" org-ref-title-case-article)
+  ("S" org-ref-sentence-case-article)
+
   ("y" (save-excursion
 	 (bibtex-beginning-of-entry)
 	 (when (looking-at bibtex-entry-maybe-empty-head)
@@ -859,27 +877,17 @@ _n_: Open notes                               _T_: Title case
           (read-string "Keywords: "
                        (bibtex-autokey-get-field "keywords"))
           t)))
-  ("b" org-ref-open-in-browser)
-  ("r" (lambda ()
-	 (interactive)
-         (bibtex-beginning-of-entry)
-         (bibtex-kill-entry)
-         (find-file (completing-read
-                     "Bibtex file: "
-                     (f-entries "." (lambda (f) (f-ext? f "bib")))))
-         (goto-char (point-max))
-         (bibtex-yank)
-         (save-buffer)
-         (kill-buffer)))
-  ("e" org-ref-email-bibtex-entry)
-  ("U" (org-ref-doi-utils-update-bibtex-entry-from-doi (org-ref-bibtex-entry-doi)))
-  ("u" org-ref-doi-utils-update-field)
+  ("r" org-ref-bibtex-refile-entry)
+  ("A" org-ref-replace-nonascii)
   ("F" org-ref-bibtex-file/body)
-  ("A" org-ref-bibtex-assoc-pdf-with-entry)
-  ("a" org-ref-replace-nonascii)
-  ("s" org-ref-sort-bibtex-entry)
-  ("T" org-ref-title-case-article)
-  ("S" org-ref-sentence-case-article)
+
+  ("P" org-ref-bibtex-pubmed)
+  ("w" org-ref-bibtex-wos)
+  ("c" org-ref-bibtex-wos-citing)
+  ("a" org-ref-bibtex-wos-related)
+  ("R" org-ref-bibtex-crossref)
+  ("g" org-ref-bibtex-google-scholar)
+
   ("q" nil))
 
 
