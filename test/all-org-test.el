@@ -58,6 +58,60 @@
     '(a c b)
     (org-ref-swap-keys 1 2 '(a b c)))))
 
+(ert-deftest test-8 ()
+  (org-test-with-temp-text
+      (format "cite:kitchin-2015-examp
+
+bibliography:%s
+" (expand-file-name
+   "tests/test-1.bib"
+   (file-name-directory
+    (locate-library "org-ref"))))
+   (should
+    (string=
+     (org-ref-link-message)
+     "Kitchin, John R., Examples of effective data sharing in scientific publishing, ACS Catalysis, 5(6), 3894–3899 (2015). 10.1021/acscatal.5b00538"))))
+
+(ert-deftest test-9 ()
+  (org-test-with-temp-text
+      (format "cite:kitchin-2015
+
+bibliography:%s
+"
+	      (expand-file-name
+	       "tests/test-1.bib"
+	       (file-name-directory
+		(locate-library "org-ref"))))
+    (should
+     (string= "!!! No entry found !!!"
+	      (org-ref-link-message)))))
+
+(ert-deftest orlm ()
+  (org-test-with-temp-text
+      (format "cite:kitchin-2015-examp
+
+bibliography:%s
+" (expand-file-name
+   "tests/test-1.bib"
+   (file-name-directory
+    (locate-library "org-ref"))))
+   (should
+    (string= (org-ref-link-message)
+             "Kitchin, John R., Examples of effective data sharing in scientific publishing, ACS Catalysis, 5(6), 3894–3899 (2015). 10.1021/acscatal.5b00538"))))
+
+(ert-deftest orlm-nil ()
+  (org-test-with-temp-text
+      (format "cite:kitchin-2015
+
+bibliography:%s
+" (expand-file-name
+   "tests/test-1.bib"
+   (file-name-directory
+    (locate-library "org-ref"))))
+    (should
+     (string= "!!! No entry found !!!"
+	      (org-ref-link-message)))))
+
 (ert-deftest orlm-ref-1 ()
   (should
    (string=
@@ -272,7 +326,6 @@ label:one
       (org-ref-find-bibliography)))))
 
 (ert-deftest orfb-3 ()
-<<<<<<< HEAD
   "addbibresource form of bibliography."
   (should
    (equal
@@ -288,23 +341,6 @@ label:one
 			 (file-name-directory
 			  (locate-library "org-ref"))))
 	      (org-ref-find-bibliography))))))
-=======
-"addbibresource form of bibliography."
-(should
-(equal
-(list (expand-file-name
-"tests/test-1.bib"
-(file-name-directory
-(locate-library "org-ref"))))
-(mapcar 'file-truename
-(org-test-with-temp-text
-(format "\\addbibresource{%s}"
-(expand-file-name
-"tests/test-1.bib"
-(file-name-directory
-(locate-library "org-ref"))))
-(org-ref-find-bibliography))))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest orfb-3a ()
   "multiple bibliographies addbibresource form of bibliography."
@@ -321,7 +357,6 @@ label:one
     (org-test-with-temp-text
 	(format "\\addbibresource{%s}
 \\addbibresource{%s}"
-<<<<<<< HEAD
 		(expand-file-name
 		 "tests/test-1.bib"
 		 (file-name-directory
@@ -331,17 +366,6 @@ label:one
 		 (file-name-directory
 		  (locate-library "org-ref"))))
       (org-ref-find-bibliography)))))
-=======
-(expand-file-name
-"tests/test-1.bib"
-(file-name-directory
-(locate-library "org-ref")))
-(expand-file-name
-"tests/test-2.bib"
-(file-name-directory
-(locate-library "org-ref"))))
-(org-ref-find-bibliography)))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest orfb-4 ()
   "getting default bibfile in file with no bib specification."
@@ -395,19 +419,11 @@ bibliography:%s
       (org-ref-get-doi-at-point)))))
 
 (ert-deftest short-titles ()
-<<<<<<< HEAD
   (org-ref-bibtex-generate-shorttitles)
   (prog1
       (should
        (file-exists-p "shorttitles.bib"))
     (delete-file "shorttitles.bib")))
-=======
-(org-ref-bibtex-generate-shorttitles)
-(prog1
-(should
-(file-exists-p "shorttitles.bib"))
-(delete-file "shorttitles.bib")))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest long-titles ()
   (org-ref-bibtex-generate-longtitles)
@@ -1144,21 +1160,12 @@ not loaded.
 
 bibliography:%s
 "
-<<<<<<< HEAD
 	     (expand-file-name
 	      "tests/test-1.bib"
 	      (file-name-directory (locate-library "org-ref"))))
 	    (org-test-with-temp-text
 		(format
 		 "cite:kitchin-2008-alloy,kitchin-2004-role
-=======
-(expand-file-name
-"tests/test-1.bib"
-(file-name-directory (locate-library "org-ref"))))
-(org-test-with-temp-text
-(format
-"cite:kitchin-2008-alloy,kitchin-2004-role
->>>>>>> Refactor all prefixes to org-ref-*
 
 bibliography:%s
 "
@@ -1299,11 +1306,7 @@ bibliography:%s
       (org-test-with-temp-text
 	  "{}"
 	(require 'org-ref-glossary)
-<<<<<<< HEAD
-	(or-find-closing-curly-bracket)))))
-=======
 	(org-ref-find-closing-curly-bracket)))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest curly-2 ()
   (should
@@ -1311,11 +1314,7 @@ bibliography:%s
       (org-test-with-temp-text
 	  "{{}}"
 	(require 'org-ref-glossary)
-<<<<<<< HEAD
-	(or-find-closing-curly-bracket)))))
-=======
 	(org-ref-find-closing-curly-bracket)))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest curly-3 ()
   (should
@@ -1324,11 +1323,7 @@ bibliography:%s
 	  "{{}}"
 	(require 'org-ref-glossary)
 	(goto-char 2)
-<<<<<<< HEAD
-	(or-find-closing-curly-bracket)))))
-=======
 	(org-ref-find-closing-curly-bracket)))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest bad-citations-1 ()
   (should
@@ -1366,7 +1361,6 @@ bibliography:%s
 		   (buffer-substring-no-properties (point-min) (point-max))))))
 
 (ert-deftest mendeley-fname ()
-<<<<<<< HEAD
   (should
    (let ((bibstring (format "bibliography:%s"
 			    (expand-file-name
@@ -1379,20 +1373,6 @@ bibliography:%s
 		  bibstring
 		""
 		(org-ref-get-mendeley-filename "Abild-Pedersen2007"))))))
-=======
-(should
-(let ((bibstring (format "bibliography:%s"
-(expand-file-name
-"tests/test-1.bib"
-(file-name-directory
-(locate-library
-"org-ref"))))))
-(string= "/Users/jkitchin/Dropbox/bibliography/bibtex-pdfs/abild-pedersen-2007-scalin-proper.pdf"
-(org-test-with-temp-text
-bibstring
-""
-(org-ref-get-mendeley-filename "Abild-Pedersen2007"))))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest fl-next-cite ()
   (org-test-with-temp-text
@@ -1409,25 +1389,22 @@ bibliography:tests/test-1.bib
 
 (ert-deftest cite-face-1 ()
   (org-test-with-temp-text
-      "cite:kitchin-2015-examp
+   "cite:kitchin-2015-examp
 
 bibliography:tests/test-1.bib
 "
-<<<<<<< HEAD
-    (unless (fboundp 'org-link-set-parameters)
-      (font-lock-add-keywords
-       nil
-       '((org-ref-match-next-cite-link (0  'org-ref-cite-face t))
-	 (org-ref-match-next-label-link (0  'org-ref-label-face t))
-	 (org-ref-match-next-ref-link (0  'org-ref-ref-face t))
-	 (org-ref-match-next-bibliography-link (0  'org-link t))
-	 (org-ref-match-next-bibliographystyle-link (0  'org-link t)))
-       t))
-    (org-mode)
-    (font-lock-fontify-region (point-min) (point-max))
-    (describe-text-properties 1)
-    ;; (should (eq 'org-ref-cite-face (get-char-property 1 'face)))
-    ))
+   (unless (fboundp 'org-link-set-parameters)
+     (font-lock-add-keywords
+      nil
+      '((org-ref-match-next-cite-link (0  'org-ref-cite-face t))
+        (org-ref-match-next-label-link (0  'org-ref-label-face t))
+        (org-ref-match-next-ref-link (0  'org-ref-ref-face t))
+        (org-ref-match-next-bibliography-link (0  'org-link t))
+        (org-ref-match-next-bibliographystyle-link (0  'org-link t)))
+      t))
+   (org-mode)
+   (font-lock-fontify-region (point-min) (point-max))
+   (describe-text-properties 1)))
 
 (ert-deftest cite-face-2 ()
   (org-test-with-temp-text
@@ -1442,36 +1419,6 @@ bibliography:tests/test-1.bib
        t))
     (font-lock-fontify-region (point-min) (point-max))
     (should (not (eq 'org-ref-cite-face (get-char-property 5 'face))))))
-=======
-(unless (fboundp 'org-link-set-parameters)
-(font-lock-add-keywords
-nil
-'((org-ref-match-next-cite-link (0  'org-ref-cite-face t))
-(org-ref-match-next-label-link (0  'org-ref-label-face t))
-(org-ref-match-next-ref-link (0  'org-ref-ref-face t))
-(org-ref-match-next-bibliography-link (0  'org-link t))
-(org-ref-match-next-bibliographystyle-link (0  'org-link t)))
-t))
-(org-mode)
-(font-lock-fontify-region (point-min) (point-max))
-(describe-text-properties 1)
-;; (should (eq 'org-ref-cite-face (get-char-property 1 'face)))
-))
-
-(ert-deftest cite-face ()
-(org-test-with-temp-text
-"# cite:kitchin-2015-examp
-
-bibliography:tests/test-1.bib
-"
-(unless (fboundp 'org-link-set-parameters)
-(font-lock-add-keywords
-nil
-'((org-ref-match-next-cite-link (0  'org-ref-cite-face t)))
-t))
-(font-lock-fontify-region (point-min) (point-max))
-(should (not (eq 'org-ref-cite-face (get-char-property 5 'face))))))
->>>>>>> Refactor all prefixes to org-ref-*
 
 (ert-deftest cite-in-comment ()
   (should
@@ -1608,8 +1555,4 @@ url =		 { http://dx.doi.org/10.1021/acscatal.5b00538 },
 keywords =	 {DESC0004031, early-career, orgmode, Data sharing },
 eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
 }")
-<<<<<<< HEAD
 		     (car (org-ref-store-bibtex-entry-link))))))
-=======
-(car (org-ref-store-bibtex-entry-link))))))
->>>>>>> Refactor all prefixes to org-ref-*
