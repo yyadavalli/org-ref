@@ -70,7 +70,7 @@ bibliography:%s
    (should
     (string=
      (org-ref-link-message)
-     "Kitchin, John R., Examples of effective data sharing in scientific publishing, ACS Catalysis, 5(6), 3894–3899 (2015). 10.1021/acscatal.5b00538"))))
+     "Kitchin, John R., Examples of Effective Data Sharing in Scientific Publishing, ACS Catalysis, 5(6), 3894-3899 (2015). 10.1021/acscatal.5b00538"))))
 
 (ert-deftest test-9 ()
   (org-test-with-temp-text
@@ -97,7 +97,7 @@ bibliography:%s
     (locate-library "org-ref"))))
    (should
     (string= (org-ref-link-message)
-             "Kitchin, John R., Examples of effective data sharing in scientific publishing, ACS Catalysis, 5(6), 3894–3899 (2015). 10.1021/acscatal.5b00538"))))
+             "Kitchin, John R., Examples of Effective Data Sharing in Scientific Publishing, ACS Catalysis, 5(6), 3894-3899 (2015). 10.1021/acscatal.5b00538"))))
 
 (ert-deftest orlm-nil ()
   (org-test-with-temp-text
