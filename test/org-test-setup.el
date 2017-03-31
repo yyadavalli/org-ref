@@ -41,10 +41,10 @@
 
 (unless (and (boundp 'org-batch-test) org-batch-test)
   (let* ((org-test-dir (expand-file-name
-			(file-name-directory
-			 (or load-file-name buffer-file-name))))
-	 (org-lisp-dir (expand-file-name
-			(concat org-test-dir "../lisp"))))
+                        (file-name-directory
+                         (or load-file-name buffer-file-name))))
+         (org-lisp-dir (expand-file-name
+                        (concat org-test-dir "../lisp"))))
 
     (unless (featurep 'org)
       (setq load-path (cons org-lisp-dir load-path))
@@ -55,36 +55,36 @@
        'org-babel-load-languages '((sh . t) (org . t))))
 
     (let* ((load-path (cons
-		       org-test-dir
-		       (cons
-			(expand-file-name "jump" org-test-dir)
-			load-path))))
-      (require 'cl)
+                       org-test-dir
+                       (cons
+                        (expand-file-name "jump" org-test-dir)
+                        load-path))))
+      (require 'cl-lib)
       (when (= emacs-major-version 22)
-	(defvar special-mode-map
-	  (let ((map (make-sparse-keymap)))
-	    (suppress-keymap map)
-	    (define-key map "q" 'quit-window)
-	    (define-key map " " 'scroll-up)
-	    (define-key map "\C-?" 'scroll-down)
-	    (define-key map "?" 'describe-mode)
-	    (define-key map "h" 'describe-mode)
-	    (define-key map ">" 'end-of-buffer)
-	    (define-key map "<" 'beginning-of-buffer)
-	    (define-key map "g" 'revert-buffer)
-	    (define-key map "z" 'kill-this-buffer)
-	    map))
+        (defvar special-mode-map
+          (let ((map (make-sparse-keymap)))
+            (suppress-keymap map)
+            (define-key map "q" 'quit-window)
+            (define-key map " " 'scroll-up)
+            (define-key map "\C-?" 'scroll-down)
+            (define-key map "?" 'describe-mode)
+            (define-key map "h" 'describe-mode)
+            (define-key map ">" 'end-of-buffer)
+            (define-key map "<" 'beginning-of-buffer)
+            (define-key map "g" 'revert-buffer)
+            (define-key map "z" 'kill-this-buffer)
+            map))
 
-	(put 'special-mode 'mode-class 'special)
-	(define-derived-mode special-mode nil "Special"
-	  "Parent major mode from which special major modes should inherit."
-	  (setq buffer-read-only t)))
+        (put 'special-mode 'mode-class 'special)
+        (define-derived-mode special-mode nil "Special"
+          "Parent major mode from which special major modes should inherit."
+          (setq buffer-read-only t)))
       (require 'ert)
       (require 'ert-x)
       (when (file-exists-p
-	     (expand-file-name "jump/jump.el" org-test-dir))
-	(require 'jump)
-	(require 'which-func)))))
+             (expand-file-name "jump/jump.el" org-test-dir))
+        (require 'jump)
+        (require 'which-func)))))
 
 (defconst org-test-default-test-file-name "tests.el"
   "For each defun a separate file with tests may be defined.
@@ -127,9 +127,9 @@ This can be used at the top of code-block-language specific test
 files to avoid loading the file on systems without the
 executable."
   (unless (reduce
-	   (lambda (acc dir)
-	     (or acc (file-exists-p (expand-file-name exe dir))))
-	   exec-path :initial-value nil)
+           (lambda (acc dir)
+             (or acc (file-exists-p (expand-file-name exe dir))))
+           exec-path :initial-value nil)
     (signal 'missing-test-dependency (list exe))))
 
 (defun org-test-buffer (&optional file)
@@ -145,44 +145,44 @@ currently executed.")
   "Run body after placing the point in the headline identified by ID."
   (declare (indent 1))
   `(let* ((id-location (org-id-find ,id))
-	  (id-file (car id-location))
-	  (visited-p (get-file-buffer id-file))
-	  to-be-removed)
+          (id-file (car id-location))
+          (visited-p (get-file-buffer id-file))
+          to-be-removed)
      (unwind-protect
-	 (save-window-excursion
-	   (save-match-data
-	     (org-id-goto ,id)
-	     (setq to-be-removed (current-buffer))
-	     (condition-case nil
-		 (progn
-		   (org-show-subtree)
-		   (org-show-block-all))
-	       (error nil))
-	     (save-restriction ,@body)))
+         (save-window-excursion
+           (save-match-data
+             (org-id-goto ,id)
+             (setq to-be-removed (current-buffer))
+             (condition-case nil
+                 (progn
+                   (org-show-subtree)
+                   (org-show-block-all))
+               (error nil))
+             (save-restriction ,@body)))
        (unless (or visited-p (not to-be-removed))
-	 (kill-buffer to-be-removed)))))
+         (kill-buffer to-be-removed)))))
 (def-edebug-spec org-test-at-id (form body))
 
 (defmacro org-test-in-example-file (file &rest body)
   "Execute body in the Org-mode example file."
   (declare (indent 1))
   `(let* ((my-file (or ,file org-test-file))
-	  (visited-p (get-file-buffer my-file))
-	  to-be-removed)
+          (visited-p (get-file-buffer my-file))
+          to-be-removed)
      (save-window-excursion
        (save-match-data
-	 (find-file my-file)
-	 (unless (eq major-mode 'org-mode)
-	   (org-mode))
-	 (setq to-be-removed (current-buffer))
-	 (goto-char (point-min))
-	 (condition-case nil
-	     (progn
-	       (outline-next-visible-heading 1)
-	       (org-show-subtree)
-	       (org-show-block-all))
-	   (error nil))
-	 (save-restriction ,@body)))
+         (find-file my-file)
+         (unless (eq major-mode 'org-mode)
+           (org-mode))
+         (setq to-be-removed (current-buffer))
+         (goto-char (point-min))
+         (condition-case nil
+             (progn
+               (outline-next-visible-heading 1)
+               (org-show-subtree)
+               (org-show-block-all))
+           (error nil))
+         (save-restriction ,@body)))
      (unless visited-p
        (kill-buffer to-be-removed))))
 (def-edebug-spec org-test-in-example-file (form body))
@@ -194,9 +194,9 @@ generating unique markers for insertion as anchors into org
 files."
   (declare (indent 2))
   `(org-test-in-example-file ,file
-     (goto-char (point-min))
-     (re-search-forward (regexp-quote ,marker))
-     ,@body))
+                             (goto-char (point-min))
+                             (re-search-forward (regexp-quote ,marker))
+                             ,@body))
 (def-edebug-spec org-test-at-marker (form form body))
 
 (defmacro org-test-with-temp-text (text &rest body)
@@ -206,16 +206,16 @@ then remove it and place the point there before running BODY,
 otherwise place the point at the beginning of the inserted text."
   (declare (indent 1))
   `(let ((inside-text (if (stringp ,text) ,text (eval ,text)))
-	 (org-mode-hook nil))
+         (org-mode-hook nil))
      (with-temp-buffer
        (org-mode)
        (let ((point (string-match "<point>" inside-text)))
-	 (if point
-	     (progn
-	       (insert (replace-match "" nil nil inside-text))
-	       (goto-char (1+ (match-beginning 0))))
-	   (insert inside-text)
-	   (goto-char (point-min))))
+         (if point
+             (progn
+               (insert (replace-match "" nil nil inside-text))
+               (goto-char (1+ (match-beginning 0))))
+           (insert inside-text)
+           (goto-char (point-min))))
        ,@body)))
 (def-edebug-spec org-test-with-temp-text (form body))
 
@@ -224,9 +224,9 @@ otherwise place the point at the beginning of the inserted text."
   (declare (indent 1))
   (let ((results (gensym)))
     `(let ((file (make-temp-file "org-test"))
-	   (kill-buffer-query-functions nil)
-	   (inside-text (if (stringp ,text) ,text (eval ,text)))
-	   ,results)
+           (kill-buffer-query-functions nil)
+           (inside-text (if (stringp ,text) ,text (eval ,text)))
+           ,results)
        (with-temp-file file (insert inside-text))
        (find-file file)
        (org-mode)
@@ -237,7 +237,7 @@ otherwise place the point at the beginning of the inserted text."
 (def-edebug-spec org-test-with-temp-text-in-file (form body))
 
 (defun org-test-table-target-expect (target &optional expect laps
-&rest tblfm)
+                                            &rest tblfm)
   "For all TBLFM: Apply the formula to TARGET, compare EXPECT with result.
 Either LAPS and TBLFM are nil and the table will only be aligned
 or LAPS is the count of recalculations that should be made on
@@ -259,36 +259,36 @@ setting `pp-escape-newlines' to nil manually."
   (let ((back pp-escape-newlines) (current-tblfm))
     (unless tblfm
       (should-not laps)
-      (push "" tblfm))  ; Dummy formula.
+      (push "" tblfm))                  ; Dummy formula.
     (unless expect (setq expect target))
     (while (setq current-tblfm (pop tblfm))
       (org-test-with-temp-text (concat target current-tblfm)
-	;; Search the last of possibly several tables, let the ERT
-	;; test fail if not found.
-	(goto-char (point-max))
-	(while (not (org-at-table-p))
-	  (should (eq 0 (forward-line -1))))
-	(when laps
-	  (if (and (symbolp laps) (eq laps 'iterate))
-	      (should (org-table-recalculate 'iterate t))
-	    (should (integerp laps))
-	    (should (< 0 laps))
-	    (let ((cnt laps))
-	      (while (< 0 cnt)
-		(should (org-table-recalculate 'all t))
-		(setq cnt (1- cnt))))))
-	(org-table-align)
-	(setq pp-escape-newlines nil)
-	;; Declutter the ERT results buffer by giving only variables
-	;; and not directly the forms to `should'.
-	(let ((expect (concat expect current-tblfm))
-	      (result (buffer-substring-no-properties
-		       (point-min) (point-max))))
-	  (should (equal expect result)))
-	;; If `should' passed then set back `pp-escape-newlines' here,
-	;; else leave it nil as a side effect to see the failed table
-	;; on multiple lines in the ERT results buffer.
-	(setq pp-escape-newlines back)))))
+                               ;; Search the last of possibly several tables, let the ERT
+                               ;; test fail if not found.
+                               (goto-char (point-max))
+                               (while (not (org-at-table-p))
+                                 (should (eq 0 (forward-line -1))))
+                               (when laps
+                                 (if (and (symbolp laps) (eq laps 'iterate))
+                                     (should (org-table-recalculate 'iterate t))
+                                   (should (integerp laps))
+                                   (should (< 0 laps))
+                                   (let ((cnt laps))
+                                     (while (< 0 cnt)
+                                       (should (org-table-recalculate 'all t))
+                                       (setq cnt (1- cnt))))))
+                               (org-table-align)
+                               (setq pp-escape-newlines nil)
+                               ;; Declutter the ERT results buffer by giving only variables
+                               ;; and not directly the forms to `should'.
+                               (let ((expect (concat expect current-tblfm))
+                                     (result (buffer-substring-no-properties
+                                              (point-min) (point-max))))
+                                 (should (equal expect result)))
+                               ;; If `should' passed then set back `pp-escape-newlines' here,
+                               ;; else leave it nil as a side effect to see the failed table
+                               ;; on multiple lines in the ERT results buffer.
+                               (setq pp-escape-newlines back)))))
 
 
 ;;; Navigation Functions
@@ -302,34 +302,34 @@ setting `pp-escape-newlines' to nil manually."
     "Jump between org-mode files and their tests."
     (lambda (path)
       (let* ((full-path (expand-file-name path org-base-dir))
-	     (file-name (file-name-nondirectory path))
-	     (name (file-name-sans-extension file-name)))
-	(find-file full-path)
-	(insert
-	 ";;; " file-name "\n\n"
-	 ";; Copyright (c) " (nth 5 (decode-time (current-time)))
-	 " " user-full-name "\n"
-	 ";; Authors: " user-full-name "\n\n"
-	 ";; Released under the GNU General Public License version 3\n"
-	 ";; see: http://www.gnu.org/licenses/gpl-3.0.html\n\n"
-	 ";;;; Comments:\n\n"
-	 ";; Template test file for Org-mode tests\n\n"
-	 "\n"
-	 ";;; Code:\n"
-	 "(let ((load-path (cons (expand-file-name\n"
-	 "			\"..\" (file-name-directory\n"
-	 "			      (or load-file-name buffer-file-name)))\n"
-	 "		       load-path)))\n"
-	 "  (require 'org-test)\n\n"
-	 "\n"
-	 ";;; Tests\n"
-	 "(ert-deftest " name "/example-test ()\n"
-	 "  \"Just an example to get you started.\"\n"
-	 "  (should t)\n"
-	 "  (should-not nil)\n"
-	 "  (should-error (error \"errr...\")))\n\n\n"
-	 "(provide '" name ")\n\n"
-	 ";;; " file-name " ends here\n") full-path))
+             (file-name (file-name-nondirectory path))
+             (name (file-name-sans-extension file-name)))
+        (find-file full-path)
+        (insert
+         ";;; " file-name "\n\n"
+         ";; Copyright (c) " (nth 5 (decode-time (current-time)))
+         " " user-full-name "\n"
+         ";; Authors: " user-full-name "\n\n"
+         ";; Released under the GNU General Public License version 3\n"
+         ";; see: http://www.gnu.org/licenses/gpl-3.0.html\n\n"
+         ";;;; Comments:\n\n"
+         ";; Template test file for Org-mode tests\n\n"
+         "\n"
+         ";;; Code:\n"
+         "(let ((load-path (cons (expand-file-name\n"
+         "			\"..\" (file-name-directory\n"
+         "			      (or load-file-name buffer-file-name)))\n"
+         "		       load-path)))\n"
+         "  (require 'org-test)\n\n"
+         "\n"
+         ";;; Tests\n"
+         "(ert-deftest " name "/example-test ()\n"
+         "  \"Just an example to get you started.\"\n"
+         "  (should t)\n"
+         "  (should-not nil)\n"
+         "  (should-error (error \"errr...\")))\n\n\n"
+         "(provide '" name ")\n\n"
+         ";;; " file-name " ends here\n") full-path))
     (lambda () ((lambda (res) (if (listp res) (car res) res)) (which-function)))))
 
 (define-key emacs-lisp-mode-map "\M-\C-j" 'org-test-jump)
@@ -348,7 +348,7 @@ setting `pp-escape-newlines' to nil manually."
   (let ((case-fold-search nil)
         (case-replace nil))
     (if(and (equal regex "")
-	    (not(equal string "")))
+            (not(equal string "")))
         nil
       (if (equal 0 (string-match regex string start))
           t
@@ -359,27 +359,27 @@ setting `pp-escape-newlines' to nil manually."
   "Load up the org-mode test suite."
   (interactive)
   (cl-flet ((rld (base)
-		;; Recursively load all files, if files throw errors
-		;; then silently ignore the error and continue to the
-		;; next file.  This allows files to error out if
-		;; required executables aren't available.
-		(mapc
-		 (lambda (path)
-		   (if (file-directory-p path)
-		       (rld path)
-		     (condition-case err
-			 (when (string-match "^[A-Za-z].*\\.el$"
-					     (file-name-nondirectory path))
-			   (load-file path))
-		       (missing-test-dependency
-			(let ((name (intern
-				     (concat "org-missing-dependency/"
-					     (file-name-nondirectory
-					      (file-name-sans-extension path))))))
-			  (eval `(ert-deftest ,name ()
-				   :expected-result :failed (should nil))))))))
-		 (directory-files base 'full
-				  "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.el$"))))
+                 ;; Recursively load all files, if files throw errors
+                 ;; then silently ignore the error and continue to the
+                 ;; next file.  This allows files to error out if
+                 ;; required executables aren't available.
+                 (mapc
+                  (lambda (path)
+                    (if (file-directory-p path)
+                        (rld path)
+                      (condition-case err
+                          (when (string-match "^[A-Za-z].*\\.el$"
+                                              (file-name-nondirectory path))
+                            (load-file path))
+                        (missing-test-dependency
+                         (let ((name (intern
+                                      (concat "org-missing-dependency/"
+                                              (file-name-nondirectory
+                                               (file-name-sans-extension path))))))
+                           (eval `(ert-deftest ,name ()
+                                    :expected-result :failed (should nil))))))))
+                  (directory-files base 'full
+                                   "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.el$"))))
 	  (rld (expand-file-name "lisp" org-test-dir))))
 
 (defun org-test-current-defun ()
@@ -391,17 +391,17 @@ setting `pp-escape-newlines' to nil manually."
   "Run all tests for current file."
   (interactive)
   (ert (concat "test-"
-	       (file-name-sans-extension
-		(file-name-nondirectory (buffer-file-name)))
-	       "/")))
+               (file-name-sans-extension
+                (file-name-nondirectory (buffer-file-name)))
+               "/")))
 
 (defvar org-test-buffers nil
   "Hold buffers open for running Org-mode tests.")
 
 (defun org-test-touch-all-examples ()
   (dolist (file (directory-files
-		 org-test-example-dir 'full
-		 "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.org$"))
+                 org-test-example-dir 'full
+                 "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.org$"))
     (unless (get-file-buffer file)
       (add-to-list 'org-test-buffers (find-file file)))))
 
@@ -421,9 +421,9 @@ setting `pp-escape-newlines' to nil manually."
 Load all test files first."
   (interactive)
   (let ((org-id-track-globally t)
-	(org-test-selector
-	 (if org-test-selector org-test-selector "\\(org\\|ob\\)"))
-	org-confirm-babel-evaluate org-startup-folded vc-handled-backends)
+        (org-test-selector
+         (if org-test-selector org-test-selector "\\(org\\|ob\\)"))
+        org-confirm-babel-evaluate org-startup-folded vc-handled-backends)
     (org-test-touch-all-examples)
     (org-test-update-id-locations)
     (org-test-load)

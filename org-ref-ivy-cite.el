@@ -79,11 +79,15 @@ of ENTRY.  ENTRY is selected from `org-ref-bibtex-candidates'."
         (cl-loop for entry in org-ref-ivy-cite-marked-candidates
                  do
                  (if ivy-current-prefix-arg
-                     (let ((org-ref-default-citation-link (ivy-read "Type: " org-ref-cite-types)))
-                       (org-ref-insert-key-at-point (list (cdr (assoc "=key=" entry)))))
-                   (org-ref-insert-key-at-point (list (cdr (assoc "=key=" entry))))))
+                     (let ((org-ref-default-citation-link
+                            (ivy-read "Type: " org-ref-cite-types)))
+                       (org-ref-insert-key-at-point
+                        (list (cdr (assoc "=key=" entry)))))
+                   (org-ref-insert-key-at-point
+                    (list (cdr (assoc "=key=" entry))))))
       (if ivy-current-prefix-arg
-          (let ((org-ref-default-citation-link (ivy-read "Type: " org-ref-cite-types)))
+          (let ((org-ref-default-citation-link
+                 (ivy-read "Type: " org-ref-cite-types)))
             (org-ref-insert-key-at-point (list (cdr (assoc "=key=" entry)))))
         (org-ref-insert-key-at-point (list (cdr (assoc "=key=" entry))))))))
 
@@ -459,11 +463,13 @@ a bibtex entry that matches the key in `org-ref-bibtex-candidates'. Set
             collect (cons (format "%2s. %s" i s) func))
    :action (lambda (f)
              (let* ((key (car (org-ref-get-bibtex-key-and-file)))
-                    (entry (cdr (elt (org-ref-bibtex-candidates)
-                                     (-elem-index
-                                      key
-                                      (cl-loop for entry in (orhc-bibtex-candidates)
-                                               collect (cdr (assoc "=key=" entry ))))))))
+                    (entry
+                     (cdr (elt (org-ref-bibtex-candidates)
+                               (-elem-index
+                                key
+                                (cl-loop for entry in (org-ref-bibtex-candidates)
+                                         collect (cdr
+                                                  (assoc "=key=" entry ))))))))
                (funcall f entry)))))
 
 

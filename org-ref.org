@@ -924,7 +924,6 @@ This is a functional link that will open a buffer of clickable index entries:
 printindex:nil
 
 * References
-<<bibliography link>>
 
 bibliographystyle:unsrt
 bibliography:org-ref.bib

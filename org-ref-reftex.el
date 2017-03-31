@@ -231,10 +231,7 @@ get a lot of options.  LINK-STRING is used by the link function."
            (choice (assoc (char-to-string input) org-ref-cite-menu-funcs)))
       ;; now run the function (2nd element in choice)
       (when choice
-        (funcall
-         (elt
-          choice
-          2))))))
+        (funcall (elt choice 2))))))
 
 
 (provide 'org-ref-reftex)

@@ -35,10 +35,8 @@
 (defvar org-ref-pdf-directory)
 
 (require 'bibtex)
+(require 'cl-lib)
 (require 'f)
-(require 'pdf-tools)
-(eval-when-compile
-  (require 'cl-lib))
 
 (declare-function org-ref-bibtex-key-from-doi "org-ref-bibtex.el")
 
@@ -162,7 +160,7 @@ This function should only apply when in a bibtex file."
            (t
             (ivy-read "Select a DOI"
                       (org-ref-pdf-doi-candidates dois)
-                      :action 'org-ref-pdf-add-dois)
+                      :action 'org-ref-pdf-add-doi)
             action)))
          ;; drag a bib file on and add contents to the end of the file.
          ((f-ext? path "bib")
@@ -206,7 +204,7 @@ This function should only apply when in a bibtex file."
                (insert (format "%% Multiple dois found in %s\n" pdf))
                (ivy-read "Select a DOI"
                          (org-ref-pdf-doi-candidates dois)
-                         :action 'org-ref-pdf-add-dois))))))
+                         :action 'org-ref-pdf-add-doi))))))
 
 
 ;;;###autoload

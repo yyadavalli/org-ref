@@ -855,7 +855,7 @@ This function is copied from `ivy-bibtex'."
           (insert (s-format "#+TITLE: Notes on: ${author} (${year}): ${title}"
                             'reftex-get-bib-field
                             (bibtex-search-entry key)))))
-                                        ; One file for all notes:
+    ;; One file for all notes:
     (unless (and buffer-file-name
                  (f-same? org-ref-bibliography-notes buffer-file-name))
       (find-file-other-window org-ref-bibliography-notes))
