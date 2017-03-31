@@ -73,8 +73,6 @@
 (require 'cl-lib)
 (require 'org-ref-core)
 
-(declare-function helm-build-sync-source "helm-source")
-
 ;;; Code:
 (defgroup org-ref-glossary nil
   "Customization group for org-ref-glossary."
@@ -90,6 +88,35 @@
   "Color for acronym links."
   :type 'string
   :group 'org-ref)
+
+;;** Tooltips on glossary entries
+(defface org-ref-glossary-face
+  `((t (:inherit org-link :foreground ,org-ref-glossary-color)))
+  "Face for glossary links.")
+
+;;** Tooltips on acronyms
+(defface org-ref-acronym-face
+  `((t (:inherit org-link :foreground ,org-ref-acronym-color)))
+  "Face for acronym links.")
+
+(defconst org-ref-acronym-links
+  '("acrshort"
+    "acrlong"
+    "acrfull"
+    "ac"
+    "Ac"
+    "acp"
+    "Acp")
+  "Acronym link types")
+
+(defconst org-ref-glossary-links
+  '("gls"
+    "glspl"
+    "Gls"
+    "Glspl"
+    "glssymbol"
+    "glsdesc")
+  "Glossary link types")
 
 
 (defun org-ref-find-closing-curly-bracket (&optional limit)
@@ -125,8 +152,8 @@ but there could be other :key value pairs."
           key value p1 p2)
       (goto-char (point-min))
       ;; We may not find an entry if it is defined as an acronym
-      (when  (re-search-forward
-              (format "\\newglossaryentry{%s}" entry) nil t)
+      (when (re-search-forward
+             (format "\\newglossaryentry{%s}" entry) nil t)
         (re-search-forward "{")
         (save-excursion
           (backward-char)
@@ -216,11 +243,6 @@ Entry gets added after the last #+latex_header line."
              (format "%s" path)))))
 
 
-;;** Tooltips on glossary entries
-(defface org-ref-glossary-face
-  `((t (:inherit org-link :foreground ,org-ref-glossary-color)))
-  "Face for glossary links.")
-
 
 (defun org-ref-glossary-tooltip (_window _object position)
   "Return tooltip for the glossary entry.
@@ -244,37 +266,36 @@ Used in fontification."
          (buffer-string))))))
 
 
-(unless (fboundp 'org-link-set-parameters)
-  (defun org-ref-next-glossary-link (limit)
-    "Search to next glossary link up to LIMIT.
+(defun org-ref-next-glossary-link (limit)
+  "Search to next glossary link up to LIMIT.
 Adds a tooltip to the link that is found."
-    (when (and (re-search-forward
-                (concat
-                 (regexp-opt '("gls" "glspl"
-                               "Gls" "Glspl"
-                               "glslink"
-                               "glssymbol"
-                               "glsdesc"))
-                 ":[a-zA-Z]\\{2,\\}")
-                limit t)
-               (not (org-in-src-block-p))
-               (not (org-at-comment-p)))
-      (forward-char -2)
-      (let ((next-link (org-element-context)))
-        (if next-link
-            (progn
-              (set-match-data (list (org-element-property :begin next-link)
-                                    (- (org-element-property :end next-link)
-                                       (org-element-property :post-blank next-link))))
-              (add-text-properties
-               (org-element-property :begin next-link)
-               (- (org-element-property :end next-link)
-                  (org-element-property :post-blank next-link))
-               (list
-                'help-echo 'org-ref-glossary-tooltip))
-              (goto-char (org-element-property :end next-link)))
-          (goto-char limit)
-          nil)))))
+  (when (and (re-search-forward
+              (concat
+               (regexp-opt '("gls" "glspl"
+                             "Gls" "Glspl"
+                             "glslink"
+                             "glssymbol"
+                             "glsdesc"))
+               ":[a-zA-Z]\\{2,\\}")
+              limit t)
+             (not (org-in-src-block-p))
+             (not (org-at-comment-p)))
+    (forward-char -2)
+    (let ((next-link (org-element-context)))
+      (if next-link
+          (progn
+            (set-match-data (list (org-element-property :begin next-link)
+                                  (- (org-element-property :end next-link)
+                                     (org-element-property :post-blank next-link))))
+            (add-text-properties
+             (org-element-property :begin next-link)
+             (- (org-element-property :end next-link)
+                (org-element-property :post-blank next-link))
+             (list
+              'help-echo 'org-ref-glossary-tooltip))
+            (goto-char (org-element-property :end next-link)))
+        (goto-char limit)
+        nil))))
 
 
 ;;* Acronyms
@@ -291,7 +312,6 @@ FULL is the expanded acronym."
       (beginning-of-line)
       (insert "\n")
       (forward-line -1))
-
     (insert (format "#+latex_header_extra: \\newacronym{%s}{%s}{%s}\n"
                     label abbrv full))))
 
@@ -372,40 +392,47 @@ WINDOW and OBJECT are ignored."
 
 ;; We use search instead of a regexp to match links with descriptions. These are
 ;; hard to do with regexps.
-(unless (fboundp 'org-link-set-parameters)
-  (defun org-ref-next-acronym-link (limit)
-    "Search to next acronym link up to LIMIT and add a tooltip."
-    (when (and (re-search-forward
-                (concat
-                 (regexp-opt '("acrshort" "acrfull" "acrlong" "ac" "Ac" "acp" "Acp"))
-                 ":[a-zA-Z]\\{2,\\}")
-                limit t)
-               (not (org-in-src-block-p))
-               (not (org-at-comment-p)))
-      (save-excursion
-        (forward-char -2)
-        (let ((next-link (org-element-context)))
-          (if next-link
-              (progn
-                (set-match-data
-                 (list (org-element-property :begin next-link)
-                       (- (org-element-property :end next-link)
-                          (org-element-property :post-blank next-link))))
-                (add-text-properties
-                 (org-element-property :begin next-link)
-                 (- (org-element-property :end next-link)
-                    (org-element-property :post-blank next-link))
-                 (list
-                  'help-echo 'org-ref-acronym-tooltip))
-                (goto-char (org-element-property :end next-link)))
-            (goto-char limit)
-            nil))))))
+(defun org-ref-next-acronym-link (limit)
+  "Search to next acronym link up to LIMIT and add a tooltip."
+  (when (and (re-search-forward
+              (concat
+               (regexp-opt '("acrshort" "acrfull" "acrlong" "ac" "Ac" "acp" "Acp"))
+               ":[a-zA-Z]\\{2,\\}")
+              limit t)
+             (not (org-in-src-block-p))
+             (not (org-at-comment-p)))
+    (save-excursion
+      (forward-char -2)
+      (let ((next-link (org-element-context)))
+        (if next-link
+            (progn
+              (set-match-data
+               (list (org-element-property :begin next-link)
+                     (- (org-element-property :end next-link)
+                        (org-element-property :post-blank next-link))))
+              (add-text-properties
+               (org-element-property :begin next-link)
+               (- (org-element-property :end next-link)
+                  (org-element-property :post-blank next-link))
+               (list
+                'help-echo 'org-ref-acronym-tooltip))
+              (goto-char (org-element-property :end next-link)))
+          (goto-char limit)
+          nil)))))
 
 
-;; * Ivy command to insert entries
+;;;###autoload
+(defun org-ref-add-glossary-or-acronym-entries ()
+  (interactive)
+  (ivy-read "Add new entry: "
+            '(("Acronym" . org-ref-add-acronym-entry)
+              ("Glossary" . org-ref-add-glossary-entry))
+            :action (lambda (x) (call-interactively (cdr x)))))
+
+
 ;;;###autoload
 (defun org-ref-insert-glossary-link ()
-  "Command to insert glossary and acronym entries as links using ivy for completion."
+  "Command to insert glossary entries as links using ivy for completion."
   (interactive)
   ;; gather entries
   (let ((glossary-candidates '())
@@ -427,84 +454,50 @@ WINDOW and OBJECT are ignored."
                          (plist-get entry :description))
                  ;; the returned candidate
                  (list key
-                       (plist-get entry :name))))))))
-    (ivy-read "Insert glossary term: "
-              glossary-candidates
-              :action (lambda (candidate)
-                        (insert (format
-                                 "[[%s:%s][%s]]"
-                                 (completing-read "Type: "
-                                                  org-ref-glossary-links
-                                                  nil t
-                                                  "gls")
-                                 (nth 1 candidate)
-                                 (nth 0 candidate))))))
+                       (plist-get entry :name)))))))
+      (ivy-read "Insert glossary term: "
+                glossary-candidates
+                :action (lambda (candidate)
+                          (insert (format
+                                   "[[%s:%s][%s]]"
+                                   (completing-read "Type: "
+                                                    org-ref-glossary-links
+                                                    nil t
+                                                    "gls")
+                                   (nth 1 candidate)
+                                   (nth 0 candidate))))))))
 
 
 ;;;###autoload
-  (defun org-ref-insert-acronym-link ()
-    "Command to insert glossary entries as links using ivy for completion."
-    (interactive)
-    (let ((acronym-candidates '())
-          key
-          entry)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward
-                "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
-          (setq key (match-string 1)
-                entry (org-ref-parse-acronym-entry key))
-          (setq acronym-candidates
-                (append
-                 acronym-candidates
-                 (list
-                  (cons
-                   (format "%s (%s)."
-                           (plist-get entry :full)
-                           (plist-get entry :abbrv))
-                   ;; the returned candidate
-                   (list key
-                         (plist-get entry :abbrv))))))))
-
-      (helm :sources
-            `(,(helm-build-sync-source "Insert glossary term"
-                                       :candidates glossary-candidates
-                                       :action (lambda (candidate)
-                                                 (insert (format
-                                                          "[[%s:%s][%s]]"
-                                                          (completing-read "Type: "
-                                                                           '("gls"
-                                                                             "glspl"
-                                                                             "Gls"
-                                                                             "Glspl"
-                                                                             "glssymbol"
-                                                                             "glsdesc")
-                                                                           nil t
-                                                                           "gls")
-                                                          (nth 0 candidate)
-                                                          (nth 1 candidate)))))
-              ,(helm-build-sync-source "Insert acronym term"
-                                       :candidates acronym-candidates
-                                       :action (lambda (candidate)
-                                                 (insert (format
-                                                          "[[%s:%s][%s]]"
-                                                          (completing-read "Type: "
-                                                                           '("acrshort"
-                                                                             "acrlong"
-                                                                             "acrfull"
-                                                                             "ac"
-                                                                             "Ac"
-                                                                             "acp"
-                                                                             "Acp")
-                                                                           nil t
-                                                                           "ac")
-                                                          (nth 0 candidate)
-                                                          (nth 1 candidate)))))
-              ,(helm-build-sync-source "Add new term"
-                                       :candidates '(("Add glossary term" . org-ref-add-glossary-entry)
-                                                     ("Add acronym term" . org-ref-add-acronym-entry))
-                                       :action (lambda (x)
-                                                 (call-interactively x))))))))
+(defun org-ref-insert-acronym-link ()
+  "Command to insert glossary entries as links using ivy for completion."
+  (interactive)
+  (let ((acronym-candidates '())
+        key
+        entry)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
+        (setq key (match-string 1)
+              entry (org-ref-parse-acronym-entry key))
+        (setq acronym-candidates
+              (append
+               acronym-candidates
+               (list (cons (format "%s (%s)."
+                                   (plist-get entry :full)
+                                   (plist-get entry :abbrv))
+                           ;; the returned candidate
+                           (list key (plist-get entry :abbrv))))))))
+    (ivy-read "Insert acronym term"
+              acronym-candidates
+              :action (lambda (candidate)
+                        (insert (format "[[%s:%s][%s]]"
+                                        (completing-read "Type: "
+                                                         org-ref-acronym-links
+                                                         nil t
+                                                         "ac")
+                                        (nth 0 candidate)
+                                        (nth 1 candidate)))))))
 
 
 (provide 'org-ref-glossary)

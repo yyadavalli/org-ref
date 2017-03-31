@@ -9,8 +9,7 @@
 (package-initialize)
 (package-refresh-contents)
 
-(dolist (package (list 'org-plus-contrib 'dash 'helm 'helm-bibtex
-		       'ivy 'hydra 'key-chord 's 'f 'lispy 'pdf-tools))
+(dolist (package (list 'org-plus-contrib 'dash 'ivy 'hydra 's 'f))
   (unless (package-installed-p package)
     (message "installing %s" package)
     (package-install package)))

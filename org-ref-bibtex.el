@@ -73,13 +73,11 @@
 (declare-function org-ref-open-in-browser "org-ref-core")
 (declare-function org-ref-sort-bibtex-entry "org-ref-core")
 (declare-function org-ref-build-full-bibliography "org-ref-core")
-(declare-function helm-tag-bibtex-entry "org-ref-helm")
 (declare-function bibtex-completion-edit-notes "bibtex-completion")
 (declare-function bibtex-completion-get-value "bibtex-completion")
 (declare-function bibtex-completion-get-entry "bibtex-completion")
 (declare-function parsebib-find-next-item "parsebib")
 (declare-function parsebib-read-entry "parsebib")
-(declare-function helm-bibtex "helm-bibtex")
 
 ;; This is duplicated from org-ref-core to try to avoid a byte-compile error.
 (add-to-list 'load-path
@@ -1166,7 +1164,6 @@ easier to search specifically for them."
     (cond
      ((string= field "author")
       (if org-ref-ivy-cite-shorten-authors
-          ;; copied from `helm-bibtex-shorten-authors'
           (cl-loop for a in (s-split " and " s)
                    for p = (s-split "," a t)
                    for sep = "" then ", "
@@ -1250,7 +1247,6 @@ when called, it resets the cache for the BIBFILE."
                  ;; file and position.
                  (append entry (list (cons "bibfile" (buffer-file-name))
                                      (cons "position" (point)))))))))
-
         ;; Now update the cache variables for hash and entries
         (if (assoc bibfile (cdr (assoc 'candidates org-ref-bibtex-cache-data)))
             (setf (cdr (assoc bibfile

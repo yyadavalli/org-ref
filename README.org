@@ -86,7 +86,6 @@ You may want to set some convenient keys for working in your bibtex file. These
 commands operate on the citation key at point.
 
 There are alternative citation key completion methods.
-- org-ref-helm-cite :: An alternative to helm-bibtex
 - org-ref-ivy-cite :: Uses ivy for key completion
 - org-ref-reftex :: Uses reftex and org-mode for completion (no longer developed)
 

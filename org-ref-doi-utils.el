@@ -1301,17 +1301,16 @@ Argument LINK-STRING Passed in on link click."
 
 ;; According to http://search.crossref.org/help/api we can send a query with a
 ;; free form citation that may give us something back. We do this to get a list
-;; of candidates, and run a helm command to get the doi.
+;; of candidates, and run a ivy command to get the doi.
 
 
 ;;;###autoload
 (defun org-ref-doi-utils-crossref-citation-query ()
   "Query Crossref with the title of the bibtex entry at point.
-Get a list of possible matches.  This opens a helm buffer to
-select an entry.  The default action inserts a doi and url field
-in the bibtex entry at point.  The second action opens the doi
-url.  If there is already a doi field, the function raises an
-error."
+Get a list of possible matches. This opens ivy to select an entry.
+The default action inserts a doi and url field in the bibtex
+entry at point. The second action opens the doi url. If there is
+already a doi field, the function raises an error."
   (interactive)
   (bibtex-beginning-of-entry)
   (let* ((entry (bibtex-parse-entry))
