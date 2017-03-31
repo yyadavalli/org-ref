@@ -35,7 +35,6 @@
 (require 'ivy)
 (require 'org-ref-bibtex)
 (require 'org-ref-citeproc)
-(require 'bibtex-completion)
 
 (defvar org-ref-ivy-cite-marked-candidates '()
   "Holds entries marked in `org-ref-ivy-insert-cite-link'.")

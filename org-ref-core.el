@@ -2224,9 +2224,7 @@ PATH is required for the org-link, but it does nothing here."
 ;;* Utilities
 ;;** create text citations from a bibtex entry
 (defun org-ref-bib-citation ()
-  "From a bibtex entry, create and return a citation string.
-If `bibtex-completion' library is loaded, return reference in APA
-format. Otherwise return a citation string from `org-ref-get-bibtex-entry-citation'."
+  "From a bibtex entry, create and return a citation string."
   (org-ref-format-entry (org-ref-get-bibtex-key-under-cursor)))
 
 

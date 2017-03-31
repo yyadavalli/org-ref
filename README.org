@@ -82,23 +82,8 @@ You should set these variables. Here is an example of how mine are set in an ini
       org-ref-pdf-directory "~/Dropbox/bibliography/bibtex-pdfs/")
 #+END_SRC
 
-You may want to set some convenient keys for working in your bibtex file. These commands operate on the citation key at point.
-
-If you use helm-bibtex as the citation key completion method you should set these variables too.
-
-#+BEGIN_SRC emacs-lisp
-(setq bibtex-completion-bibliography "~/Dropbox/bibliography/references.bib"
-      bibtex-completion-library-path "~/Dropbox/bibliography/bibtex-pdfs"
-      bibtex-completion-notes-path "~/Dropbox/bibliography/helm-bibtex-notes")
-
-;; open pdf with system pdf viewer (works on mac)
-(setq bibtex-completion-pdf-open-function
-  (lambda (fpath)
-    (start-process "open" "*open*" "open" fpath)))
-
-;; alternative
-;; (setq bibtex-completion-pdf-open-function 'org-open-file)
-#+END_SRC
+You may want to set some convenient keys for working in your bibtex file. These
+commands operate on the citation key at point.
 
 There are alternative citation key completion methods.
 - org-ref-helm-cite :: An alternative to helm-bibtex
