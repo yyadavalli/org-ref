@@ -32,14 +32,14 @@
 
 (defvar org-ref-latex-cite-re
   (concat "\\\\\\(" (mapconcat
-		     (lambda (x)
-		       (replace-regexp-in-string "\*" "\\\\*" x))
-		     org-ref-cite-types
-		     "\\|")
-	  "\\)"
-	  "\\(\\[[^}]*\\)?"		; optional []
-	  "\\(\\[[^}]*\\)?"		; optional []
-	  "{\\([^}]*\\)}")
+                     (lambda (x)
+                       (replace-regexp-in-string "\*" "\\\\*" x))
+                     org-ref-cite-types
+                     "\\|")
+          "\\)"
+          "\\(\\[[^}]*\\)?"             ; optional []
+          "\\(\\[[^}]*\\)?"             ; optional []
+          "{\\([^}]*\\)}")
   "Regexp for LaTeX citations. \citetype[optional]{some,keys}.
 The clickable part are the keys.")
 
@@ -51,7 +51,6 @@ The clickable part are the keys.")
     (save-excursion
       (re-search-backward ",\\|{")
       (setq start (+ 1 (point))))
-
     ;; look forward to , or }
     (save-excursion
       (re-search-forward ",\\|}")
@@ -64,17 +63,17 @@ The clickable part are the keys.")
   "Debug org-ref-latex."
   (interactive)
   (message-box "%S\n%S\n%S\n%S"
-	       (org-ref-latex-get-key)
-	       (org-ref-find-bibliography)
-	       (org-ref-get-bibtex-key-and-file (org-ref-latex-get-key))
-	       (ignore-errors
-		 (org-ref-latex-help-echo nil nil (point)))))
+               (org-ref-latex-get-key)
+               (org-ref-find-bibliography)
+               (org-ref-get-bibtex-key-and-file (org-ref-latex-get-key))
+               (ignore-errors
+                 (org-ref-latex-help-echo nil nil (point)))))
 
 
 (defun org-ref-latex-jump-to-bibtex (&optional key)
   "Jump to the KEY at point."
   (let ((results (org-ref-get-bibtex-key-and-file
-		  (or key (org-ref-latex-get-key)))))
+                  (or key (org-ref-latex-get-key)))))
     (find-file (cdr results))
     (bibtex-search-entry (car results))))
 
@@ -96,41 +95,40 @@ The clickable part are the keys.")
   (save-excursion
     (goto-char position)
     (let* ((key (org-ref-latex-get-key))
-	   (results (org-ref-get-bibtex-key-and-file key))
-	   (bibfile (cdr results))
-	   citation
-	   tooltip)
-      (setq citation
-	    (if bibfile
-		(save-excursion
-		  (with-temp-buffer
-		    (insert-file-contents bibfile)
-		    (bibtex-set-dialect
-		     (parsebib-find-bibtex-dialect) t)
-		    (bibtex-search-entry key)
-		    (org-ref-bib-citation)))
-	      "!!! No entry found !!!"))
-      (setq tooltip
-	    (with-temp-buffer
-	      (insert citation)
-	      (fill-paragraph)
-	      (buffer-string)))
+           (results (org-ref-get-bibtex-key-and-file key))
+           (bibfile (cdr results))
+           citation
+           tooltip)
+      (setq citation (if bibfile
+                         (save-excursion
+                           (with-temp-buffer
+                             (insert-file-contents bibfile)
+                             (bibtex-set-dialect
+                              (parsebib-find-bibtex-dialect) t)
+                             (bibtex-search-entry key)
+                             (org-ref-bib-citation)))
+                       "!!! No entry found !!!"))
+      (setq tooltip (with-temp-buffer
+                      (insert citation)
+                      (fill-paragraph)
+                      (buffer-string)))
       tooltip)))
 
 
 (defun org-ref-next-latex-cite (&optional limit)
   "Font-lock function to make citations in LaTeX documents clickable."
   (when (re-search-forward org-ref-latex-cite-re limit t)
-    (setq font-lock-extra-managed-props (delq 'help-echo font-lock-extra-managed-props))
+    (setq font-lock-extra-managed-props (delq 'help-echo
+                                              font-lock-extra-managed-props))
     (add-text-properties
      (match-beginning 3)
      (match-end 3)
      `(mouse-face
        highlight
        local-map ,(let ((map (copy-keymap latex-mode-map)))
-		    (define-key map [mouse-1]
-		      'org-ref-latex-click)
-		    map)
+                    (define-key map [mouse-1]
+                      'org-ref-latex-click)
+                    map)
        help-echo org-ref-latex-help-echo))))
 
 
@@ -141,7 +139,7 @@ The clickable part are the keys.")
    '((org-ref-next-latex-cite 3 font-lock-constant-face))))
 
 (add-hook 'latex-mode-hook 'org-ref-latex-cite-on)
-(add-hook 'LaTeX-mode-hook 'org-ref-latex-cite-on)
 
 (provide 'org-ref-latex)
+
 ;;; org-ref-latex.el ends here

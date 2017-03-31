@@ -405,11 +405,10 @@ WINDOW and OBJECT are ignored."
 ;; * Ivy command to insert entries
 ;;;###autoload
 (defun org-ref-insert-glossary-link ()
-  "Helm command to insert glossary and acronym entries as links."
+  "Command to insert glossary and acronym entries as links using ivy for completion."
   (interactive)
   ;; gather entries
   (let ((glossary-candidates '())
-        (acronym-candidates '())
         key
         entry)
     (save-excursion
@@ -429,65 +428,83 @@ WINDOW and OBJECT are ignored."
                  ;; the returned candidate
                  (list key
                        (plist-get entry :name))))))))
+    (ivy-read "Insert glossary term: "
+              glossary-candidates
+              :action (lambda (candidate)
+                        (insert (format
+                                 "[[%s:%s][%s]]"
+                                 (completing-read "Type: "
+                                                  org-ref-glossary-links
+                                                  nil t
+                                                  "gls")
+                                 (nth 1 candidate)
+                                 (nth 0 candidate))))))
 
-    ;; acronym candidates
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward
-              "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
-        (setq key (match-string 1)
-              entry (org-ref-parse-acronym-entry key))
-        (setq acronym-candidates
-              (append
-               acronym-candidates
-               (list
-                (cons
-                 (format "%s (%s)."
-                         (plist-get entry :full)
-                         (plist-get entry :abbrv))
-                 ;; the returned candidate
-                 (list key
-                       (plist-get entry :abbrv))))))))
 
-    (helm :sources
-	  `(,(helm-build-sync-source "Insert glossary term"
-	       :candidates glossary-candidates
-	       :action (lambda (candidate)
-			 (insert (format
-				  "[[%s:%s][%s]]"
-				  (completing-read "Type: "
-						   '("gls"
-						     "glspl"
-						     "Gls"
-						     "Glspl"
-						     "glssymbol"
-						     "glsdesc")
-						   nil t
-						   "gls")
-				  (nth 0 candidate)
-				  (nth 1 candidate)))))
-	    ,(helm-build-sync-source "Insert acronym term"
-	       :candidates acronym-candidates
-	       :action (lambda (candidate)
-			 (insert (format
-				  "[[%s:%s][%s]]"
-				  (completing-read "Type: "
-						   '("acrshort"
-						     "acrlong"
-						     "acrfull"
-						     "ac"
-						     "Ac"
-						     "acp"
-						     "Acp")
-						   nil t
-						   "ac")
-				  (nth 0 candidate)
-				  (nth 1 candidate)))))
-	    ,(helm-build-sync-source "Add new term"
-	       :candidates '(("Add glossary term" . org-ref-add-glossary-entry)
-			     ("Add acronym term" . org-ref-add-acronym-entry))
-	       :action (lambda (x)
-			 (call-interactively x)))))))
+;;;###autoload
+  (defun org-ref-insert-acronym-link ()
+    "Command to insert glossary entries as links using ivy for completion."
+    (interactive)
+    (let ((acronym-candidates '())
+          key
+          entry)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward
+                "\\\\newacronym{\\([[:ascii:]]+?\\)}" nil t)
+          (setq key (match-string 1)
+                entry (org-ref-parse-acronym-entry key))
+          (setq acronym-candidates
+                (append
+                 acronym-candidates
+                 (list
+                  (cons
+                   (format "%s (%s)."
+                           (plist-get entry :full)
+                           (plist-get entry :abbrv))
+                   ;; the returned candidate
+                   (list key
+                         (plist-get entry :abbrv))))))))
+
+      (helm :sources
+            `(,(helm-build-sync-source "Insert glossary term"
+                                       :candidates glossary-candidates
+                                       :action (lambda (candidate)
+                                                 (insert (format
+                                                          "[[%s:%s][%s]]"
+                                                          (completing-read "Type: "
+                                                                           '("gls"
+                                                                             "glspl"
+                                                                             "Gls"
+                                                                             "Glspl"
+                                                                             "glssymbol"
+                                                                             "glsdesc")
+                                                                           nil t
+                                                                           "gls")
+                                                          (nth 0 candidate)
+                                                          (nth 1 candidate)))))
+              ,(helm-build-sync-source "Insert acronym term"
+                                       :candidates acronym-candidates
+                                       :action (lambda (candidate)
+                                                 (insert (format
+                                                          "[[%s:%s][%s]]"
+                                                          (completing-read "Type: "
+                                                                           '("acrshort"
+                                                                             "acrlong"
+                                                                             "acrfull"
+                                                                             "ac"
+                                                                             "Ac"
+                                                                             "acp"
+                                                                             "Acp")
+                                                                           nil t
+                                                                           "ac")
+                                                          (nth 0 candidate)
+                                                          (nth 1 candidate)))))
+              ,(helm-build-sync-source "Add new term"
+                                       :candidates '(("Add glossary term" . org-ref-add-glossary-entry)
+                                                     ("Add acronym term" . org-ref-add-acronym-entry))
+                                       :action (lambda (x)
+                                                 (call-interactively x))))))))
 
 
 (provide 'org-ref-glossary)

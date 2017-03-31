@@ -29,10 +29,13 @@
 
 ;; The principle commands you will use from here are:
 
-;; - org-ref-doi-utils-get-bibtex-entry-pdf with the cursor in a bibtex entry.
-;; - org-ref-doi-utils-insert-bibtex-entry-from-doi to insert a bibtex entry at your cursor, clean it and try to get a pdf.
-;; - org-ref-doi-utils-add-bibtex-entry-from-doi to add an entry to your default bibliography (cleaned with pdf if possible).
-;; - org-ref-doi-utils-update-bibtex-entry-from-doi with cursor in an entry to update its fields.
+;; - `org-ref-doi-utils-get-bibtex-entry-pdf' with the cursor in a bibtex entry.
+;; - `org-ref-doi-utils-insert-bibtex-entry-from-doi' to insert a bibtex entry
+;;   at your cursor, clean it and try to get a pdf.
+;; - `org-ref-doi-utils-add-bibtex-entry-from-doi' to add an entry to your
+;;   default bibliography (cleaned with pdf if possible).
+;; - `org-ref-doi-utils-update-bibtex-entry-from-doi' with cursor in an entry to
+;;   update its fields.
 
 ;;; Code:
 
@@ -47,8 +50,6 @@
 (declare-function reftex-get-bib-field "reftex-cite")
 (declare-function bibtex-completion-edit-notes "bibtex-completion")
 
-(eval-when-compile
-  (require 'cl-lib))
 (require 'bibtex)
 (require 'dash)
 (require 'f)
@@ -66,7 +67,6 @@
   "Customization group for org-ref-doi-utils."
   :tag "DOI utils"
   :group 'org-ref-doi-utils)
-
 
 (defcustom org-ref-doi-utils-download-pdf
   t
@@ -102,7 +102,8 @@ Set to nil to avoid setting timestamps in the entries."
 (defcustom org-ref-doi-utils-make-notes-function
   (lambda ()
     (bibtex-beginning-of-entry)
-    (bibtex-completion-edit-notes (list (cdr (assoc "=key=" (bibtex-parse-entry))))))
+    (org-ref-bibtex-edit-notes (list (cdr (assoc "=key="
+                                                 (bibtex-parse-entry))))))
   "Function to create notes for a bibtex entry.
 
 Set `org-ref-doi-utils-make-notes' to nil if you want no notes."
@@ -114,7 +115,6 @@ Set `org-ref-doi-utils-make-notes' to nil if you want no notes."
   "Base url to retrieve doi metadata from. A trailing / is required."
   :type 'string
   :group 'org-ref-doi-utils)
-
 
 ;;* Getting pdf files from a DOI
 
@@ -128,25 +128,34 @@ Set `org-ref-doi-utils-make-notes' to nil if you want no notes."
 ;; does not return anything, so we communicate through global variables.
 ;; url-retrieve is asynchronous, so we have to make sure to wait for it to
 ;; finish.
-
 (defvar *org-ref-doi-utils-waiting* t
   "Stores waiting state for url retrieval.")
 
 (defvar *org-ref-doi-utils-redirect* nil
   "Stores redirect url from a callback function.")
 
+;; Once we have a redirect for a particular doi, we need to compute the url to
+;; the pdf. We do this with a series of functions. Each function takes a single
+;; argument, the redirect url. If it knows how to compute the pdf url it does,
+;; and returns it. We store the functions in a variable:
+(defvar org-ref-doi-utils-pdf-url-functions nil
+  "Functions that return a url to a pdf from a redirect url.
+Each function takes one argument, the redirect url.  The function
+must return a pdf-url, or nil.")
+
+
 (defun org-ref-doi-utils-redirect-callback (&optional status)
   "Callback for `url-retrieve' to set the redirect.
 Optional argument STATUS Unknown why this is optional."
   (when (plist-get status :error)
     (signal (car (plist-get status :error)) (cdr(plist-get status :error))))
-  (when (plist-get status :redirect) ;  is nil if there none
+  (when (plist-get status :redirect)    ;  is nil if there none
     (setq *org-ref-doi-utils-redirect* (plist-get status :redirect)))
   ;; we have done our job, so we are not waiting any more.
   (setq *org-ref-doi-utils-waiting* nil))
 
-;; To actually get the redirect we use url-retrieve like this.
 
+;; To actually get the redirect we use url-retrieve like this.
 (defun org-ref-doi-utils-get-redirect (doi)
   "Get redirect url from `org-ref-doi-utils-dx-doi-org-url'/DOI."
   ;; we are going to wait until the url-retrieve is done
@@ -163,27 +172,16 @@ Optional argument STATUS Unknown why this is optional."
   ;; just gave the first one enough time to finish.
   (while *org-ref-doi-utils-waiting* (sleep-for 0.1)))
 
-;; Once we have a redirect for a particular doi, we need to compute the url to
-;; the pdf. We do this with a series of functions. Each function takes a single
-;; argument, the redirect url. If it knows how to compute the pdf url it does,
-;; and returns it. We store the functions in a variable:
-
-(defvar org-ref-doi-utils-pdf-url-functions nil
-  "Functions that return a url to a pdf from a redirect url.
-Each function takes one argument, the redirect url.  The function
-must return a pdf-url, or nil.")
-
 
 ;;** APS journals
-
 (defun aps-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://journals.aps.org" *org-ref-doi-utils-redirect*)
-    (replace-regexp-in-string "/abstract/" "/pdf/" *org-ref-doi-utils-redirect*)))
+    (replace-regexp-in-string
+     "/abstract/" "/pdf/" *org-ref-doi-utils-redirect*)))
 
 
 ;;** Science
-
 (defun science-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://www.sciencemag.org" *org-ref-doi-utils-redirect*)
@@ -191,7 +189,6 @@ must return a pdf-url, or nil.")
 
 
 ;;** Nature
-
 (defun nature-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://www.nature.com" *org-ref-doi-utils-redirect*)
@@ -217,8 +214,6 @@ must return a pdf-url, or nil.")
 ;; This is where the link is hidden:
 
 ;; <iframe id="pdfDocument" src="http://onlinelibrary.wiley.com/store/10.1002/anie.201402680/asset/6397_ftp.pdf?v=1&amp;t=hwut2142&amp;s=d4bb3cd4ad20eb733836717f42346ffb34017831" width="100%" height="675px"></iframe>
-
-
 (defun org-ref-doi-utils-get-wiley-pdf-url (redirect-url)
   "Wileyscience direct hides the pdf url in html.
 We get it out here by parsing the html.
@@ -234,28 +229,30 @@ Argument REDIRECT-URL URL you are redirected to."
   (while *org-ref-doi-utils-waiting* (sleep-for 0.1))
   *org-ref-doi-utils-pdf-url*)
 
+
 (defun wiley-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
-  (when (string-match "^http://onlinelibrary.wiley.com" *org-ref-doi-utils-redirect*)
+  (when (string-match "^http://onlinelibrary.wiley.com"
+                      *org-ref-doi-utils-redirect*)
     (org-ref-doi-utils-get-wiley-pdf-url
      (replace-regexp-in-string "/abstract" "/pdf" *org-ref-doi-utils-redirect*))
     *org-ref-doi-utils-pdf-url*))
 
 
 ;;** Springer
-
 (defun springer-chapter-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
-  (when (string-match "^http://link.springer.com/chapter/" *org-ref-doi-utils-redirect*)
+  (when (string-match "^http://link.springer.com/chapter/"
+                      *org-ref-doi-utils-redirect*)
     (replace-regexp-in-string "/chapter" "/content/pdf"
-			      (concat *org-ref-doi-utils-redirect* ".pdf"))))
+                              (concat *org-ref-doi-utils-redirect* ".pdf"))))
 
 
 (defun springer-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://link.springer.com" *org-ref-doi-utils-redirect*)
     (replace-regexp-in-string "/article/" "/content/pdf/"
-			      (concat *org-ref-doi-utils-redirect* ".pdf"))))
+                              (concat *org-ref-doi-utils-redirect* ".pdf"))))
 
 
 ;;** ACS
@@ -263,37 +260,38 @@ Argument REDIRECT-URL URL you are redirected to."
 ;; the pdf is found at http://pubs.acs.org/doi/pdf/10.1021/nl500037x
 
 ;; we just change /abs/ to /pdf/.
-
 (defun acs-pdf-url-1 (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
-  (when (string-match "^http://pubs.acs.org/doi/abs/" *org-ref-doi-utils-redirect*)
+  (when (string-match "^http://pubs.acs.org/doi/abs/"
+                      *org-ref-doi-utils-redirect*)
     (replace-regexp-in-string "/abs/" "/pdf/" *org-ref-doi-utils-redirect*)))
+
 
 ;; 1/20/2016 I noticed this new pattern in pdf urls, where there is no abs in
 ;; the url
 (defun acs-pdf-url-2 (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://pubs.acs.org/doi/" *org-ref-doi-utils-redirect*)
-    (replace-regexp-in-string "/doi/" "/doi/pdf/" *org-ref-doi-utils-redirect*)))
+    (replace-regexp-in-string "/doi/" "/doi/pdf/"
+                              *org-ref-doi-utils-redirect*)))
 
 
 ;;** IOP
-
 (defun iop-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://iopscience.iop.org" *org-ref-doi-utils-redirect*)
     (replace-regexp-in-string "/meta" "/pdf" *org-ref-doi-utils-redirect*)))
 
-;;** JSTOR
 
+;;** JSTOR
 (defun jstor-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://www.jstor.org" *org-ref-doi-utils-redirect*)
-    (concat (replace-regexp-in-string "/stable/" "/stable/pdfplus/" *org-ref-doi-utils-redirect*) ".pdf")))
+    (concat (replace-regexp-in-string "/stable/" "/stable/pdfplus/"
+                                      *org-ref-doi-utils-redirect*) ".pdf")))
 
 
 ;;** AIP
-
 (defun aip-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://scitation.aip.org" *org-ref-doi-utils-redirect*)
@@ -307,39 +305,40 @@ Argument REDIRECT-URL URL you are redirected to."
       (format "http://scitation.aip.org/deliver/fulltext/%s.pdf?itemId=/%s&mimeType=pdf&containerItemId=%s"
               p1 p2 p3))))
 
-;;** Taylor and Francis
 
+;;** Taylor and Francis
 (defun tandfonline-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
-  (when (string-match "^http://www.tandfonline.com" *org-ref-doi-utils-redirect*)
-    (replace-regexp-in-string "/abs/\\|/full/" "/pdf/" *org-ref-doi-utils-redirect*)))
+  (when (string-match "^http://www.tandfonline.com"
+                      *org-ref-doi-utils-redirect*)
+    (replace-regexp-in-string "/abs/\\|/full/" "/pdf/"
+                              *org-ref-doi-utils-redirect*)))
+
 
 ;;** ECS
-
 (defun ecs-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://jes.ecsdl.org" *org-ref-doi-utils-redirect*)
-    (replace-regexp-in-string "\.abstract$" ".full.pdf" *org-ref-doi-utils-redirect*)))
+    (replace-regexp-in-string "\.abstract$" ".full.pdf"
+                              *org-ref-doi-utils-redirect*)))
+
 
 ;; http://ecst.ecsdl.org/content/25/2/2769
 ;; http://ecst.ecsdl.org/content/25/2/2769.full.pdf
-
-
 (defun ecst-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://ecst.ecsdl.org" *org-ref-doi-utils-redirect*)
     (concat *org-ref-doi-utils-redirect* ".full.pdf")))
 
 
-
 ;;** RSC
-
 (defun rsc-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://pubs.rsc.org" *org-ref-doi-utils-redirect*)
     (let ((url (downcase *org-ref-doi-utils-redirect*)))
       (setq url (replace-regexp-in-string "articlelanding" "articlepdf" url))
       url)))
+
 
 ;;** Science Direct
 (defun org-ref-doi-utils-get-science-direct-pdf-url (redirect-url)
@@ -504,7 +503,7 @@ REDIRECT-URL is where the pdf url will be in."
     (with-current-buffer (url-retrieve-synchronously *org-ref-doi-utils-redirect*)
       (goto-char (point-min))
       (when (re-search-forward "<meta name=\"citation_pdf_url\" content=\"\\([[:ascii:]]*?\\)\">" nil t)
-	(let ((framed-url (match-string 1)))
+        (let ((framed-url (match-string 1)))
           (with-current-buffer (url-retrieve-synchronously framed-url)
             (goto-char (point-min))
             (when (re-search-forward "<frame src=\"\\(http[[:ascii:]]*?\\)\"" nil t)
@@ -518,7 +517,7 @@ REDIRECT-URL is where the pdf url will be in."
     (with-current-buffer (url-retrieve-synchronously *org-ref-doi-utils-redirect*)
       (goto-char (point-min))
       (when (re-search-forward "\"pdfUrl\":\"\\([[:ascii:]]*?\\)\"" nil t)
-	(let ((framed-url (match-string 1)))
+        (let ((framed-url (match-string 1)))
           (with-current-buffer (url-retrieve-synchronously (concat "http://ieeexplore.ieee.org" framed-url))
             (goto-char (point-min))
             (when (re-search-forward "<frame src=\"\\(http[[:ascii:]]*?\\)\"" nil t)
@@ -547,13 +546,14 @@ REDIRECT-URL is where the pdf url will be in."
     (with-current-buffer (url-retrieve-synchronously *org-ref-doi-utils-redirect*)
       (goto-char (point-min))
       (when (re-search-forward "<a name=\"FullTextPDF\".*href=\"\\([[:ascii:]]*?\\)\"" nil t)
-	(concat "http://dl.acm.org/" (match-string 1))))))
+        (concat "http://dl.acm.org/" (match-string 1))))))
 
 ;;** Optical Society of America (OSA)
 (defun osa-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^https://www.osapublishing.org" *org-ref-doi-utils-redirect*)
-    (replace-regexp-in-string "abstract.cfm" "viewmedia.cfm" *org-ref-doi-utils-redirect* )))
+    (replace-regexp-in-string
+     "abstract.cfm" "viewmedia.cfm" *org-ref-doi-utils-redirect* )))
 
 
 
@@ -594,7 +594,6 @@ It would be better to parse this, but here I just use a regexp.
 
 
 ;;** Add all functions
-
 (setq org-ref-doi-utils-pdf-url-functions
       (list
        'aps-pdf-url
@@ -664,7 +663,7 @@ checked."
   (interactive "P")
   (save-excursion
     (bibtex-beginning-of-entry)
-    (let (;; get doi, removing http://dx.doi.org/ if it is there.
+    (let ( ;; get doi, removing http://dx.doi.org/ if it is there.
           (doi (replace-regexp-in-string
                 "https?://\\(dx.\\)?.doi.org/" ""
                 (bibtex-autokey-get-field "doi")))
@@ -675,31 +674,31 @@ checked."
       (re-search-forward bibtex-entry-maybe-empty-head)
       (setq key (match-string bibtex-key-in-head))
       (setq pdf-file (concat
-		      (if org-ref-pdf-directory
-			  (file-name-as-directory org-ref-pdf-directory)
-			(read-directory-name "PDF directory: " "."))
-		      key ".pdf"))
+                      (if org-ref-pdf-directory
+                          (file-name-as-directory org-ref-pdf-directory)
+                        (read-directory-name "PDF directory: " "."))
+                      key ".pdf"))
       ;; now get file if needed.
       (unless (file-exists-p pdf-file)
-	(cond
-	 ((and (not arg)
-	       doi
-	       (setq pdf-url (org-ref-doi-utils-get-pdf-url doi)))
-	  (url-copy-file pdf-url pdf-file)
-	  ;; now check if we got a pdf
+        (cond
+         ((and (not arg)
+               doi
+               (setq pdf-url (org-ref-doi-utils-get-pdf-url doi)))
+          (url-copy-file pdf-url pdf-file)
+          ;; now check if we got a pdf
           (if (org-ref-pdf-p pdf-file)
               (message "%s saved" pdf-file)
             (delete-file pdf-file)
             (message "No pdf was downloaded.")
             (browse-url pdf-url)))
-	 ((equal arg '(4))
-	  (copy-file (expand-file-name (read-file-name "Pdf file: " nil nil t))
-		     pdf-file))
-	 ((equal arg '(16))
-	  (with-current-buffer (read-buffer-to-switch "Pdf buffer: ")
-	    (write-file pdf-file))))
-	(when (and org-ref-doi-utils-open-pdf-after-download (file-exists-p pdf-file))
-	  (org-open-file pdf-file))))))
+         ((equal arg '(4))
+          (copy-file (expand-file-name (read-file-name "Pdf file: " nil nil t))
+                     pdf-file))
+         ((equal arg '(16))
+          (with-current-buffer (read-buffer-to-switch "Pdf buffer: ")
+            (write-file pdf-file))))
+        (when (and org-ref-doi-utils-open-pdf-after-download (file-exists-p pdf-file))
+          (org-open-file pdf-file))))))
 
 ;;* Getting bibtex entries from a DOI
 
@@ -708,7 +707,6 @@ checked."
 ;; you can download metadata about a DOI from http://dx.doi.org. You just have
 ;; to construct the right http request to get it. Here is a function that gets
 ;; the metadata as a plist in emacs.
-
 (defun org-ref-doi-utils-get-json-metadata (doi)
   "Try to get json metadata for DOI.  Open the DOI in a browser if we do not get it."
   (let ((url-request-method "GET")
@@ -729,15 +727,13 @@ checked."
 ;; We can use that data to construct a bibtex entry. We do that by defining a
 ;; template, and filling it in. I wrote this template expansion code which makes
 ;; it easy to substitute values like %{} in emacs lisp.
-
-
 (defun org-ref-doi-utils-expand-template (s)
   "Expand a string template S containing %{} with the eval of its contents."
   (replace-regexp-in-string "%{\\([^}]+\\)}"
                             (lambda (arg)
                               (let ((sexp (substring arg 2 -1)))
                                 (format "%s" (eval (read sexp)))))
-			    s))
+                            s))
 
 
 ;; Now we define a function that fills in that template from the metadata.
@@ -765,12 +761,12 @@ checked."
       (year       (elt (elt (plist-get (plist-get results :issued) :date-parts) 0) 0))
       ;; Some dates don't have a month in them.
       (month      (let ((date (elt
-			       (plist-get (plist-get results :issued) :date-parts) 0)))
-		    (if (>= (length date) 2)
-			(elt date 1)
-		      "-")))
+                               (plist-get (plist-get results :issued) :date-parts) 0)))
+                    (if (>= (length date) 2)
+                        (elt date 1)
+                      "-")))
       (pages      (or (plist-get results :page)
-		      (plist-get results :article-number)))
+                      (plist-get results :article-number)))
       (doi        (plist-get results :DOI))
       (url        (plist-get results :URL))
       (booktitle  (plist-get results :container-title))))
@@ -792,7 +788,7 @@ expressions."
           ((and (stringp (car lst))
                 (stringp (car acc)))
            (org-ref-doi-utils-concat-prepare (cdr lst) (cons (concat (car acc) (car lst))
-                                                     (cdr acc))))
+                                                             (cdr acc))))
           (t (org-ref-doi-utils-concat-prepare (cdr lst) (cons (car lst) acc))))))
 
 (defmacro org-ref-doi-utils-def-bibtex-type (name matching-types &rest fields)
@@ -827,35 +823,38 @@ MATCHING-TYPES."
                           "}\n")))))))
          org-ref-doi-utils-bibtex-type-generators))
 
-(org-ref-doi-utils-def-bibtex-type article ("journal-article" "article-journal")
-                                   author title journal year volume number pages doi url)
 
-(org-ref-doi-utils-def-bibtex-type inproceedings ("proceedings-article" "paper-conference")
-                                   author title booktitle year month pages doi url)
+(org-ref-doi-utils-def-bibtex-type
+ article ("journal-article" "article-journal")
+ author title journal year volume number pages doi url)
 
-(org-ref-doi-utils-def-bibtex-type book ("book")
-                                   author title series publisher year pages doi url)
+(org-ref-doi-utils-def-bibtex-type
+ inproceedings ("proceedings-article" "paper-conference")
+ author title booktitle year month pages doi url)
 
-(org-ref-doi-utils-def-bibtex-type inbook ("book-chapter" "reference-entry")
-                                   author title booktitle series publisher year pages doi url)
+(org-ref-doi-utils-def-bibtex-type
+ book ("book")
+ author title series publisher year pages doi url)
 
+(org-ref-doi-utils-def-bibtex-type
+ inbook ("book-chapter" "reference-entry")
+ author title booktitle series publisher year pages doi url)
 
 
 ;; With the code generating the bibtex entry in place, we can glue it to the json retrieval code.
-
 (defun org-ref-doi-utils-doi-to-bibtex-string (doi)
   "Return a bibtex entry as a string for the DOI.  Not all types are supported yet."
   (let* ((results (org-ref-doi-utils-get-json-metadata doi))
          (type (plist-get results :type)))
     ;; (format "%s" results) ; json-data
-    (or (-some (lambda (g) (funcall g type results)) org-ref-doi-utils-bibtex-type-generators)
+    (or (-some (lambda (g) (funcall g type results))
+               org-ref-doi-utils-bibtex-type-generators)
         (message "%s not supported yet\n%S." type results))))
 
 ;; That is just the string for the entry. To be useful, we need a function that
 ;; inserts the string into a buffer. This function will insert the string at the
 ;; cursor, clean the entry, try to get the pdf, and create a notes entry for
 ;; you.
-
 (defun org-ref-doi-utils-insert-bibtex-entry-from-doi (doi)
   "Insert bibtex entry from a DOI.
 Also cleans entry using ‘org-ref’, and tries to download the corresponding pdf."
@@ -876,7 +875,7 @@ Also cleans entry using ‘org-ref’, and tries to download the corresponding p
       (when (f-file? org-ref-bibliography-notes)
         (find-file-noselect org-ref-bibliography-notes)
         (save-buffer))
-      (let ((bibtex-completion-bibliography (list (buffer-file-name))))
+      (let ((bibtex-files (list (buffer-file-name))))
         (funcall org-ref-doi-utils-make-notes-function)))))
 
 
@@ -952,7 +951,6 @@ Argument BIBFILE the bibliography to use."
            ;; will have to type it in.
            (t
             nil)))))
-
   (unless bibfile
     (setq bibfile (completing-read
                    "Bibfile: "
@@ -979,13 +977,16 @@ Argument BIBFILE the bibliography to use."
         ;; make sure we are at the beginning of a line
         (when (not (= (point) (line-beginning-position)))
           (forward-char 1))
+        <<<<<<< HEAD
+        =======
+        (when (not (looking-back "\n\n" 3))
+          (insert "\n\n"))
+        >>>>>>> Clean update formatting and remove deprecated code
         (when (not (looking-back "\n\n" (min 3 (point))))
           (insert "\n\n"))
         (org-ref-doi-utils-insert-bibtex-entry-from-doi doi)
         (save-buffer)))))
 
-(defalias 'doi-add-bibtex-entry 'org-ref-doi-utils-add-bibtex-entry-from-doi
-  "Alias function for convenience.")
 
 ;;;###autoload
 (defun org-ref-doi-utils-doi-to-org-bibtex (doi)
@@ -1037,8 +1038,6 @@ Optional argument NODELIM see `bibtex-make-field'."
 
 ;; The updating function for a whole entry looks like this. We get all the keys
 ;; from the json plist metadata, and update the fields if they exist.
-
-
 (defun plist-get-keys (plist)
   "Return keys in a PLIST."
   (-slice plist 0 nil 2))
@@ -1056,7 +1055,7 @@ Every field will be updated, so previous change will be lost."
          (type (plist-get results :type))
          (author (mapconcat
                   (lambda (x) (concat (plist-get x :given)
-                                      " " (plist-get x :family)))
+                                 " " (plist-get x :family)))
                   (plist-get results :author) " and "))
          (title (plist-get results :title))
          (journal (plist-get results :container-title))
@@ -1071,7 +1070,6 @@ Every field will be updated, so previous change will be lost."
          (url (or (plist-get results :URL) ""))
          (doi (plist-get results :DOI))
          mapping)
-
     ;; map the json fields to bibtex fields. The code each field is mapped to is
     ;; evaluated.
     (setq mapping '((:author . (bibtex-set-field "author" author))
@@ -1083,13 +1081,11 @@ Every field will be updated, so previous change will be lost."
                     (:page . (bibtex-set-field "pages" pages))
                     (:DOI . (bibtex-set-field "doi" doi))
                     (:URL . (bibtex-set-field "url" url))))
-
     ;; now we have code to run for each entry. we map over them and evaluate the code
     (mapc
      (lambda (key)
        (eval (cdr (assoc key mapping))))
      (plist-get-keys results)))
-
   (org-ref-clean-bibtex-entry))
 
 
@@ -1118,8 +1114,6 @@ Data is retrieved from the doi in the entry."
      (t
       (message "%s not supported yet." field)))))
 
-
-
 ;;* DOI functions for WOS
 
 ;; I came across this API http://wokinfo.com/media/pdf/OpenURL-guide.pdf to make
@@ -1143,7 +1137,8 @@ Data is retrieved from the doi in the entry."
   (interactive "sDOI: ")
   (browse-url
    (format
-    "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info:doi/%s" doi)))
+    "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info:doi/%s"
+    doi)))
 
 ;;;###autoload
 (defun org-ref-doi-utils-wos-citing (doi)
@@ -1161,9 +1156,10 @@ May be empty if none are found."
   "Open Web of Science related articles page for DOI."
   (interactive "sDOI: ")
   (browse-url
-   (concat "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info%3Adoi%2F"
-           doi
-           "&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.related=yes")))
+   (concat
+    "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info%3Adoi%2F"
+    doi
+    "&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.related=yes")))
 
 
 ;;* A new doi link for org-mode
@@ -1200,18 +1196,14 @@ May be empty if none are found."
 (defun org-ref-doi-utils-crossref (doi)
   "Search DOI in CrossRef."
   (interactive "sDOI: ")
-  (browse-url
-   (format
-    "http://search.crossref.org/?q=%s" doi)))
+  (browse-url (format "http://search.crossref.org/?q=%s" doi)))
 
 
 ;;;###autoload
 (defun org-ref-doi-utils-google-scholar (doi)
   "Google scholar the DOI."
   (interactive "sDOI: ")
-  (browse-url
-   (format
-    "http://scholar.google.com/scholar?q=%s" doi)))
+  (browse-url (format "http://scholar.google.com/scholar?q=%s" doi)))
 
 
 ;;;###autoload
@@ -1219,9 +1211,8 @@ May be empty if none are found."
   "Search Pubmed for the DOI."
   (interactive "sDOI: ")
   (browse-url
-   (format
-    "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s"
-    (url-hexify-string doi))))
+   (format "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s"
+           (url-hexify-string doi))))
 
 
 (defvar doi-link-menu-funcs '()
@@ -1330,7 +1321,6 @@ error."
          (doi))
     (unless (string= ""(reftex-get-bib-field "doi" entry))
       (error "Entry already has a doi field"))
-
     (with-current-buffer
         (url-retrieve-synchronously
          (concat
@@ -1350,13 +1340,10 @@ error."
       ;; decode json string
       (setq json-string (decode-coding-string (string-make-unibyte raw-json-string) 'utf-8))
       (setq json-data (json-read-from-string json-string)))
-
-    (let* ((ivy-candidates (mapcar (lambda (x)
-                                     (cons
-                                      (concat
-                                       (cdr (assoc 'fullCitation x)))
-                                      (cdr (assoc 'doi x))))
-                                   json-data)))
+    (let* ((ivy-candidates
+            (mapcar (lambda (x) (cons (concat (cdr (assoc 'fullCitation x)))
+                                 (cdr (assoc 'doi x))))
+                    json-data)))
       (ivy-read "CrossRef hits: " 'ivy-candidates
                 :action '(1
                           ("i" (lambda (entry) (org-ref-doi-utils-add-bibtex-entry-from-doi
@@ -1385,7 +1372,7 @@ error."
           (progn
             (browse-url (concat org-ref-doi-utils-dx-doi-org-url doi))
             (error "Resource not found.  Opening website"))
-	json-data))))
+        json-data))))
 
 
 ;;;###autoload
@@ -1401,10 +1388,11 @@ error."
           (let ((url-request-method "GET")
                 (url-mime-accept-string "application/citeproc+json"))
             (pp
-             (json-read-from-string (with-current-buffer
-                                        (url-retrieve-synchronously
-                                         (concat org-ref-doi-utils-dx-doi-org-url doi))
-                                      (buffer-substring url-http-end-of-headers (point-max))))))
+             (json-read-from-string
+              (with-current-buffer
+                  (url-retrieve-synchronously
+                   (concat org-ref-doi-utils-dx-doi-org-url doi))
+                (buffer-substring url-http-end-of-headers (point-max))))))
           "\n\n")
   (goto-char (point-min)))
 
@@ -1439,12 +1427,10 @@ error."
          (json-string)
          (json-data)
          (doi))
-
     (with-current-buffer
         (url-retrieve-synchronously
-         (concat
-          "http://search.crossref.org/dois?q="
-          (url-hexify-string query)))
+         (concat "http://search.crossref.org/dois?q="
+                 (url-hexify-string query)))
       ;; replace html entities
       (save-excursion
       	(goto-char (point-min))
@@ -1456,17 +1442,16 @@ error."
       	(goto-char (point-min))
       	(while (re-search-forward "&quot;" nil t)
       	  (replace-match "\\\"" nil t)))
-      (setq raw-json-string (buffer-substring url-http-end-of-headers (point-max)))
+      (setq raw-json-string (buffer-substring url-http-end-of-headers
+                                              (point-max)))
       ;; decode json string
-      (setq json-string (decode-coding-string (string-make-unibyte raw-json-string) 'utf-8))
+      (setq json-string (decode-coding-string
+                         (string-make-unibyte raw-json-string) 'utf-8))
       (setq json-data (json-read-from-string json-string)))
-
-    (let* ((ivy-candidates (mapcar (lambda (x)
-                                     (cons
-                                      (concat
-                                       (cdr (assoc 'fullCitation x)))
-                                      (cdr (assoc 'doi x))))
-                                   json-data)))
+    (let* ((ivy-candidates
+            (mapcar (lambda (x) (cons (concat (cdr (assoc 'fullCitation x)))
+                                 (cdr (assoc 'doi x))))
+                    json-data)))
       (ivy-read "CrossRef hits: " ivy-candidates
                 :action '(1
                           ("i" (lambda (entry) (org-ref-doi-utils-add-bibtex-entry-from-doi

@@ -29,7 +29,9 @@
 ;;; Code:
 (declare-function org-ref-doi-utils-add-bibtex-entry-from-doi "org-ref-doi-utils.el")
 (declare-function org-ref-doi-utils-get-json-metadata "org-ref-doi-utils.el")
-
+(declare-function pdf-view-assert-active-region "pdf-view")
+(declare-function pdf-view-active-region-text "pdf-view")
+(declare-function pdf-view-deactivate-region "pdf-view")
 (defvar org-ref-pdf-directory)
 
 (require 'bibtex)
@@ -72,11 +74,11 @@ space or end of line.
 
 If there is a trailing . (dot) we chomp it off. Returns a list of doi strings,
 or nil."
-
   (with-temp-buffer
-    (insert (shell-command-to-string (format "%s %s -"
-                                             pdftotext-executable
-                                             (shell-quote-argument (dnd-unescape-uri pdf)))))
+    (insert (shell-command-to-string
+             (format "%s %s -"
+                     pdftotext-executable
+                     (shell-quote-argument (dnd-unescape-uri pdf)))))
     (goto-char (point-min))
     (let ((matches '()))
       (while (re-search-forward org-ref-pdf-doi-regex nil t)
@@ -90,8 +92,8 @@ or nil."
 
 
 (defun org-ref-pdf-doi-candidates (dois)
-  "Generate candidate list for helm source.
-Used when multiple dois are found in a pdf file."
+  "Generate candidate list for ivy.
+Used when multiple DOIS are found in a pdf file."
   (cl-loop for doi in dois
            collect
            (condition-case nil
@@ -101,13 +103,9 @@ Used when multiple dois are found in a pdf file."
              (error (cons (format "%s read error" doi) doi)))))
 
 
-(defun org-ref-pdf-add-dois (_)
-  "Add all entries for CANDIDATE in `helm-marked-candidates'."
-  (cl-loop for doi in (helm-marked-candidates)
-           do
-           (doi-utils-add-bibtex-entry-from-doi
-            doi
-            (buffer-file-name))))
+(defun org-ref-pdf-add-doi (doi)
+  "Add entry for DOI."
+  (org-ref-doi-utils-add-bibtex-entry-from-doi doi (buffer-file-name)))
 
 ;;;###autoload
 (defun org-ref-pdf-to-bibtex ()
@@ -130,42 +128,6 @@ using the `pdf-tools' package."
       (copy-file (buffer-file-name)
                  (expand-file-name (format "%s.pdf" key)
                                    org-ref-pdf-directory)))))
-
-;;;###autoload
-;; (defun org-ref-pdf-dnd-func (event)
-;;   "Drag-n-drop support to add a bibtex entry from a pdf file."
-;;   (interactive "e")
-;;   (goto-char (nth 1 (event-start event)))
-;;   (x-focus-frame nil)
-;;   (let* ((payload (car (last event)))
-;;          (pdf (cadr payload))
-;; 	 (dois (org-ref-extract-doi-from-pdf pdf)))
-;;     (cond
-;;      ((null dois)
-;;       (message "No doi found in %s" pdf))
-;;      ((= 1 (length dois))
-;;       (doi-utils-add-bibtex-entry-from-doi
-;;        (car dois)
-;;        (buffer-file-name)))
-;;      ;; Multiple DOIs found
-;;      (t
-;;       (helm :sources `((name . "Select a DOI")
-;; 		       (candidates . ,(org-ref-pdf-doi-candidates dois))
-;; 		       (action . org-ref-pdf-add-dois)))))))
-
-;; This isn't very flexible, as it hijacks all drag-n-drop events. I switched to
-;; using `dnd-protocol-alist'.
-;; (define-key bibtex-mode-map (kbd "<drag-n-drop>") 'org-ref-pdf-dnd-func)
-
-;; This is what the original dnd function was.
-;; (define-key bibtex-mode-map (kbd "<drag-n-drop>") 'ns-drag-n-drop)
-
-
-;; I replaced the functionality above with this new approach that leverages
-;; ns-drag-n-drop. An alternative approach would be to adapt the function above
-;; so that if the item dragged on wasn't a pdf, it would use another function.
-;; that is essentially what ns-drag-n-drop enables, multiple handlers for
-;; different uris that get dropped on the windwo.
 
 (defun org-ref-pdf-dnd-protocol (uri action)
   "Drag-n-drop protocol.
@@ -226,7 +188,6 @@ This function should only apply when in a bibtex file."
                 (read-directory-name "Directory: ")))
   (find-file bibfile)
   (goto-char (point-max))
-
   (cl-loop for pdf in (f-entries directory (lambda (f) (f-ext? f "pdf")))
            do
            (goto-char (point-max))
@@ -276,4 +237,5 @@ variable `org-ref-pdf-doi-regex'."
 
 
 (provide 'org-ref-pdf)
+
 ;;; org-ref-pdf.el ends here

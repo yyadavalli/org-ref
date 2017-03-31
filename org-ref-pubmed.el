@@ -54,25 +54,32 @@
 (require 'org-ref-utils)
 
 (org-ref-link-set-parameters "pmid"
-  :follow (lambda (link-string) (browse-url (format "http://www.ncbi.nlm.nih.gov/pubmed/%s" link-string)))
+  :follow (lambda (link-string)
+            (browse-url (format "http://www.ncbi.nlm.nih.gov/pubmed/%s"
+                                link-string)))
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)
-              (format "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s\">pmid:%s</a>" keyword (or desc keyword))) ; no output for html
+              (format
+               "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s\">pmid:%s</a>"
+               keyword (or desc keyword))) ; no output for html
              ((eq format 'latex)
               ;; write out the latex command
-              (format "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s}{%s}" keyword (or desc keyword))))))
+              (format
+               "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s}{%s}"
+               keyword (or desc keyword))))))
 
 ;;** Get MEDLINE metadata
 
 ;; We can get bibliographic metadata from a pmid. Here we get the MEDLINE
 ;; text. The website wraps the data in <pre></pre> tags.
-
 (defun pubmed-get-medline (pmid)
   "Get MEDLINE text for PMID as a string."
   (with-current-buffer
       (url-retrieve-synchronously
-       (format "http://www.ncbi.nlm.nih.gov/pubmed/%s/?report=medline&format=text" pmid))
+       (format
+        "http://www.ncbi.nlm.nih.gov/pubmed/%s/?report=medline&format=text"
+        pmid))
     (goto-char (point-min))
     (let ((p1 (search-forward "<pre>"))
           (p2 (search-forward "</pre>")))
@@ -89,20 +96,21 @@
         (p2)
         (tag)
         (value))
-    (with-temp-buffer (insert (pubmed-get-medline pmid))
-                      (goto-char (point-min))
-                      (while (re-search-forward "\\(^[A-Z]\\{2,4\\}\\)\\s-*- "
-						nil t)
-                        (setq tag (match-string 1))
-                        ;; point is at end of the search
-                        (setq p1 (point))
-                        ;; now go to next tag
-                        (re-search-forward "\\(^[A-Z]\\{2,4\\}\\)\\s-*- " nil t)
-                        (setq p2 (- (match-beginning 1) 1))
-                        (setq value (buffer-substring p1 p2))
-                        (setq data (append data (list (cons tag value))))
-                        ;; now go back to last tag to get the next one
-                        (goto-char p1)))
+    (with-temp-buffer
+      (insert (pubmed-get-medline pmid))
+      (goto-char (point-min))
+      (while (re-search-forward "\\(^[A-Z]\\{2,4\\}\\)\\s-*- "
+                                nil t)
+        (setq tag (match-string 1))
+        ;; point is at end of the search
+        (setq p1 (point))
+        ;; now go to next tag
+        (re-search-forward "\\(^[A-Z]\\{2,4\\}\\)\\s-*- " nil t)
+        (setq p2 (- (match-beginning 1) 1))
+        (setq value (buffer-substring p1 p2))
+        (setq data (append data (list (cons tag value))))
+        ;; now go back to last tag to get the next one
+        (goto-char p1)))
     data))
 
 ;;** PMID to bibtex entry
@@ -115,10 +123,7 @@
   (let* ((data (pubmed-parse-medline pmid))
          (type (cdr (assoc "PT" data)))
          (title (cdr (assoc "TI" data)))
-         (authors (mapconcat 'cdr
-                             (-filter (lambda (x)
-                                        (string= (car x) "FAU"))
-                                      data)
+         (authors (mapconcat 'cdr (-filter (lambda (x) (string= (car x) "FAU")) data)
                              " and "))
          (abstract (cdr (assoc "AB" data)))
          (volume (cdr (assoc "VI" data)))
@@ -127,7 +132,6 @@
          (year (cdr (assoc "DP" data)))
          (pages (cdr (assoc "PG" data)))
          (aid (cdr (assoc "AID" data))))
-
     (cond
      ((string= type "JOURNAL ARTICLE")
       (concat "@article{,
@@ -189,15 +193,20 @@ You must clean the entry after insertion."
 
 ;; Here we define a new link. Clicking on it simply opens a webpage to the
 ;; article.
-
 (org-ref-link-set-parameters "pmcid"
-  :follow (lambda (link-string) (browse-url (format "http://www.ncbi.nlm.nih.gov/pmc/articles/%s" link-string)))
+  :follow (lambda (link-string)
+            (browse-url (format
+                         "http://www.ncbi.nlm.nih.gov/pmc/articles/%s"
+                         link-string)))
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)
-              (format "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/%s\">pmcid:%s</a>" keyword (or desc keyword)))
+              (format
+               "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/%s\">pmcid:%s</a>"
+               keyword (or desc keyword)))
              ((eq format 'latex)
-              (format "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/%s}{%s}" keyword (or desc keyword))))))
+              (format "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/%s}{%s}"
+                      keyword (or desc keyword))))))
 
 ;;* NIHMSID
 
@@ -207,16 +216,22 @@ You must clean the entry after insertion."
 ;; article. Once the Web version of the NIHMS submission is approved for
 ;; inclusion in PMC and the corresponding citation is in PubMed, the article
 ;; will also be assigned a PMCID.
-
 (org-ref-link-set-parameters "nihmsid"
-  :follow (lambda (link-string) (browse-url (format "http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s" link-string)))
+  :follow (lambda (link-string)
+            (browse-url (format
+                         "http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s"
+                         link-string)))
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)
-              (format "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/mid//%s\">nihmsid:%s</a>" keyword (or desc keyword)))
+              (format
+               "<a href=\"http://www.ncbi.nlm.nih.gov/pmc/articles/mid//%s\">nihmsid:%s</a>"
+               keyword (or desc keyword)))
              ((eq format 'latex)
               ;; write out the latex command
-              (format "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s}{%s}" keyword (or desc keyword))))))
+              (format
+               "\\url{http://www.ncbi.nlm.nih.gov/pmc/articles/mid/%s}{%s}"
+               keyword (or desc keyword))))))
 
 
 ;;* Searching pubmed
@@ -240,7 +255,8 @@ You must clean the entry after insertion."
   "Open QUERY in Pubmed in a browser."
   (interactive "sQuery: ")
   (browse-url
-   (format "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s" (url-hexify-string query))))
+   (format "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s"
+           (url-hexify-string query))))
 
 
 (org-ref-link-set-parameters "pubmed-search"
@@ -248,12 +264,16 @@ You must clean the entry after insertion."
             "Open QUERY in a `pubmed-simple-search'."
             (pubmed-simple-search query))
   :export (lambda (query desc format)
-            (let ((url (format "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s" (url-hexify-string query))))
+            (let ((url (format "http://www.ncbi.nlm.nih.gov/pubmed/?term=%s"
+                               (url-hexify-string query))))
               (cond
                ((eq format 'html)
-                (format "<a href=\"%s\">%s</a>" url (or desc (concat "pubmed-search:" query))))
+                (format "<a href=\"%s\">%s</a>" url
+                        (or desc (concat "pubmed-search:" query))))
                ((eq format 'latex)
-                (format "\\href{%s}{%s}" url (or desc (concat "pubmed-search:" query))))))))
+                (format "\\href{%s}{%s}" url
+                        (or desc (concat "pubmed-search:" query))))))))
 
 (provide 'org-ref-pubmed)
+
 ;;; org-ref-pubmed.el ends here

@@ -29,8 +29,8 @@
 
 (defvar url-http-end-of-headers)
 
-;;* ISBN utility
 
+;;* ISBN utility
 (defcustom org-ref-isbn-clean-bibtex-entry-hook
   '(oricb-remove-enclosing-brackets
     oricb-clean-author-field
@@ -111,12 +111,13 @@ See functions in `org-ref-isbn-clean-bibtex-entry-hook'."
   (interactive)
   (bibtex-beginning-of-entry)
   (mapc (lambda (x)
-	  (save-restriction
-	    (save-excursion
-	      (funcall x))))
-	org-ref-isbn-clean-bibtex-entry-hook))
+          (save-restriction
+            (save-excursion
+              (funcall x))))
+        org-ref-isbn-clean-bibtex-entry-hook))
 
-;; I found this on the web. It can be handy, but the bibtex entry has a lot of stuff in it.
+;; I found this on the web. It can be handy, but the bibtex entry has a lot of
+;; stuff in it.
 
 ;;;###autoload
 (defun isbn-to-bibtex-lead (isbn)
@@ -139,28 +140,25 @@ Nothing happens if an entry with the generated key already exists
 in the file. Data comes from worldcat."
   (interactive
    (list
-    (read-string
-     "ISBN: "
-     ;; now set initial input
-     (cond
-      ;; If region is active and it starts with a number, we use it
-      ((and  (region-active-p)
-             (s-match "^[0-9]" (buffer-substring (region-beginning) (region-end))))
-       (buffer-substring (region-beginning) (region-end)))
-      ;; if first entry in kill ring starts with a number assume it is an isbn
-      ;; and use it as the guess
-      ((stringp (car kill-ring))
-       (when (s-match "^[0-9]" (car kill-ring))
-	 (car kill-ring)))
-      ;; type or paste it in
-      (t
-       nil)))
-    (completing-read
-     "Bibfile: "
-     (append (f-entries "." (lambda (f) (f-ext? f "bib")))
-	     ;; Convert relative path to absolute path
-	     (list (file-truename (car org-ref-default-bibliography)))))))
-
+    (read-string "ISBN: "
+                 ;; now set initial input
+                 (cond
+                  ;; If region is active and it starts with a number, we use it
+                  ((and  (region-active-p)
+                         (s-match "^[0-9]" (buffer-substring (region-beginning)
+                                                             (region-end))))
+                   (buffer-substring (region-beginning) (region-end)))
+                  ;; if first entry in kill ring starts with a number assume it
+                  ;; is an isbn and use it as the guess
+                  ((stringp (car kill-ring))
+                   (when (s-match "^[0-9]" (car kill-ring))
+                     (car kill-ring)))
+                  ;; type or paste it in
+                  (t
+                   nil)))
+    (completing-read "Bibfile: "
+                     (append (f-entries "." (lambda (f) (f-ext? f "bib")))
+                             (list (file-truename (car org-ref-default-bibliography)))))))
   (let* ((results (with-current-buffer
                       (url-retrieve-synchronously
                        (format
@@ -175,24 +173,23 @@ in the file. Data comes from worldcat."
     ;; check if we got something
     (unless (string= "ok" status)
       (error "Status is %s" status))
-
     (setq metadata (aref  (cdr (assoc 'list results)) 0))
-
     ;; construct an alphabetically sorted bibtex entry. I assume ISBN numbers go
     ;; with book entries.
     (setq new-entry
           (concat "\n@book{,\n"
                   (mapconcat
                    'identity
-                   (cl-loop for field in (-sort 'string-lessp (mapcar 'car metadata))
+                   (cl-loop for field in (-sort 'string-lessp
+                                                (mapcar 'car metadata))
                             collect
-                            (format "  %s={%s}," field (cdr (assoc field metadata))))
+                            (format "  %s={%s},"
+                                    field (cdr (assoc field metadata))))
                    "\n")
                   "\n}\n"))
-
     ;; build entry in temp buffer to get the key so we can check for duplicates
     (setq new-entry (with-temp-buffer
-		      (insert (decode-coding-string new-entry 'utf-8))
+                      (insert (decode-coding-string new-entry 'utf-8))
                       (s-trim  (buffer-string))))
     (find-file bibfile)
     (goto-char (point-max))
@@ -203,4 +200,5 @@ in the file. Data comes from worldcat."
     (save-buffer)))
 
 (provide 'org-ref-isbn)
+
 ;;; org-ref-isbn.el ends here

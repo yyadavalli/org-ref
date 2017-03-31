@@ -44,31 +44,17 @@ You need to set this in your init files.  Get a key here:
 http://dev.elsevier.com/myapikey.html.")
 
 
-;; (defun scopus-doi-to-xml (doi)
-;;   "Return a parsed xml from the Scopus article retrieval api for DOI.
-;; This does not always seem to work for the most recent DOIs."
-;;   (let* ((url-request-method "GET")
-;;	 (url-request-extra-headers  (list (cons "X-ELS-APIKey" *scopus-api-key*)))
-;;	 (url (format  "http://api.elsevier.com/content/article/doi/%s" doi))
-;;	 (xml))
-;;     (setq xml
-;;	  (with-current-buffer  (url-retrieve-synchronously url)
-;;	    (xml-parse-region url-http-end-of-headers (point-max))))
-;;     (if (eq 'service-error (caar xml))
-;;	(progn (message-box "%s\n%s\n%s" doi url xml)
-;;	       nil)
-;;       xml)))
-
 (defun scopus-doi-to-eid (doi)
   "Get a Scopus eid from a DOI.
 Requires `*scopus-api-key*' to be defined."
   (unless *scopus-api-key* (error "You must define `*scopus-api-key*'"))
   (let* ((url-request-method "GET")
          (url-mime-accept-string "application/xml")
-         (url-request-extra-headers  (list (cons "X-ELS-APIKey" *scopus-api-key*)
-                                           '("field" . "eid")))
+         (url-request-extra-headers (list (cons "X-ELS-APIKey" *scopus-api-key*)
+                                          '("field" . "eid")))
          (url (format  "http://api.elsevier.com/content/search/scopus?query=doi(%s)" doi))
-         (xml (with-current-buffer  (url-retrieve-synchronously url)
+         (xml (with-current-buffer
+                  (url-retrieve-synchronously url)
                 (xml-parse-region url-http-end-of-headers (point-max))))
          (results (car xml))
          (entry (car (xml-get-children results 'entry))))
@@ -81,7 +67,9 @@ Requires `*scopus-api-key*' to be defined."
   (interactive)
   (unless *scopus-api-key* (error "You must define `*scopus-api-key*'"))
   (let ((eid (scopus-doi-to-eid doi)))
-    (when eid (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=key&zone=relatedDocuments" eid))))
+    (when eid
+      (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=key&zone=relatedDocuments"
+              eid))))
 
 
 ;;;###autoload
@@ -90,7 +78,9 @@ Requires `*scopus-api-key*' to be defined."
   (interactive)
   (unless *scopus-api-key* (error "You must define `*scopus-api-key*'"))
   (let ((eid (scopus-doi-to-eid doi)))
-    (when eid (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=aut&zone=relatedDocuments" eid))))
+    (when eid
+      (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=aut&zone=relatedDocuments"
+              eid))))
 
 
 ;;;###autoload
@@ -99,19 +89,26 @@ Requires `*scopus-api-key*' to be defined."
   (interactive)
   (unless *scopus-api-key* (error "You must define `*scopus-api-key*'"))
   (let ((eid (scopus-doi-to-eid doi)))
-    (when eid (format "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=ref&zone=relatedDocuments" eid))))
+    (when eid
+      (format
+       "http://www.scopus.com/search/submit/mlt.url?eid=%s&src=s&all=true&origin=recordpage&method=ref&zone=relatedDocuments"
+       eid))))
 
 
 (defun scopus-citing-url (doi)
   "Return a Scopus url to articles citing DOI."
-  (format "http://www.scopus.com/results/citedbyresults.url?sort=plf-f&cite=%s&src=s&imp=t&sot=cite&sdt=a&sl=0&origin=recordpage" (scopus-doi-to-eid doi)))
+  (format
+   "http://www.scopus.com/results/citedbyresults.url?sort=plf-f&cite=%s&src=s&imp=t&sot=cite&sdt=a&sl=0&origin=recordpage"
+   (scopus-doi-to-eid doi)))
 
 
 ;;;###autoload
 (defun scopus-open-eid (eid)
   "Open article with EID in browser."
   (interactive "sEID: ")
-  (browse-url (format "http://www.scopus.com/record/display.url?eid=%s&origin=resultslist" eid)))
+  (browse-url
+   (format "http://www.scopus.com/record/display.url?eid=%s&origin=resultslist"
+           eid)))
 
 
 (defun scopus ()
@@ -126,7 +123,8 @@ Requires `*scopus-api-key*' to be defined."
   (browse-url
    (format
     "http://www.scopus.com/results/results.url?sort=plf-f&src=s&sot=b&sdt=b&sl=%s&s=TITLE-ABS-KEY%%28%s%%29&origin=searchbasic"
-    (length (url-unhex-string (concat "TITLE-ABS-KEY%28" (url-hexify-string query) "%29")))
+    (length (url-unhex-string (concat "TITLE-ABS-KEY%28"
+                                      (url-hexify-string query) "%29")))
     (url-hexify-string query))))
 
 
@@ -167,10 +165,13 @@ Requires `*scopus-api-key*' to be defined."
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)
-              (format "<a href=\" http://www.scopus.com/record/display.url?eid=%s&origin=resultslist\">%s</a>" keyword (or desc keyword)))
+              (format
+               "<a href=\"http://www.scopus.com/record/display.url?eid=%s&origin=resultslist\">%s</a>"
+               keyword (or desc keyword)))
              ((eq format 'latex)
-              (format "\\href{http://www.scopus.com/record/display.url?eid=%s&origin=resultslist}{%s}"
-                      keyword (or desc keyword))))))
+              (format
+               "\\href{http://www.scopus.com/record/display.url?eid=%s&origin=resultslist}{%s}"
+               keyword (or desc keyword))))))
 
 
 (org-ref-link-set-parameters "scopus-search"
@@ -202,8 +203,7 @@ Requires `*scopus-api-key*' to be defined."
                 (format "\\href{%s}{%s}" url (or desc query)))))))
 
 (org-ref-link-set-parameters "scopusid"
-  :follow (lambda
-            (link-string)
+  :follow (lambda (link-string)
             (browse-url
              (format
               "http://www.scopus.com/authid/detail.url?origin=AuthorProfile&authorId=%s"
@@ -216,7 +216,6 @@ Requires `*scopus-api-key*' to be defined."
              ((eq format 'html)
               (format "<a href=\"http://www.scopus.com/authid/detail.url?origin=AuthorProfile&authorId=%s\">%s</a>"
                       keyword (or desc (concat "scopusid:" keyword)))))))
-
 
 (provide 'org-ref-scopus)
 ;;; org-ref-scopus.el ends here

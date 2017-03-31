@@ -50,11 +50,13 @@
   :export (lambda (keyword desc format)
             (cond
              ((eq format 'html)
-              (format  "<a href=\"http://arxiv.org/abs/%s\">arxiv:%s</a>"
+              (format "<a href=\"http://arxiv.org/abs/%s\">arxiv:%s</a>"
                        keyword  (or desc keyword)))
              ((eq format 'latex)
               ;; write out the latex command
-              (format "\\url{http://arxiv.org/abs/%s}{%s}" keyword (or desc keyword))))))
+              (format "\\url{http://arxiv.org/abs/%s}{%s}"
+                      keyword (or desc keyword))))))
+
 
 ;;* Getting a bibtex entry for an arXiv article using remote service:
 ;; For an arxiv article, there is a link to a NASA ADS page like this:
@@ -64,14 +66,12 @@
 ;;
 ;; It looks like you need to get a Bibliographic code from the arxiv number to
 ;; then get the bibtex entry.
-
 (defun arxiv-get-bibliographic-code (arxiv-number)
   "Get Bibliographic code for ARXIV-NUMBER."
   (with-current-buffer
       (url-retrieve-synchronously
-       (concat
-        "http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:"
-        arxiv-number))
+       (concat "http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:"
+               arxiv-number))
     (search-forward-regexp "name=\\\"bibcode\\\" value=\\\"\\(.*\\)\\\"")
     (match-string 1)))
 
@@ -88,12 +88,13 @@
         (progn
           (forward-line)
           (buffer-substring (point) (point-max)))
-      (error "Did not get one entry: %s" (buffer-substring (point) (point-max))))))
+      (error "Did not get one entry: %s"
+             (buffer-substring (point) (point-max))))))
+
 
 ;;* Getting a bibtex entry for an arXiv article using arXiv API:
 ;; Retrieves the meta data of an article view arXiv's http API,
 ;; extracts the necessary information, and formats a new BibTeX entry.
-
 (defvar arxiv-entry-format-string "@article{%s,
   journal = {CoRR},
   title = {%s},
@@ -112,7 +113,8 @@
   "Retrieve meta data for ARXIV-NUMBER.
 Returns a formatted BibTeX entry."
   (with-current-buffer
-      (url-retrieve-synchronously (format "http://export.arxiv.org/api/query?id_list=%s" arxiv-number) t)
+      (url-retrieve-synchronously
+       (format "http://export.arxiv.org/api/query?id_list=%s" arxiv-number) t)
     (let* ((parse-tree (libxml-parse-xml-region
                         (progn (goto-char 0)
                                (search-forward "<?xml ")
@@ -120,26 +122,35 @@ Returns a formatted BibTeX entry."
                         (point-max)))
            (entry (assq 'entry parse-tree))
            (authors (--map (nth 2 (nth 2 it))
-                           (--filter (and (listp it) (eq (car it) 'author)) entry)))
-           (year (format-time-string "%Y" (date-to-time (nth 2 (assq 'published entry)))))
+                           (--filter (and (listp it) (eq (car it) 'author))
+                                     entry)))
+           (year
+            (format-time-string "%Y"
+                                (date-to-time (nth 2 (assq 'published entry)))))
            (title (nth 2 (assq 'title entry)))
            (names (arxiv-bibtexify-authors authors))
            (category (cdar (nth 1 (assq 'primary_category entry))))
            (abstract (s-trim (nth 2 (assq 'summary entry))))
            (url (nth 2 (assq 'id entry)))
-           (temp-bibtex (format arxiv-entry-format-string "" title names year arxiv-number category abstract url))
+           (temp-bibtex
+            (format arxiv-entry-format-string
+                    "" title names year arxiv-number category abstract url))
            (key (with-temp-buffer
                   (insert temp-bibtex)
-		  (bibtex-mode)
-		  (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
+                  (bibtex-mode)
+                  (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
                   (bibtex-generate-autokey))))
-      (format arxiv-entry-format-string key title names year arxiv-number category abstract url))))
+      (format arxiv-entry-format-string
+              key title names year arxiv-number category abstract url))))
 
 
 (defun arxiv-bibtexify-authors (authors)
   "Return names in 'SURNAME, FIRST NAME' format from AUTHORS list."
   (s-join " and "
-          (--map (concat (-last-item it) ", " (s-join " " (-remove-last 'stringp it)))
+          (--map (concat
+                  (-last-item it)
+                  ", "
+                  (s-join " " (-remove-last 'stringp it)))
                  (--map (s-split " +" it) authors))))
 
 
@@ -182,6 +193,7 @@ Returns a formatted BibTeX entry."
       (delete-file pdf)
       (message "Error downloading arxiv pdf %s" pdf-url))))
 
+
 ;;;###autoload
 (defun arxiv-get-pdf-add-bibtex-entry (arxiv-number bibfile pdfdir)
   "Add bibtex entry for ARXIV-NUMBER to BIBFILE.
@@ -198,9 +210,7 @@ key."
          (read-directory-name
           "PDF directory: "
           org-ref-pdf-directory)))
-
   (arxiv-add-bibtex-entry arxiv-number bibfile)
-
   (save-window-excursion
     (let ((key ""))
       (find-file bibfile)
@@ -214,8 +224,9 @@ key."
                        (match-end bibtex-key-in-head)))
             ;; remove potentially troublesome characters from key
             ;; as it will be used as  a filename
-            (setq key (replace-regexp-in-string   "\"\\|\\*\\|/\\|:\\|<\\|>\\|\\?\\|\\\\\\||\\|\\+\\|,\\|\\.\\|;\\|=\\|\\[\\|]\\|:\\|!\\|@"
-                                                  "" key))
+            (setq key (replace-regexp-in-string
+                       "\"\\|\\*\\|/\\|:\\|<\\|>\\|\\?\\|\\\\\\||\\|\\+\\|,\\|\\.\\|;\\|=\\|\\[\\|]\\|:\\|!\\|@"
+                       "" key))
             ;; check if the key is in the buffer
             (when (save-excursion
                     (bibtex-search-entry key))
@@ -229,5 +240,7 @@ key."
       (insert key)
       (arxiv-get-pdf arxiv-number (concat pdfdir key ".pdf")))))
 
+
 (provide 'org-ref-arxiv)
+
 ;;; org-ref-arxiv.el ends here

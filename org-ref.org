@@ -302,7 +302,6 @@ index:export!html index:export!ascii
 There is some basic support for HTML and ascii export. Not all bibtex entry types are supported, but basic support exists for articles and books. For a markdown export, the cite links are exported as Pandoc style links. During HTML export, the references get the HTML class ~org-ref-reference~, the bibliography headline has the class ~org-ref-bib-h1~ and the list of references has the class ~org-ref-bib~.
 
 * org-ref-ivy
-
 org-ref provides an alternative to reftex and helm with ivy as the backend completion engine for searching and entering citations.
 
 You can set this backend in your init file like this

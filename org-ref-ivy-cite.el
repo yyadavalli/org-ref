@@ -29,6 +29,9 @@
 (declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
 (declare-function org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
+
+(require 'cl-lib)
+(require 'hydra)
 (require 'ivy)
 (require 'org-ref-bibtex)
 (require 'org-ref-citeproc)
@@ -57,9 +60,7 @@
   (save-excursion
     (forward-char)
     (-contains? org-ref-cite-types
-                (org-element-property
-                 :type
-                 (org-element-context)))))
+                (org-element-property :type (org-element-context)))))
 
 
 (defun org-ref-looking-back-cite ()
@@ -67,9 +68,7 @@
   (save-excursion
     (forward-char -1)
     (-contains? org-ref-cite-types
-                (org-element-property
-                 :type
-                 (org-element-context)))))
+                (org-element-property :type (org-element-context)))))
 
 
 (defun org-ref-ivy-bibtex-insert-cite (entry)
@@ -94,10 +93,8 @@ of ENTRY.  ENTRY is selected from `org-ref-bibtex-candidates'."
   "Open the pdf associated with ENTRY.
 ENTRY is selected from `org-ref-bibtex-candidates'."
   (with-ivy-window
-    (let ((pdf (expand-file-name
-                (format "%s.pdf"
-                        (cdr (assoc "=key=" entry)))
-                org-ref-pdf-directory)))
+    (let ((pdf (expand-file-name (format "%s.pdf" (cdr (assoc "=key=" entry)))
+                                 org-ref-pdf-directory)))
       (if (file-exists-p pdf)
           (org-open-file pdf)
         (message "No pdf found for %s" (cdr (assoc "=key=" entry)))))))
@@ -107,10 +104,8 @@ ENTRY is selected from `org-ref-bibtex-candidates'."
   "Open the notes associated with ENTRY.
 ENTRY is selected from `org-ref-bibtex-candidates'."
   (with-ivy-window
-    (find-file (expand-file-name
-                (format "%s.org"
-                        (cdr (assoc "=key=" entry)))
-                org-ref-notes-directory))))
+    (find-file (expand-file-name (format "%s.org" (cdr (assoc "=key=" entry)))
+                                 org-ref-notes-directory))))
 
 
 (defun org-ref-ivy-bibtex-open-entry (entry)
@@ -177,10 +172,8 @@ Create email unless called from an email."
         (bibtex-copy-entry-as-kill))
       (insert (pop bibtex-entry-kill-ring))
       (insert "\n")
-      (let ((pdf (expand-file-name
-                  (format "%s.pdf"
-                          (cdr (assoc "=key=" entry)))
-                  org-ref-pdf-directory)))
+      (let ((pdf (expand-file-name (format "%s.pdf" (cdr (assoc "=key=" entry)))
+                                   org-ref-pdf-directory)))
         (if (file-exists-p pdf)
             (mml-attach-file pdf)))
       (when goto-to
@@ -259,7 +252,8 @@ Can be set to nil to use Ivy's default).")
   "Move ivy candidate up and update candidates."
   (interactive)
   (setf (ivy-state-collection ivy-last)
-        (org-ref-swap ivy--index (1- ivy--index) (ivy-state-collection ivy-last)))
+        (org-ref-swap ivy--index (1- ivy--index)
+                      (ivy-state-collection ivy-last)))
   (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
   (ivy--reset-state ivy-last))
 
@@ -268,7 +262,8 @@ Can be set to nil to use Ivy's default).")
   "Move ivy candidate down."
   (interactive)
   (setf (ivy-state-collection ivy-last)
-        (org-ref-swap ivy--index (1+ ivy--index) (ivy-state-collection ivy-last)))
+        (org-ref-swap ivy--index (1+ ivy--index)
+                      (ivy-state-collection ivy-last)))
   (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
   (ivy--reset-state ivy-last))
 
@@ -298,8 +293,8 @@ Can be set to nil to use Ivy's default).")
   (setf (ivy-state-preselect ivy-last) ivy--current)
   (ivy--reset-state ivy-last))
 
-;; * marking candidates
 
+;; * marking candidates
 (defun org-ref-ivy-mark-candidate ()
   "Add current candidate to `org-ref-ivy-cite-marked-candidates'.
 If candidate is already in, remove it."
@@ -348,7 +343,7 @@ If candidate is already in, remove it."
                                   (kill-visual-line)
                                   (setf (ivy-state-collection ivy-last)
                                         (org-ref-bibtex-candidates))
-                                  (setf (ivy-state-preselect ivy-last) ivy--current)
+                                  (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
                                   (ivy--reset-state ivy-last)))
     (define-key map (kbd "C-<return>")
       (lambda ()
@@ -373,7 +368,6 @@ prefix ARG is used, which uses `org-ref-default-bibliography'."
                                  org-ref-default-bibliography
                                (org-ref-find-bibliography)))
   (setq org-ref-ivy-cite-marked-candidates '())
-
   (ivy-read "Open: " (org-ref-bibtex-candidates)
             :require-match t
             :keymap org-ref-ivy-cite-keymap
@@ -390,11 +384,10 @@ prefix ARG is used, which uses `org-ref-default-bibliography'."
                       (insert s)
                       (fill-paragraph)
                       (buffer-string))))
-    (if (-contains?
-         (if (listp (car org-ref-ivy-cite-marked-candidates))
-             (mapcar 'car org-ref-ivy-cite-marked-candidates)
-           org-ref-ivy-cite-marked-candidates)
-         s)
+    (if (-contains? (if (listp (car org-ref-ivy-cite-marked-candidates))
+                        (mapcar 'car org-ref-ivy-cite-marked-candidates)
+                      org-ref-ivy-cite-marked-candidates)
+                    s)
         (propertize wrapped-s 'face 'font-lock-warning-face)
       (propertize wrapped-s 'face nil))))
 
@@ -406,9 +399,8 @@ prefix ARG is used, which uses `org-ref-default-bibliography'."
 (defun org-ref-ivy-insert-label-link ()
   "Insert a label with ivy."
   (interactive)
-  (insert
-   (concat "label:"
-           (ivy-read "label: " (org-ref-get-labels)))))
+  (insert (concat "label:"
+                  (ivy-read "label: " (org-ref-get-labels)))))
 
 
 (defun org-ref-ivy-insert-ref-link ()
@@ -423,10 +415,6 @@ Use a prefix ARG to select the ref type."
                org-ref-default-ref-type)
              ":"
              label))))
-
-
-(require 'hydra)
-(setq hydra-is-helpful t)
 
 
 (defhydra org-ref-cite-hydra (:color blue :hint nil)
@@ -501,10 +489,10 @@ a bibtex entry that matches the key in `org-ref-bibtex-candidates'. Set
             :caller 'org-ref-ivy-set-keywords
             :action (lambda (key)
                       (org-ref-set-bibtex-keywords
-                       (mapconcat
-                        'identity
-                        (or org-ref-ivy-cite-marked-candidates (list key))
-                        ", ")))))
+                       (mapconcat 'identity
+                                  (or org-ref-ivy-cite-marked-candidates
+                                      (list key))
+                                  ", ")))))
 
 (ivy-set-display-transformer
  'org-ref-ivy-set-keywords

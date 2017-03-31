@@ -40,7 +40,6 @@
 (declare-function 'org-ref-get-bibtex-key-and-file "org-ref-core.el")
 (declare-function 'org-ref-find-bibliography "org-ref-core.el")
 (declare-function 'org-ref-key-in-file-p "org-ref-core.el")
-(declare-function 'org-ref-bib-citation "org-ref-core.el")
 (declare-function 'org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
 (require 'org-ref-doi-utils)
@@ -105,27 +104,26 @@ a misc entry, with a prompt for a key."
          ((> (length dois) 1)
           (ivy-read
            "Select a DOI"
-           `(candidates .
-                        ,(let ((dois '()))
-                           (with-current-buffer (url-retrieve-synchronously url)
-                             (cl-loop for doi-pattern in org-ref-doi-regexps
-                                      do
-                                      (goto-char (point-min))
-                                      (while (re-search-forward doi-pattern nil t)
-                                        (cl-pushnew
-                                         ;; Cut off the doi, sometimes
-                                         ;; false matches are long.
-                                         (cons (format "%40s | %s"
-                                                       (substring
-                                                        (match-string 1)
-                                                        0 (min
-                                                           (length (match-string 1))
-                                                           40))
-                                                       doi-pattern)
-                                               (match-string 1))
-                                         dois
-                                         :test #'equal)))
-                             (reverse dois))))
+           `(candidates . ,(let ((dois '()))
+                             (with-current-buffer (url-retrieve-synchronously url)
+                               (cl-loop for doi-pattern in org-ref-doi-regexps
+                                        do
+                                        (goto-char (point-min))
+                                        (while (re-search-forward doi-pattern nil t)
+                                          (cl-pushnew
+                                           ;; Cut off the doi, sometimes
+                                           ;; false matches are long.
+                                           (cons (format "%40s | %s"
+                                                         (substring
+                                                          (match-string 1)
+                                                          0 (min
+                                                             (length (match-string 1))
+                                                             40))
+                                                         doi-pattern)
+                                                 (match-string 1))
+                                           dois
+                                           :test #'equal)))
+                               (reverse dois))))
            :action 'org-ref-doi-utils-add-bibtex-entry-from-doi)
           action)
          ;; No DOIs found, add a misc entry.
@@ -252,7 +250,6 @@ not perfect, and some hits are not actually DOIs."
 (define-key bibtex-mode-map (kbd "<M-drag-n-drop>") 'org-ref-url-dnd-all)
 (define-key bibtex-mode-map (kbd "<C-drag-n-drop>") 'org-ref-url-dnd-debug)
 (define-key bibtex-mode-map (kbd "<s-drag-n-drop>") 'org-ref-url-dnd-first)
-
 
 (provide 'org-ref-url-utils)
 

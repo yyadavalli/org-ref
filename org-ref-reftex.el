@@ -59,10 +59,6 @@
         org-ref-cite-onclick-function 'org-ref-cite-onclick-minibuffer-menu)
   (message "reftex completion in org-ref loaded."))
 
-(org-ref-reftex-completion)
-(define-key org-mode-map
-  (kbd org-ref-insert-cite-key)
-  org-ref-insert-link-function)
 
 ;; Messages in the minbuffer conflict with the minibuffer menu. So we turn them
 ;; off.
@@ -84,8 +80,8 @@
   '(progn
      (add-to-list 'reftex-cite-format-builtin
                   '(org "Org-mode citation"
-                        ((?\C-m . "cite:%l")     ; default
-                         (?d . ",%l")            ; for appending
+                        ((?\C-m . "cite:%l") ; default
+                         (?d . ",%l")        ; for appending
                          (?a . "autocite:%l")
                          (?t . "citet:%l")
                          (?T . "citet*:%l")
@@ -107,41 +103,34 @@ arg (ALTERNATIVE-CITE) to get a menu of citation types."
   (org-ref-find-bibliography)
   (let* ((object (org-element-context))
          (link-string-end (org-element-property :end object)))
-
     (if (not alternative-cite)
-
         (cond
          ;; case where we are in a link
          ((and (equal (org-element-type object) 'link)
                (-contains? org-ref-cite-types
-			   (org-element-property :type object)))
+                           (org-element-property :type object)))
           (goto-char link-string-end)
           ;; sometimes there are spaces at the end of the link
           ;; this code moves point pack until no spaces are there
           (skip-chars-backward " ")
-          (insert (concat "," (mapconcat
-			       'identity
-			       (reftex-citation t ?a) ","))))
-
+          (insert (concat "," (mapconcat 'identity
+                                         (reftex-citation t ?a) ","))))
          ;; We are next to a link, and we want to append
          ((save-excursion
             (backward-char)
             (and (equal (org-element-type (org-element-context)) 'link)
                  (-contains? org-ref-cite-types
                              (org-element-property
-			      :type (org-element-context)))))
+                              :type (org-element-context)))))
           (skip-chars-backward " ")
-          (insert (concat "," (mapconcat
-			       'identity
-			       (reftex-citation t ?a) ","))))
-
+          (insert (concat "," (mapconcat 'identity
+                                         (reftex-citation t ?a) ","))))
          ;; insert fresh link
          (t
           (insert
            (concat org-ref-default-citation-link
                    ":"
                    (mapconcat 'identity (reftex-citation t) ",")))))
-
       ;; you pressed a C-u so we run this code
       (reftex-citation))))
 
@@ -154,7 +143,6 @@ arg (ALTERNATIVE-CITE) to get a menu of citation types."
   (if  org-ref-bibliography-notes
       (find-file-other-window org-ref-bibliography-notes)
     (error "Org-ref-bib-bibliography-notes is not set to anything"))
-
   (org-open-link-from-string
    (format "[[#%s]]" (car (reftex-citation t))))
   (funcall org-ref-open-notes-function))
@@ -187,68 +175,41 @@ get a lot of options.  LINK-STRING is used by the link function."
                   ;; I like this better than bibtex-url which does not always find
                   ;; the urls
                   (bibtex-autokey-get-field "doi")))))
-
     (when (string= "" doi) (setq doi nil))
     (when (string= "" url) (setq url nil))
     (setq org-ref-cite-menu-funcs '())
-
     ;; open action
-    (when
-        bibfile
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("o" "pen" org-ref-open-citation-at-point)))
-
+    (when bibfile
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("o" "pen" org-ref-open-citation-at-point)))
     ;; pdf
     (when (file-exists-p pdf-file)
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       `("p" "df" ,org-ref-open-pdf-function) t))
-
+      (add-to-list 'org-ref-cite-menu-funcs
+                   `("p" "df" ,org-ref-open-pdf-function) t))
     ;; notes
-    (add-to-list
-     'org-ref-cite-menu-funcs
-     '("n" "otes" org-ref-open-notes-at-point) t)
-
+    (add-to-list 'org-ref-cite-menu-funcs
+                 '("n" "otes" org-ref-open-notes-at-point) t)
     ;; url
     (when (or url doi)
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("u" "rl" org-ref-open-url-at-point) t))
-
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("u" "rl" org-ref-open-url-at-point) t))
     ;; doi funcs
     (when doi
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("w" "os" org-ref-wos-at-point) t)
-
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("c" "iting" org-ref-wos-citing-at-point) t)
-
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("r" "elated" org-ref-wos-related-at-point) t)
-
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("g" "oogle scholar" org-ref-google-scholar-at-point) t)
-
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       '("P" "ubmed" org-ref-pubmed-at-point) t))
-
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("w" "os" org-ref-wos-at-point) t)
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("c" "iting" org-ref-wos-citing-at-point) t)
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("r" "elated" org-ref-wos-related-at-point) t)
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("g" "oogle scholar" org-ref-google-scholar-at-point) t)
+      (add-to-list 'org-ref-cite-menu-funcs
+                   '("P" "ubmed" org-ref-pubmed-at-point) t))
     ;; add user functions
     (dolist (tup org-ref-user-cite-menu-funcs)
-      (add-to-list
-       'org-ref-cite-menu-funcs
-       tup t))
-
+      (add-to-list 'org-ref-cite-menu-funcs tup t))
     ;; finally quit
-    (add-to-list
-     'org-ref-cite-menu-funcs
-     '("q" "uit" (lambda ())) t)
-
+    (add-to-list 'org-ref-cite-menu-funcs '("q" "uit" (lambda ())) t)
     ;; now we make a menu
     ;; construct menu string as a message
     (message
@@ -263,15 +224,11 @@ get a lot of options.  LINK-STRING is used by the link function."
             (bibtex-search-entry key)
             (org-ref-bib-citation))))
       "\n"
-      (mapconcat
-       (lambda (tup)
-         (concat "[" (elt tup 0) "]"
-                 (elt tup 1) " "))
-       org-ref-cite-menu-funcs "")))
+      (mapconcat (lambda (tup) (concat "[" (elt tup 0) "]" (elt tup 1) " "))
+                 org-ref-cite-menu-funcs "")))
     ;; get the input
     (let* ((input (read-char-exclusive))
-           (choice (assoc
-                    (char-to-string input) org-ref-cite-menu-funcs)))
+           (choice (assoc (char-to-string input) org-ref-cite-menu-funcs)))
       ;; now run the function (2nd element in choice)
       (when choice
         (funcall

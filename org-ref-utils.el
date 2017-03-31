@@ -704,8 +704,7 @@ If SORT is non-nil the bibliography is alphabetically sorted."
 (defun org-ref-get-bibtex-entry-org (key)
   "Return an org string for the bibliography entry corresponding to KEY."
   (let ((org-ref-bibliography-files (org-ref-find-bibliography))
-	file entry)
-
+        file entry)
     (setq file (catch 'result
                  (cl-loop for file in org-ref-bibliography-files do
                           (if (org-ref-key-in-file-p key (file-truename file))
@@ -726,11 +725,11 @@ If SORT is non-nil the bibliography is alphabetically sorted."
 (org-ref-reftex-get-bib-field "title" entry)
 (concat "   :CUSTOM_ID: " (org-ref-reftex-get-bib-field "=key=" entry) "\n"
         (mapconcat
-	 (lambda (element) (format "   :%s: %s"
-				   (upcase (car element))
-				   (cdr element)))
-	 entry
-	 "\n"))))))
+         (lambda (element) (format "   :%s: %s"
+                                   (upcase (car element))
+                                   (cdr element)))
+         entry
+         "\n"))))))
 
 
 (defun org-ref-get-org-bibliography (&optional sort)

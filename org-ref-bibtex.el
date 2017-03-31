@@ -50,8 +50,6 @@
 ;; org-ref-bibtex-hydra/body gives a hydra menu to a lot of useful functions.
 ;; org-ref-bibtex-new-entry/body gives a hydra menu to add new bibtex entries.
 ;; org-ref-bibtex-file/body gives a hydra menu of actions for the bibtex file
-;;
-;; org-ref-bibtex :: a deprecated menu of actions
 
 ;;; Code:
 (require 'bibtex)
@@ -157,12 +155,107 @@ Find new abbreviations at http://cassi.cas.org/search.jsp.")
 
 (defcustom org-ref-bibtex-assoc-pdf-with-entry-move-function 'rename-file
   "Function to use when associating pdf files with bibtex entries.
-The value should be either `rename-file' or `copy-file'. The former
-will move and rename the original file. The latter will leave the
-original file in place while creating a renamed copy in
-`org-ref-pdf-directory'."
+The value should be either `rename-file' or `copy-file'. The former will move
+and rename the original file. The latter will leave the original file in place
+while creating a renamed copy in `org-ref-pdf-directory'."
   :type 'function
   :group 'org-ref-bibtex)
+
+;;* Journal abbreviations
+(defvar org-ref-bibtex-journal-abbreviations
+  '()
+  "List of (string journal-full-name journal-abbreviation).
+Find new abbreviations at http://cassi.cas.org/search.jsp.")
+
+;;* Title case transformations
+(defvar org-ref-lower-case-words
+  '("a" "an" "on" "and" "for" "the" "of" "in")
+  "List of words to keep lowercase when changing case in a title.")
+
+;;* Non-ascii character replacement
+;; see https://github.com/fxcoudert/tools/blob/master/doi2bib for more replacements
+(defvar org-ref-nonascii-latex-replacements
+  '()
+  "Cons list of non-ascii characters and their LaTeX representations.")
+
+(setq org-ref-nonascii-latex-replacements
+      '(("í" . "{\\\\'i}")
+        ("æ" . "{\\\\ae}")
+        ("ć" . "{\\\\'c}")
+        ("é" . "{\\\\'e}")
+        ("ä" . "{\\\\\"a}")
+        ("è" . "{\\\\`e}")
+        ("à" . "{\\\\`a}")
+        ("á" . "{\\\\'a}")
+        ("ø" . "{\\\\o}")
+        ("ë" . "{\\\\\"e}")
+        ("ü" . "{\\\\\"u}")
+        ("ñ" . "{\\\\~n}")
+        ("ņ" . "{\\\\c{n}}")
+        ("ñ" . "{\\\\~n}")
+        ("å" . "{\\\\aa}")
+        ("ö" . "{\\\\\"o}")
+        ("Á" . "{\\\\'A}")
+        ("í" . "{\\\\'i}")
+        ("ó" . "{\\\\'o}")
+        ("ó" . "{\\\\'o}")
+        ("ú" . "{\\\\'u}")
+        ("ú" . "{\\\\'u}")
+        ("ý" . "{\\\\'y}")
+        ("š" . "{\\\\v{s}}")
+        ("č" . "{\\\\v{c}}")
+        ("ř" . "{\\\\v{r}}")
+        ("š" . "{\\\\v{s}}")
+        ("İ" . "{\\\\.I}")
+        ("ğ" . "{\\\\u{g}}")
+        ("δ" . "$\\\\delta$")
+        ("ç" . "{\\\\c{c}}")
+        ("ß" . "{\\\\ss}")
+        ("≤" . "$\\\\le$")
+        ("≥" . "$\\\\ge$")
+        ("<" . "$<$")
+        ("θ" . "$\\\\theta$")
+        ("μ" . "$\\\\mu$")
+        ("→" . "$\\\\rightarrow$")
+        ("⇌" . "$\\\\leftrightharpoons$")
+        ("×" . "$\\\\times$")
+        ("°" . "$\\\\deg$")
+        ("ş" . "{\\\\c{s}}")
+        ("γ" . "$\\\\gamma$")
+        ("ɣ" . "$\\\\gamma$")
+        ("º" . "degC")
+        ("η" . "$\\\\eta$")
+        ("µ" . "$\\\\mu$")
+        ("α" . "$\\\\alpha$")
+        ("β" . "$\\\\beta$")
+        ("ɛ" . "$\\\\epsilon$")
+        ("Ⅵ" . "\\textrm{VI}")
+        ("Ⅲ" . "\\textrm{III}")
+        ("Ⅴ" . "\\textrm{V}")
+        ("λ" . "$\\\\lambda$")
+        ("π" . "$\\\\pi$")
+        ("∞" . "$\\\\infty$")
+        ("χ" . "$\\\\chi$")
+        ("∼" . "\\\\textasciitilde{}")
+        ("‑" . "\\\\textemdash{}")
+        (" " . " ")
+        ("…" . "...")
+        ("•" . "\\\\textbullet ")
+        ;; I think these are non-ascii spaces. there seems to be more than one.
+        (" " . " ")
+        (" " . " ")
+        (" " . " ")
+        ("–" . "-")
+        ("−" . "-")
+        ("–" . "-")
+        ("—" . "-")
+        ("‒" . "\\\\textemdash{}")
+        ("‘" . "'")
+        ("’" . "'")
+        ("’" . "'")
+        ("“" . "\"")
+        ("’" . "'")
+        ("”" . "\"")))
 
 (setq org-ref-bibtex-journal-abbreviations
       '(("ACR" "Accounts of Chemical Research" "Acc. Chem. Res.")
@@ -451,6 +544,8 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
         ("’" . "'")
         ("”" . "\"")))
 
+=======
+>>>>>>> Clean update formatting and remove deprecated code
 
 ;;;###autoload
 (defun org-ref-replace-nonascii ()
@@ -488,7 +583,6 @@ optional, and are only there so you can use this function with
 and books."
   (interactive)
   (bibtex-beginning-of-entry)
-
   (let* ((title (bibtex-autokey-get-field "title"))
          (words (split-string title))
          (start 0))
@@ -521,13 +615,10 @@ and books."
                       (t
                        (s-capitalize word))))
                    words))
-
       ;; Check if first word should be capitalized
       (when (-contains? org-ref-lower-case-words (car words))
         (setf (car words) (s-capitalize (car words))))
-
       (setq title (mapconcat 'identity words " "))
-
       ;; Capitalize letters after a dash
       (while
           (string-match "[a-zA-Z]-\\([a-z]\\)" title start)
@@ -535,7 +626,6 @@ and books."
           (setf (substring title (match-beginning 1) (match-end 1))
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
-
       ;; this is defined in org-ref-doi-utils
       (bibtex-set-field
        "title"
@@ -561,43 +651,32 @@ so you can use this function with `bibtex-map-entries' to change
 all the title entries in articles."
   (interactive)
   (bibtex-beginning-of-entry)
-
   (let* ((title (bibtex-autokey-get-field "title"))
          (words (split-string title))
          (start 0))
-    (when
-        (string= "article"
-                 (downcase
-                  (cdr (assoc "=type="
-                              (bibtex-parse-entry)))))
+    (when (string= "article"
+                   (downcase
+                    (cdr (assoc "=type=" (bibtex-parse-entry)))))
       (setq words (mapcar
                    (lambda (word)
-                     (if
-                         ;; match words containing {} or \ which are probably
-                         ;; LaTeX or protected words
-                         (string-match "\\$\\|{\\|}\\|\\\\" word)
+                     ;; match words containing {} or \ which are probably
+                     ;; LaTeX or protected words
+                     (if (string-match "\\$\\|{\\|}\\|\\\\" word)
                          word
                        (s-downcase word)))
                    words))
-
       ;; capitalize first word
       (setf (car words) (s-capitalize (car words)))
-
       ;; join the words
       (setq title (mapconcat 'identity words " "))
-
       ;; capitalize a word after a :, eg. a subtitle, and protect it
-      (while
-          (string-match "[a-z]:\\s-+\\([A-Z]\\)" title start)
+      (while (string-match "[a-z]:\\s-+\\([A-Z]\\)" title start)
         (let ((char (substring title (match-beginning 1) (match-end 1))))
           (setf (substring title (match-beginning 1) (match-end 1))
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
-
       ;; this is defined in org-ref-doi-utils
-      (bibtex-set-field
-       "title" title)
-
+      (bibtex-set-field "title" title)
       ;; clean and refill entry so it looks nice
       (bibtex-clean-entry)
       (bibtex-fill-entry))))
@@ -626,8 +705,7 @@ forward.  Negative numbers do nothing."
 N is a prefix argument.  If it is numeric, jump that many entries back."
   (interactive "P")
   (bibtex-beginning-of-entry)
-  (when
-      (re-search-backward bibtex-entry-head nil t (and (numberp n) n))
+  (when (re-search-backward bibtex-entry-head nil t (and (numberp n) n))
     (bibtex-beginning-of-entry)))
 
 
@@ -664,8 +742,7 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
   (if (eq (org-ref-bibtex-entry-doi) "") nil
     (let ((front-url "https://doi.org/")
           (doi (org-ref-bibtex-entry-doi)))
-      (bibtex-set-field "url"
-                        (concat front-url doi)))))
+      (bibtex-set-field "url" (concat front-url doi)))))
 
 
 ;;;###autoload
@@ -753,16 +830,16 @@ name '[bibtexkey].pdf'. If the file does not exist, rename it to
   (save-excursion
     (bibtex-beginning-of-entry)
     (let* ((file (read-file-name "Select file associated with entry: "))
-	   (bibtex-expand-strings t)
+           (bibtex-expand-strings t)
            (entry (bibtex-parse-entry t))
            (key (reftex-get-bib-field "=key=" entry))
            (pdf (concat org-ref-pdf-directory (concat key ".pdf")))
-	   (file-move-func (org-ref-bibtex-get-file-move-func prefix)))
+           (file-move-func (org-ref-bibtex-get-file-move-func prefix)))
       (if (file-exists-p pdf)
-	  (message (format "A file named %s already exists" pdf))
-	(progn
-	  (funcall file-move-func file pdf)
-	  (message (format "Created file %s" pdf)))))))
+          (message (format "A file named %s already exists" pdf))
+        (progn
+          (funcall file-move-func file pdf)
+          (message (format "Created file %s" pdf)))))))
 
 
 (defun org-ref-bibtex-edit-notes (key)
@@ -811,9 +888,8 @@ This function is copied from `ivy-bibtex'."
   (interactive)
   (bibtex-beginning-of-entry)
   (bibtex-kill-entry)
-  (find-file (completing-read
-              "Bibtex file: "
-              (f-entries "." (lambda (f) (f-ext? f "bib")))))
+  (find-file (completing-read "Bibtex file: "
+                              (f-entries "." (lambda (f) (f-ext? f "bib")))))
   (goto-char (point-max))
   (bibtex-yank)
   (save-buffer)
@@ -845,7 +921,6 @@ _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
   ("u" (org-ref-doi-utils-update-bibtex-entry-from-doi
         (org-ref-bibtex-entry-doi)))
   ("U" org-ref-doi-utils-update-field)
-
   ("N" org-ref-bibtex-new-entry/body)
   ("Y" (lambda ()
          (interactive)
@@ -857,7 +932,6 @@ _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
   ("a" org-ref-bibtex-assoc-pdf-with-entry)
   ("T" org-ref-title-case-article)
   ("S" org-ref-sentence-case-article)
-
   ("y" (save-excursion
 	 (bibtex-beginning-of-entry)
 	 (when (looking-at bibtex-entry-maybe-empty-head)
@@ -880,14 +954,12 @@ _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
   ("r" org-ref-bibtex-refile-entry)
   ("A" org-ref-replace-nonascii)
   ("F" org-ref-bibtex-file/body)
-
   ("P" org-ref-bibtex-pubmed)
   ("w" org-ref-bibtex-wos)
   ("c" org-ref-bibtex-wos-citing)
   ("a" org-ref-bibtex-wos-related)
   ("R" org-ref-bibtex-crossref)
   ("g" org-ref-bibtex-google-scholar)
-
   ("q" nil))
 
 
@@ -921,68 +993,19 @@ _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
   ("p" org-ref-build-full-bibliography "PDF bibliography"))
 
 
-;;* DEPRECATED bibtex menu
-(defvar org-ref-bibtex-menu-funcs '()
-  "Functions to run in doi menu.
-Each entry is a list of (key menu-name function).  The function
-must take one argument, the doi.  This is somewhat deprecated, as
-I prefer the hydra interfaces above.")
-
-(setq org-ref-bibtex-menu-funcs
-      '(("p" "df" org-ref-bibtex-pdf)
-        ("C" "opy" (lambda (doi)
-                     (kill-new (org-ref-bib-citation))
-                     (bury-buffer)))
-        ("w" "os" org-ref-doi-utils-wos)
-        ("c" "iting articles" org-ref-doi-utils-wos-citing)
-        ("r" "elated articles" org-ref-doi-utils-wos-related)
-        ("s" "Google Scholar" org-ref-doi-utils-google-scholar)
-        ("P" "Pubmed" org-ref-doi-utils-pubmed)
-        ("f" "CrossRef" org-ref-doi-utils-crossref)))
-
-;;;###autoload
-(defun org-ref-bibtex ()
-  "Menu command to run in a bibtex entry.
-Functions from `org-ref-bibtex-menu-funcs'.  They all rely on the
-entry having a doi."
-
-  (interactive)
-  ;; construct menu string as a message
-  (message
-   (concat
-    (mapconcat
-     (lambda (tup)
-       (concat "[" (elt tup 0) "]"
-               (elt tup 1) " "))
-     org-ref-bibtex-menu-funcs "") ": "))
-  (let* ((input (read-char-exclusive))
-         (choice (assoc
-                  (char-to-string input) org-ref-bibtex-menu-funcs)))
-    (when choice
-      (funcall
-       (elt
-        choice
-        2)
-       (org-ref-bibtex-entry-doi)
-       ))))
-
-(defalias 'jb 'org-ref-bibtex)
-
-
 ;;;###autoload
 (defun org-ref-email-bibtex-entry ()
   "Email current bibtex entry at point and pdf if it exists."
   (interactive)
-
   (save-excursion
     (bibtex-beginning-of-entry)
     (let* ((key (reftex-get-bib-field "=key=" (bibtex-parse-entry t)))
-	   pdf)
+           pdf)
       ;; when we have org-ref defined we may have pdf to find.
       (when (boundp 'org-ref-pdf-directory)
-	(setq pdf (expand-file-name
-		   (concat key ".pdf")
-		   org-ref-pdf-directory)))
+        (setq pdf (expand-file-name
+                   (concat key ".pdf")
+                   org-ref-pdf-directory)))
       (bibtex-copy-entry-as-kill)
       (compose-mail)
       (message-goto-body)
@@ -991,7 +1014,7 @@ entry having a doi."
       (insert key)
       (message "%s exists %s" pdf (file-exists-p pdf))
       (when (file-exists-p pdf)
-	(mml-attach-file pdf))
+        (mml-attach-file pdf))
       (message-goto-to))))
 
 ;;* org-ref bibtex keywords
@@ -1006,8 +1029,8 @@ These are in the keywords field, and are comma or semicolon separated."
       (while (re-search-forward "^\\s-*keywords.*{\\([^}]+\\)}" nil t)
         ;; TWS - remove newlines/multiple spaces:
         (setq kstring (replace-regexp-in-string
-		       "[ \t\n]+" " "
-		       (match-string 1)))
+                       "[ \t\n]+" " "
+                       (match-string 1)))
         (mapc
          (lambda (v)
            (add-to-list 'keywords v t))
@@ -1047,10 +1070,10 @@ keywords.  Optional argument ARG prefix arg to replace keywords."
 (defun org-ref-save-all-bibtex-buffers ()
   "Save all bibtex-buffers."
   (cl-loop for buffer in (buffer-list)
-	   do
-	   (with-current-buffer buffer
-	     (when (and (buffer-file-name) (f-ext? (buffer-file-name) "bib"))
-	       (save-buffer)))))
+           do
+           (with-current-buffer buffer
+             (when (and (buffer-file-name) (f-ext? (buffer-file-name) "bib"))
+               (save-buffer)))))
 
 
 ;;* org-ref bibtex cache
@@ -1103,7 +1126,7 @@ It is an alist of (=type= . s-format-string).")
   "Clear the cache and delete `org-ref-bibtex-cache-file'."
   (interactive)
   (setq org-ref-bibtex-cache-data '((hashes . nil)
-                                 (candidates . nil)))
+                                    (candidates . nil)))
   (when (find-buffer-visiting org-ref-bibtex-cache-file)
     (kill-buffer (find-buffer-visiting org-ref-bibtex-cache-file)))
   (when (file-exists-p org-ref-bibtex-cache-file)
@@ -1252,30 +1275,30 @@ when called, it resets the cache for the BIBFILE."
   "Conditionally update cache for all files in `org-ref-bibtex-files'.
 Files that have the same hash as in the cache are not updated."
   (cl-loop for bibfile in org-ref-bibtex-files
-	   unless (string= (with-temp-buffer
-			     (insert-file-contents bibfile)
-			     (secure-hash 'sha256 (current-buffer)))
-			   (or (cdr
-				(assoc bibfile
-				       (cdr
-					(assoc 'hashes org-ref-bibtex-cache-data))))
-			       ""))
-	   do
-	   (org-ref-update-bibfile-cache bibfile)))
+           unless (string=
+                   (with-temp-buffer
+                     (insert-file-contents bibfile)
+                     (secure-hash 'sha256 (current-buffer)))
+                   (or (cdr
+                        (assoc bibfile
+                               (cdr
+                                (assoc 'hashes org-ref-bibtex-cache-data))))
+                       ""))
+           do
+           (org-ref-update-bibfile-cache bibfile)))
 
 
 (defun org-ref-describe-bibtex-cache ()
   "Show what is in the cache."
   (interactive)
   (let ((hash-cache (cdr (assoc 'hashes org-ref-bibtex-cache-data)))
-	(candidates-cache (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
+        (candidates-cache (cdr (assoc 'candidates org-ref-bibtex-cache-data))))
     (message "%s\n\n%s"
-	     (mapconcat (lambda (h)
-			  (format "%s - %s" (car h) (cdr h)))
-			hash-cache "\n")
-	     (mapconcat (lambda (c)
-			  (format "%s - %s entries" (car c) (length (cdr c))))
-			candidates-cache "\n"))))
+             (mapconcat (lambda (h) (format "%s - %s" (car h) (cdr h)))
+                        hash-cache "\n")
+             (mapconcat (lambda (c)
+                          (format "%s - %s entries" (car c) (length (cdr c))))
+                        candidates-cache "\n"))))
 
 
 (defun org-ref-bibtex-candidates ()
@@ -1337,35 +1360,31 @@ of format strings used."
   "Get a formatted string for ENTRY."
   (require 'unsrt)
   (let* ((adaptive-fill-function '(lambda () "    "))
-	 (indent-tabs-mode nil)
-	 (entry-type (downcase
-		      (cdr (assoc "=type=" entry))))
-	 (entry-styles (cdr (assoc 'entries bibliography-style)))
-	 (entry-fields
-	  (progn
-	    (if (cdr (assoc (intern entry-type) entry-styles))
-		(cdr (assoc (intern entry-type) entry-styles))
-	      (warn "%s not found. Using default." entry-type)
-	      (cdr (assoc 't entry-styles)))))
-	 (funcs (mapcar
-		 (lambda (field)
-		   (if (fboundp (intern
-				 (format "orcp-%s" field)))
-		       (intern
-			(format "orcp-%s" field))
-		     ;; No formatter found. just get the data
-		     `(lambda (entry)
-			(orcp-get-entry-field
-			 ,(symbol-name field) entry))))
-		 entry-fields)))
-
+         (indent-tabs-mode nil)
+         (entry-type (downcase
+                      (cdr (assoc "=type=" entry))))
+         (entry-styles (cdr (assoc 'entries bibliography-style)))
+         (entry-fields (progn
+                         (if (cdr (assoc (intern entry-type) entry-styles))
+                             (cdr (assoc (intern entry-type) entry-styles))
+                           (warn "%s not found. Using default." entry-type)
+                           (cdr (assoc 't entry-styles)))))
+         (funcs (mapcar
+                 (lambda (field)
+                   (if (fboundp (intern (format "orcp-%s" field)))
+                       (intern (format "orcp-%s" field))
+                     ;; No formatter found. just get the data
+                     `(lambda (entry)
+                        (orcp-get-entry-field
+                         ,(symbol-name field) entry))))
+                 entry-fields)))
     ;; this is the entry. We do this in a buffer to make it
     ;; easy to indent, fill, etc...
     (with-temp-buffer
       (insert (mapconcat (lambda (field-func)
-			   (funcall field-func entry))
-			 funcs
-			 ""))
+                           (funcall field-func entry))
+                         funcs
+                         ""))
       (buffer-string))))
 
 
@@ -1377,26 +1396,24 @@ If BIBFILE exists, append, unless you use a prefix arg, which will clobber the
 file."
   (interactive
    (list (read-file-name "Bibfile: " nil nil nil
-			 (file-name-nondirectory
-			  (concat (file-name-sans-extension
-				   (buffer-file-name))
-				  ".bib")))))
+                         (file-name-nondirectory
+                          (concat (file-name-sans-extension
+                                   (buffer-file-name))
+                                  ".bib")))))
 
   (let ((contents ""))
     (when (and (file-exists-p bibfile)
-	       (not current-prefix-arg))
+               (not current-prefix-arg))
       (setq contents (with-temp-buffer
-		       (insert-file-contents bibfile)
-		       (buffer-string))))
-
+                       (insert-file-contents bibfile)
+                       (buffer-string))))
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward "#\\+BEGIN_SRC bibtex" nil t)
-	(setq contents
-	      (concat
-	       contents
-	       (org-element-property :value (org-element-at-point))))))
-
+        (setq contents
+              (concat
+               contents
+               (org-element-property :value (org-element-at-point))))))
     (with-temp-file bibfile
       (insert contents))))
 
