@@ -2,7 +2,6 @@
 
 
 ;;; Commentary:
-;; 
 
 (require 'ert)
 (require 'lispy)
@@ -81,7 +80,7 @@ Returns the result unless an error comes up, and then it returns 'error."
 	      (concat test-string
 		      (format "(ert-deftest %s ()\n%s)\n\n"
 			      (or (nth 4 (org-babel-get-src-block-info))
-				  (format "test-%s" i)) 
+				  (format "test-%s" i))
 			      (nth 1 (org-babel-get-src-block-info))))))
       (with-temp-file fname
 	(insert test-string)
@@ -97,13 +96,12 @@ Returns the result unless an error comes up, and then it returns 'error."
 
 (defun org-ert-tangle-tests ()
   (let ((org (expand-file-name "test/all-org-test.org"
-			       (file-name-directory (locate-library "org-ref"))))
+			       (file-name-directory (locate-library "org-ref-ivy"))))
 	(el (expand-file-name "test/all-org-test.el"
-			     (file-name-directory (locate-library "org-ref")))))
+			     (file-name-directory (locate-library "org-ref-ivy")))))
   (find-file org)
   (org-ert-tangle el)))
 
 (provide 'org-ert)
 
 ;;; org-ert.el ends here
-

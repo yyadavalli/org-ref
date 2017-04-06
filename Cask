@@ -2,7 +2,7 @@
 (source melpa)
 (source org)
 
-(package-file "org-ref.el")
+(package-file "org-ref-ivy.el")
 
 (development
  (depends-on "s")

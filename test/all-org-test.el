@@ -19,7 +19,7 @@
      (org-ref-key-in-file-p "kitchin-2015-examp"
 			    (expand-file-name
 			     "tests/test-1.bib"
-			     (file-name-directory (locate-library "org-ref"))))))))
+			     (file-name-directory (locate-library "org-ref-ivy"))))))))
 
 (ert-deftest or-key-file-p-nil ()
   "Check `org-ref-key-in-file-p' for non-existent key"
@@ -28,7 +28,7 @@
     (org-ref-key-in-file-p "bad-key"
 			   (expand-file-name
 			    "tests/test-1.bib"
-			    (file-name-directory (locate-library "org-ref")))))))
+			    (file-name-directory (locate-library "org-ref-ivy")))))))
 
 (ert-deftest or-key-file ()
   "Check we find a key in a file"
@@ -37,11 +37,11 @@
     (cons "kitchin-2015-examp" (expand-file-name
 				"tests/test-1.bib"
 				(file-name-directory
-				 (locate-library "org-ref"))))
+				 (locate-library "org-ref-ivy"))))
     (let ((org-ref-default-bibliography (list (expand-file-name
 					       "tests/test-1.bib"
 					       (file-name-directory
-						(locate-library "org-ref"))))))
+						(locate-library "org-ref-ivy"))))))
       (org-ref-get-bibtex-key-and-file "kitchin-2015-examp")))))
 
 (ert-deftest swap-1 ()
@@ -66,7 +66,7 @@ bibliography:%s
 " (expand-file-name
    "tests/test-1.bib"
    (file-name-directory
-    (locate-library "org-ref"))))
+    (locate-library "org-ref-ivy"))))
    (should
     (string=
      (org-ref-link-message)
@@ -81,7 +81,7 @@ bibliography:%s
 	      (expand-file-name
 	       "tests/test-1.bib"
 	       (file-name-directory
-		(locate-library "org-ref"))))
+		(locate-library "org-ref-ivy"))))
     (should
      (string= "!!! No entry found !!!"
 	      (org-ref-link-message)))))
@@ -94,7 +94,7 @@ bibliography:%s
 " (expand-file-name
    "tests/test-1.bib"
    (file-name-directory
-    (locate-library "org-ref"))))
+    (locate-library "org-ref-ivy"))))
    (should
     (string= (org-ref-link-message)
              "Kitchin, John R., Examples of Effective Data Sharing in Scientific Publishing, ACS Catalysis, 5(6), 3894-3899 (2015). 10.1021/acscatal.5b00538"))))
@@ -107,7 +107,7 @@ bibliography:%s
 " (expand-file-name
    "tests/test-1.bib"
    (file-name-directory
-    (locate-library "org-ref"))))
+    (locate-library "org-ref-ivy"))))
     (should
      (string= "!!! No entry found !!!"
 	      (org-ref-link-message)))))
@@ -207,13 +207,13 @@ label:one
     (expand-file-name
      "tests/bibtex-pdfs/kitchin-2015.pdf"
      (file-name-directory
-      (locate-library "org-ref")))
+      (locate-library "org-ref-ivy")))
     (org-test-with-temp-text
 	"cite:kitchin-2015"
       (let ((org-ref-pdf-directory (expand-file-name
 				    "tests/bibtex-pdfs/"
 				    (file-name-directory
-				     (locate-library "org-ref")))))
+				     (locate-library "org-ref-ivy")))))
 	(org-ref-get-pdf-filename (org-ref-get-bibtex-key-under-cursor)))))))
 
 (ert-deftest or-get-key ()
@@ -249,13 +249,13 @@ label:one
     (list (expand-file-name
 	   "tests/test-1.bib"
 	   (file-name-directory
-	    (locate-library "org-ref"))))
+	    (locate-library "org-ref-ivy"))))
     (org-test-with-temp-text
 	(format "bibliography:%s"
 		(expand-file-name
 		 "tests/test-1.bib"
 		 (file-name-directory
-		  (locate-library "org-ref"))))
+		  (locate-library "org-ref-ivy"))))
       (org-ref-find-bibliography)))))
 
 (ert-deftest orfb-1a ()
@@ -266,21 +266,21 @@ label:one
       (list (expand-file-name
 	     "tests/test-1.bib"
 	     (file-name-directory
-	      (locate-library "org-ref")))
+	      (locate-library "org-ref-ivy")))
 	    (expand-file-name
 	     "tests/test-2.bib"
 	     (file-name-directory
-	      (locate-library "org-ref"))))
+	      (locate-library "org-ref-ivy"))))
       (org-test-with-temp-text
 	  (format "bibliography:%s,%s"
 		  (expand-file-name
 		   "tests/test-1.bib"
 		   (file-name-directory
-		    (locate-library "org-ref")))
+		    (locate-library "org-ref-ivy")))
 		  (expand-file-name
 		   "tests/test-2.bib"
 		   (file-name-directory
-		    (locate-library "org-ref"))))
+		    (locate-library "org-ref-ivy"))))
 	(org-ref-find-bibliography))))))
 
 (ert-deftest orfb-2 ()
@@ -290,14 +290,14 @@ label:one
     (list (expand-file-name
 	   "tests/test-1.bib"
 	   (file-name-directory
-	    (locate-library "org-ref"))))
+	    (locate-library "org-ref-ivy"))))
     (org-test-with-temp-text
 	(format "
 \\bibliography{%s}"
 		(file-name-sans-extension (expand-file-name
 					   "tests/test-1.bib"
 					   (file-name-directory
-					    (locate-library "org-ref")))))
+					    (locate-library "org-ref-ivy")))))
       (org-ref-find-bibliography)))))
 
 (ert-deftest orfb-2a ()
@@ -307,22 +307,22 @@ label:one
     (list (expand-file-name
 	   "tests/test-1.bib"
 	   (file-name-directory
-	    (locate-library "org-ref")))
+	    (locate-library "org-ref-ivy")))
 	  (expand-file-name
 	   "tests/test-2.bib"
 	   (file-name-directory
-	    (locate-library "org-ref"))))
+	    (locate-library "org-ref-ivy"))))
     (org-test-with-temp-text
 	(format "
 \\bibliography{%s,%s}"
 		(file-name-sans-extension (expand-file-name
 					   "tests/test-1.bib"
 					   (file-name-directory
-					    (locate-library "org-ref"))))
+					    (locate-library "org-ref-ivy"))))
 		(file-name-sans-extension (expand-file-name
 					   "tests/test-2.bib"
 					   (file-name-directory
-					    (locate-library "org-ref")))))
+					    (locate-library "org-ref-ivy")))))
       (org-ref-find-bibliography)))))
 
 (ert-deftest orfb-3 ()
@@ -332,14 +332,14 @@ label:one
     (list (expand-file-name
 	   "tests/test-1.bib"
 	   (file-name-directory
-	    (locate-library "org-ref"))))
+	    (locate-library "org-ref-ivy"))))
     (mapcar 'file-truename
 	    (org-test-with-temp-text
 		(format "\\addbibresource{%s}"
 			(expand-file-name
 			 "tests/test-1.bib"
 			 (file-name-directory
-			  (locate-library "org-ref"))))
+			  (locate-library "org-ref-ivy"))))
 	      (org-ref-find-bibliography))))))
 
 (ert-deftest orfb-3a ()
@@ -349,22 +349,22 @@ label:one
     (list (expand-file-name
 	   "tests/test-1.bib"
 	   (file-name-directory
-	    (locate-library "org-ref")))
+	    (locate-library "org-ref-ivy")))
 	  (expand-file-name
 	   "tests/test-2.bib"
 	   (file-name-directory
-	    (locate-library "org-ref"))))
+	    (locate-library "org-ref-ivy"))))
     (org-test-with-temp-text
 	(format "\\addbibresource{%s}
 \\addbibresource{%s}"
 		(expand-file-name
 		 "tests/test-1.bib"
 		 (file-name-directory
-		  (locate-library "org-ref")))
+		  (locate-library "org-ref-ivy")))
 		(expand-file-name
 		 "tests/test-2.bib"
 		 (file-name-directory
-		  (locate-library "org-ref"))))
+		  (locate-library "org-ref-ivy"))))
       (org-ref-find-bibliography)))))
 
 (ert-deftest orfb-4 ()
@@ -415,7 +415,7 @@ bibliography:%s
 	 (expand-file-name
 	  "tests/test-1.bib"
 	  (file-name-directory
-	   (locate-library "org-ref"))))
+	   (locate-library "org-ref-ivy"))))
       (org-ref-get-doi-at-point)))))
 
 (ert-deftest short-titles ()
@@ -727,7 +727,7 @@ date_added =	 {Sat Oct 24 10:57:22 2015},
 			(expand-file-name
 			 "tests/test-1.bib"
 			 (file-name-directory
-			  (locate-library "org-ref"))))
+			  (locate-library "org-ref-ivy"))))
 	      (org-ref-get-citation-year "kitchin-2015-examp")))))
 
 (ert-deftest clean-year-1 ()
@@ -904,7 +904,7 @@ date_added =	 {Mon Jun 1 09:11:23 2015},
 	   (insert-file-contents (expand-file-name
 				  "tests/test-1.bib"
 				  (file-name-directory
-				   (locate-library "org-ref"))))
+				   (locate-library "org-ref-ivy"))))
 	   (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
 	   (bibtex-search-entry "kitchin-2015-examp"))))))
 
@@ -915,7 +915,7 @@ date_added =	 {Mon Jun 1 09:11:23 2015},
 	   (insert-file-contents (expand-file-name
 				  "tests/test-1.bib"
 				  (file-name-directory
-				   (locate-library "org-ref"))))
+				   (locate-library "org-ref-ivy"))))
 	   (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
 	   (bibtex-search-entry "bad-key")))))
 
@@ -1162,7 +1162,7 @@ bibliography:%s
 "
 	     (expand-file-name
 	      "tests/test-1.bib"
-	      (file-name-directory (locate-library "org-ref"))))
+	      (file-name-directory (locate-library "org-ref-ivy"))))
 	    (org-test-with-temp-text
 		(format
 		 "cite:kitchin-2008-alloy,kitchin-2004-role
@@ -1171,7 +1171,7 @@ bibliography:%s
 "
 		 (expand-file-name
 		  "tests/test-1.bib"
-		  (file-name-directory (locate-library "org-ref"))))
+		  (file-name-directory (locate-library "org-ref-ivy"))))
 	      (org-ref-sort-citation-link)
 	      (buffer-string)))))
 
@@ -1335,7 +1335,7 @@ bibliography:%s
 "
 	       (expand-file-name
 		"tests/test-1.bib"
-		(file-name-directory (locate-library "org-ref"))))
+		(file-name-directory (locate-library "org-ref-ivy"))))
      (message "-------------------\n%S" (mapconcat
 					 (lambda (x)
 					   (file-name-directory (file-truename x)))
@@ -1356,7 +1356,7 @@ bibliography:%s
 bibliography:%s
 " (expand-file-name
    "tests/test-1.bib"
-   (file-name-directory (locate-library "org-ref"))))
+   (file-name-directory (locate-library "org-ref-ivy"))))
 		   (org-ref-extract-bibtex-entries)
 		   (buffer-substring-no-properties (point-min) (point-max))))))
 
@@ -1366,8 +1366,7 @@ bibliography:%s
 			    (expand-file-name
 			     "tests/test-1.bib"
 			     (file-name-directory
-			      (locate-library
-			       "org-ref"))))))
+			      (locate-library "org-ref-ivy"))))))
      (string= "/Users/jkitchin/Dropbox/bibliography/bibtex-pdfs/abild-pedersen-2007-scalin-proper.pdf"
 	      (org-test-with-temp-text
 		  bibstring

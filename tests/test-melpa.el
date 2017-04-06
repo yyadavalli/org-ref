@@ -8,7 +8,7 @@
 
 (package-initialize)
 
-(require 'org-ref)
+(require 'org-ref-ivy)
 (require 'org-ref-latex)
 (require 'org-ref-pdf)
 (require 'org-ref-url-utils)

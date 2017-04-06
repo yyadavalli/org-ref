@@ -36,7 +36,7 @@
 	       (file-name-directory
 		(or load-file-name (buffer-file-name))))))
 
-(require 'org-ref)
+(require 'org-ref-ivy)
 
 
 (message "done")

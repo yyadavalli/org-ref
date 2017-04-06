@@ -2,21 +2,20 @@
 #+TITLE: org-ref: citations, cross-references, indexes, glossaries and bibtex utilities for org-mode
 
 #+BEGIN_HTML
-<a href="https://travis-ci.org/jkitchin/org-ref"><img src="https://travis-ci.org/jkitchin/org-ref.svg?branch=master"></a>
-<a href='https://coveralls.io/github/jkitchin/org-ref?branch=master'><img src='https://coveralls.io/repos/github/jkitchin/org-ref/badge.svg?branch=master' alt='Coverage Status' /></a>
-<a href="https://melpa.org/#/org-ref"><img alt="MELPA" src="https://melpa.org/packages/org-ref-badge.svg"/></a>
-<a href="http://stable.melpa.org/#/org-ref"><img alt="MELPA Stable" src="http://stable.melpa.org/packages/org-ref-badge.svg"/></a>
+<a href="https://travis-ci.org/yyadavalli/org-ref-ivy">
+  <img src="https://travis-ci.org/yyadavalli/org-ref-ivy.svg?branch=master">
+</a>
 #+END_HTML
 
-
+*This an ivy-focused fork of [[https://github.com/jkitchin/org-ref][org-ref]].*
 
 Introduction to org-ref on [[https://www.youtube.com/watch?v=2t925KRBbFc][YouTube]].
+
 #+BEGIN_HTML
 <a href="https://www.youtube.com/watch?v=2t925KRBbFc">
 <img src="http://img.youtube.com/vi/2t925KRBbFc/0.jpg">
 </a>
 #+END_HTML
-
 
 * Screenshots
 
@@ -35,7 +34,6 @@ Here is an example of a menu of actions you get when you click on a cite link.
 org-ref can analyze your org-file and tell you about it, for example if there are bad citations, multiply defined labels, bad reference links, missing bibliography files, etc... You can select each one and it will jump to the location to help you fix it.
 
 [[./screenshots/org-ref-analysis.png]]
-
 
 * Installation
 

@@ -4,9 +4,9 @@
 
 ;; Author: John Kitchin <jkitchin@andrew.cmu.edu>
 ;; URL: https://github.com/jkitchin/org-ref
-;; Version: 0.8.1
+;; Version: 1.0.0
 ;; Keywords: org-mode, cite, ref, label
-;; Package-Requires: ((dash "2.11.0") (ivy "0.8.0") (hydra "0.13.2") (key-chord "0") (s "1.10.0") (f "0.18.0") (parsebib "0")  (emacs "24.4"))
+;; Package-Requires: ((dash "2.11.0") (ivy "0.8.0") (hydra "0.13.2") (s "1.10.0") (f "0.18.0") (parsebib "0")  (emacs "24.4"))
 
 ;; This file is not currently part of GNU Emacs.
 
@@ -24,17 +24,16 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
 ;;
+;; Lisp code to setup bibliography, cite, ref and label org-mode links.
+;; Also sets up reftex and ivy for org-mode citations.  The links are
+;; clickable and do things that are useful.
+
+;; You should really read org-ref.org in this package for details.
 
 ;;; Code:
-(defvar org-ref-completion-library)
-
-(setq org-ref-completion-library 'org-ref-ivy-cite)
-
-(require 'org-ref-ivy-cite)
-
-(org-ref-ivy-cite-completion)
+(require 'org-ref-core)
+(require org-ref-completion-library)
 
 (provide 'org-ref-ivy)
 
