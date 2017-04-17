@@ -257,7 +257,7 @@ Can be set to nil to use Ivy's default).")
   (setf (ivy-state-collection ivy-last)
         (org-ref-swap ivy--index (1- ivy--index)
                       (ivy-state-collection ivy-last)))
-  (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
+  (setf (ivy-state-preselect ivy-last) (ivy-state-current ivy-last))
   (ivy--reset-state ivy-last))
 
 
@@ -267,7 +267,7 @@ Can be set to nil to use Ivy's default).")
   (setf (ivy-state-collection ivy-last)
         (org-ref-swap ivy--index (1+ ivy--index)
                       (ivy-state-collection ivy-last)))
-  (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
+  (setf (ivy-state-preselect ivy-last) (ivy-state-current ivy-last))
   (ivy--reset-state ivy-last))
 
 
@@ -280,7 +280,7 @@ Can be set to nil to use Ivy's default).")
                    (let ((y1 (string-to-number (or (cdr (assoc "year" a)) "0")))
                          (y2 (string-to-number (or (cdr (assoc "year" b)) "0"))))
                      (< y1 y2)))))
-  (setf (ivy-state-preselect ivy-last) ivy--current)
+  (setf (ivy-state-preselect ivy-last) (ivy-state-current ivy-last))
   (ivy--reset-state ivy-last))
 
 
@@ -293,7 +293,7 @@ Can be set to nil to use Ivy's default).")
                    (let ((y1 (string-to-number (or (cdr (assoc "year" a)) "0")))
                          (y2 (string-to-number (or (cdr (assoc "year" b)) "0"))))
                      (> y1 y2)))))
-  (setf (ivy-state-preselect ivy-last) ivy--current)
+  (setf (ivy-state-preselect ivy-last) (ivy-state-current ivy-last))
   (ivy--reset-state ivy-last))
 
 
@@ -302,8 +302,9 @@ Can be set to nil to use Ivy's default).")
   "Add current candidate to `org-ref-ivy-cite-marked-candidates'.
 If candidate is already in, remove it."
   (interactive)
-  (let ((cand (or (assoc ivy--current (ivy-state-collection ivy-last))
-                  ivy--current)))
+  (let ((cand (or (assoc (ivy-state-current ivy-last)
+                         (ivy-state-collection ivy-last))
+                  (ivy-state-current ivy-last))))
     (if (-contains? org-ref-ivy-cite-marked-candidates cand)
         ;; remove it from the marked list
         (setq org-ref-ivy-cite-marked-candidates
@@ -318,8 +319,8 @@ If candidate is already in, remove it."
   "Show marked candidates."
   (interactive)
   (setf (ivy-state-collection ivy-last) org-ref-ivy-cite-marked-candidates)
-  (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
-  (ivy--reset-state ivy-last))
+  (setf (ivy-state-preselect ivy-last) (ivy-state-current ivy-last))
+  (ivy--reset-state ivy-last) ivy-last)
 
 
 (defun org-ref-ivy-show-all ()
@@ -346,7 +347,8 @@ If candidate is already in, remove it."
                                   (kill-visual-line)
                                   (setf (ivy-state-collection ivy-last)
                                         (org-ref-bibtex-candidates))
-                                  (setf (ivy-state-preselect ivy-last) (org-ref-ivy-current))
+                                  (setf (ivy-state-preselect ivy-last)
+                                        (ivy-state-current ivy-last))
                                   (ivy--reset-state ivy-last)))
     (define-key map (kbd "C-<return>")
       (lambda ()
