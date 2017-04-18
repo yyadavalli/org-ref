@@ -3,7 +3,12 @@
 
 #+BEGIN_HTML
 <a href="https://travis-ci.org/yyadavalli/org-ref-ivy">
-  <img src="https://travis-ci.org/yyadavalli/org-ref-ivy.svg?branch=master">
+  <img src="https://travis-ci.org/yyadavalli/org-ref-ivy.svg?branch=master"
+   alt="Build Status">
+</a>
+<a href="https://coveralls.io/github/yyadavalli/org-ref-ivy">
+  <img src="https://coveralls.io/repos/github/yyadavalli/org-ref-ivy/badge.svg"
+   alt="Coverage Status" />
 </a>
 #+END_HTML
 

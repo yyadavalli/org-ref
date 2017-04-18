@@ -1,7 +1,7 @@
 ;; This get loaded by .ert-runner.
 
 (require 'undercover)
-(undercover "org-ref-ivy.el")
+(undercover "*.el")
 
 (require 'ert)
 
