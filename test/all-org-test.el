@@ -1,3 +1,8 @@
+;;; all-org-test.el -- Tests for org-ref
+
+;;; Commentary:
+
+;;; Code:
 (ert-deftest or-split-key-1 ()
   (should
    (equal
@@ -17,9 +22,9 @@
    (not
     (null
      (org-ref-key-in-file-p "kitchin-2015-examp"
-			    (expand-file-name
-			     "tests/test-1.bib"
-			     (file-name-directory (locate-library "org-ref-ivy"))))))))
+                            (expand-file-name
+                             "tests/test-1.bib"
+                             (file-name-directory (locate-library "org-ref-ivy"))))))))
 
 (ert-deftest or-key-file-p-nil ()
   "Check `org-ref-key-in-file-p' for non-existent key"
@@ -117,13 +122,13 @@ bibliography:%s
    (string=
     "!!! NO CONTEXT FOUND !!!count: 0"
     (org-test-with-temp-text
-	"ref:one
+     "ref:one
 
 cite:kitchin-2015
 
 bibliography:tests/test-1.bib
 "
-      (org-ref-link-message)))))
+     (org-ref-link-message)))))
 
 (ert-deftest orlm-ref-2 ()
   (should
@@ -132,11 +137,11 @@ bibliography:tests/test-1.bib
 #+caption: some text label:one
 count: 1"
     (org-test-with-temp-text
-	"ref:one
+     "ref:one
 
 #+caption: some text label:one
 "
-      (org-ref-link-message)))))
+     (org-ref-link-message)))))
 
 (ert-deftest orlm-ref-3 ()
   (should
@@ -1431,14 +1436,44 @@ bibliography:tests/test-1.bib
 
 (ert-deftest fl-next-ref ()
   (org-test-with-temp-text
-      "   ref:one
+   "   ref:one
 "
-    (goto-char (point-min))
-    (if (fboundp 'org-link-set-parameters)
-	t
-      (org-ref-match-next-ref-link nil)
-      (should
-       (= 11 (point))))))
+   (goto-char (point-min))
+   (if (fboundp 'org-link-set-parameters)
+       t
+     (org-ref-match-next-ref-link nil)
+     (should
+      (= 11 (point))))))
+
+(ert-deftest ref-face-1 ()
+  (org-test-with-temp-text
+   " ref:kitchin-2015-examp
+
+bibliography:tests/test-1.bib
+"
+   (unless (fboundp 'org-link-set-parameters)
+     (font-lock-add-keywords
+      nil
+      '((org-ref-match-next-ref-link (0  'font-lock-warning-face t)))
+      t))
+   (font-lock-fontify-region (point-min) (point-max))
+   (should (eq 'font-lock-warning-face (get-char-property 2 'face)))))
+
+(ert-deftest ref-face-2 ()
+  (org-test-with-temp-text
+   " ref:kitchin-2015-examp
+
+label:kitchin-2015-examp
+
+bibliography:tests/test-1.bib
+"
+   (unless (fboundp 'org-link-set-parameters)
+     (font-lock-add-keywords
+      nil
+      '((org-ref-match-next-ref-link (0  'font-lock-warning-face t)))
+      t))
+   (font-lock-fontify-region (point-min) (point-max))
+   (should (eq 'org-ref-ref-face (get-char-property 2 'face)))))
 
 (ert-deftest fl-next-label ()
   (org-test-with-temp-text
@@ -1485,12 +1520,11 @@ stuff
 
 cite
 "
-    (if (fboundp 'org-link-set-parameters)
-	t
-      (goto-char (point-min))
-      (org-ref-match-next-bibliographystyle-link nil)
-      (should
-       (= 25 (point))))))
+      (if (fboundp 'org-link-set-parameters)
+          t
+        (goto-char (point-min))
+        (org-ref-match-next-bibliographystyle-link nil)
+        (should (= 25 (point))))))
 
 (ert-deftest store-label-link ()
   (org-test-with-temp-text
@@ -1554,4 +1588,6 @@ url =		 { http://dx.doi.org/10.1021/acscatal.5b00538 },
 keywords =	 {DESC0004031, early-career, orgmode, Data sharing },
 eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
 }")
-		     (car (org-ref-store-bibtex-entry-link))))))
+         (car (org-ref-store-bibtex-entry-link))))))
+
+;;; all-org-test.el ends here
