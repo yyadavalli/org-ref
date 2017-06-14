@@ -566,23 +566,22 @@ On this page the pdf might be here:     <meta name=\"citation_author\" content=\
 
 It is in the citation_pdf_url.
 
-It would be better to parse this, but here I just use a regexp.
-"
+It would be better to parse this, but here I just use a regexp."
 
   (when (string-match "^http://biomechanical.asmedigitalcollection.asme.org" *doi-utils-redirect*)
-    (setq *doi-utils-waiting* 0)
+    (setq *org-ref-doi-utils-waiting* 0)
     (url-retrieve
      *doi-utils-redirect*
      (lambda (status)
        (goto-char (point-min))
        (re-search-forward "citation_pdf_url\" content=\"\\(.*\\)\"" nil t)
        (message-box (match-string 1))
-       (setq *doi-utils-pdf-url* (match-string 1)
-	     *doi-utils-waiting* nil)))
-    (while (and *doi-utils-waiting* (< *doi-utils-waiting* 5))
-      (setq *doi-utils-waiting* (+ *doi-utils-waiting* 0.1))
+       (setq *org-ref-doi-utils-pdf-url* (match-string 1)
+             *org-ref-doi-utils-waiting* nil)))
+    (while (and *org-ref-doi-utils-waiting* (< *org-ref-doi-utils-waiting* 5))
+      (setq *org-ref-doi-utils-waiting* (+ *org-ref-doi-utils-waiting* 0.1))
       (sleep-for 0.1))
-    *doi-utils-pdf-url*))
+    *org-ref-doi-utils-pdf-url*))
 
 
 ;; Society for Industrial and Applied Mathematics (SIAM)

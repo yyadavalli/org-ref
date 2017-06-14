@@ -66,7 +66,7 @@
 ;;
 ;; It looks like you need to get a Bibliographic code from the arxiv number to
 ;; then get the bibtex entry.
-(defun arxiv-get-bibliographic-code (arxiv-number)
+(defun org-ref-arxiv-get-bibliographic-code (arxiv-number)
   "Get Bibliographic code for ARXIV-NUMBER."
   (with-current-buffer
       (url-retrieve-synchronously
@@ -76,7 +76,7 @@
     (match-string 1)))
 
 
-(defun arxiv-get-bibtex-entry (arxiv-bibliographic-code)
+(defun org-ref-arxiv-get-bibtex-entry (arxiv-bibliographic-code)
   "Get bibtex entry for ARXIV-BIBLIOGRAPHIC-CODE."
   (with-current-buffer
       (url-retrieve-synchronously
@@ -109,7 +109,7 @@
 	"Template for BibTeX entries of arXiv articles.")
 
 
-(defun arxiv-get-bibtex-entry-via-arxiv-api (arxiv-number)
+(defun org-ref-arxiv-get-bibtex-entry-via-arxiv-api (arxiv-number)
   "Retrieve meta data for ARXIV-NUMBER.
 Returns a formatted BibTeX entry."
   (with-current-buffer
@@ -128,7 +128,7 @@ Returns a formatted BibTeX entry."
             (format-time-string "%Y"
                                 (date-to-time (nth 2 (assq 'published entry)))))
            (title (nth 2 (assq 'title entry)))
-           (names (arxiv-bibtexify-authors authors))
+           (names (org-ref-arxiv-bibtexify-authors authors))
            (category (cdar (nth 1 (assq 'primary_category entry))))
            (abstract (s-trim (nth 2 (assq 'summary entry))))
            (url (nth 2 (assq 'id entry)))
@@ -144,7 +144,7 @@ Returns a formatted BibTeX entry."
               key title names year arxiv-number category abstract url))))
 
 
-(defun arxiv-bibtexify-authors (authors)
+(defun org-ref-arxiv-bibtexify-authors (authors)
   "Return names in 'SURNAME, FIRST NAME' format from AUTHORS list."
   (s-join " and "
           (--map (concat
@@ -155,7 +155,7 @@ Returns a formatted BibTeX entry."
 
 
 ;;;###autoload
-(defun arxiv-add-bibtex-entry (arxiv-number bibfile)
+(defun org-ref-arxiv-add-bibtex-entry (arxiv-number bibfile)
   "Add bibtex entry for ARXIV-NUMBER to BIBFILE."
   (interactive
    (list (read-string "arxiv: ")
@@ -168,13 +168,13 @@ Returns a formatted BibTeX entry."
     (find-file bibfile)
     (goto-char (point-max))
     (when (not (looking-at "^")) (insert "\n"))
-    (insert (arxiv-get-bibtex-entry-via-arxiv-api arxiv-number))
+    (insert (org-ref-arxiv-get-bibtex-entry-via-arxiv-api arxiv-number))
     (org-ref-clean-bibtex-entry)
     (save-buffer)))
 
 
 ;;;###autoload
-(defun arxiv-get-pdf (arxiv-number pdf)
+(defun org-ref-arxiv-get-pdf (arxiv-number pdf)
   "Retrieve a pdf for ARXIV-NUMBER and save it to PDF."
   (interactive "sarxiv: \nsPDF: ")
   (let ((pdf-url (with-current-buffer
@@ -195,7 +195,7 @@ Returns a formatted BibTeX entry."
 
 
 ;;;###autoload
-(defun arxiv-get-pdf-add-bibtex-entry (arxiv-number bibfile pdfdir)
+(defun org-ref-arxiv-get-pdf-add-bibtex-entry (arxiv-number bibfile pdfdir)
   "Add bibtex entry for ARXIV-NUMBER to BIBFILE.
 Remove troublesome chars from the bibtex key, retrieve a pdf
 for ARXIV-NUMBER and save it to PDFDIR with the same name of the
@@ -210,7 +210,7 @@ key."
          (read-directory-name
           "PDF directory: "
           org-ref-pdf-directory)))
-  (arxiv-add-bibtex-entry arxiv-number bibfile)
+  (org-ref-arxiv-add-bibtex-entry arxiv-number bibfile)
   (save-window-excursion
     (let ((key ""))
       (find-file bibfile)
@@ -238,7 +238,7 @@ key."
               (setq key (bibtex-read-key "Duplicate Key found, edit: " key))))
         (setq key (bibtex-read-key "Key not found, insert: ")))
       (insert key)
-      (arxiv-get-pdf arxiv-number (concat pdfdir key ".pdf")))))
+      (org-ref-arxiv-get-pdf arxiv-number (concat pdfdir key ".pdf")))))
 
 
 (provide 'org-ref-arxiv)

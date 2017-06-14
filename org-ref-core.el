@@ -43,6 +43,7 @@
 (require 'org-ref-bibtex)
 (require 'org-ref-utils)
 (require 'org-ref-glossary)
+(require 'org-ref-arxiv)
 
 (defvar org-export-exclude-tags)
 (defvar warning-suppress-types)
