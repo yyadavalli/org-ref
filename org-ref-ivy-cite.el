@@ -1,4 +1,4 @@
-;;; org-ref-ivy-cite.el --- Use ivy for completion in org-ref  -*- lexical-binding: t; -*-
+;;; org-ref-ivy-cite.el --- Use ivy for completion in org-ref
 
 ;; Copyright (C) 2016  John Kitchin
 
@@ -29,7 +29,6 @@
 (declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
 (declare-function org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
-
 (require 'cl-lib)
 (require 'hydra)
 (require 'ivy)
@@ -50,8 +49,6 @@
         org-ref-insert-label-function 'org-ref-ivy-insert-label-link
         org-ref-insert-ref-function 'org-ref-ivy-insert-ref-link
         org-ref-cite-onclick-function (lambda (_) (org-ref-cite-hydra/body))))
-
-(org-ref-ivy-cite-completion)
 
 
 (defun org-ref-looking-forward-cite ()
@@ -149,7 +146,7 @@ ENTRY is selected from `org-ref-bibtex-candidates'."
 
 (defun org-ref-ivy-bibtex-set-keywords (entry)
   "Prompt for keywords, and put them on the selected ENTRY."
-  (let ((keywords (read-string "Keyword(s) comma-separated: " ))
+  (let ((keywords (read-string "Keyword(s) comma-separated: "))
         entry-keywords)
     (save-window-excursion
       (org-ref-ivy-bibtex-open-entry entry)
@@ -470,8 +467,7 @@ a bibtex entry that matches the key in `org-ref-bibtex-candidates'. Set
                                (-elem-index
                                 key
                                 (cl-loop for entry in (org-ref-bibtex-candidates)
-                                         collect (cdr
-                                                  (assoc "=key=" entry ))))))))
+                                         collect (cdr (assoc "=key=" entry))))))))
                (funcall f entry)))))
 
 

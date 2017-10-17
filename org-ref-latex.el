@@ -29,7 +29,6 @@
 (defvar latex-mode-map)
 (defvar org-ref-cite-types)
 
-
 (defvar org-ref-latex-cite-re
   (concat "\\\\\\(" (mapconcat
                      (lambda (x)
@@ -116,7 +115,9 @@ The clickable part are the keys.")
 
 
 (defun org-ref-next-latex-cite (&optional limit)
-  "Font-lock function to make citations in LaTeX documents clickable."
+  "Font-lock function to make citations in LaTeX documents clickable.
+
+LIMIT can be used to bound the search."
   (when (re-search-forward org-ref-latex-cite-re limit t)
     (setq font-lock-extra-managed-props (delq 'help-echo
                                               font-lock-extra-managed-props))

@@ -143,6 +143,14 @@ Set `org-ref-doi-utils-make-notes' to nil if you want no notes."
 Each function takes one argument, the redirect url.  The function
 must return a pdf-url, or nil.")
 
+(defvar *org-ref-doi-utils-pdf-url* nil
+  "Stores url to pdf download from a callback function.")
+
+(defvar doi-link-menu-funcs '()
+  "Functions to run in doi menu.
+Each entry is a list of (key menu-name function).  The function
+must take one argument, the doi.")
+
 
 (defun org-ref-doi-utils-redirect-callback (&optional status)
   "Callback for `url-retrieve' to set the redirect.
@@ -200,9 +208,6 @@ Optional argument STATUS Unknown why this is optional."
 ;;** Elsevier/ScienceDirect
 ;; You cannot compute these pdf links; they are embedded in the redirected pages.
 
-(defvar *org-ref-doi-utils-pdf-url* nil
-  "Stores url to pdf download from a callback function.")
-
 ;;** Wiley
 ;; http://onlinelibrary.wiley.com/doi/10.1002/anie.201402680/abstract
 ;; http://onlinelibrary.wiley.com/doi/10.1002/anie.201402680/pdf
@@ -258,7 +263,6 @@ Argument REDIRECT-URL URL you are redirected to."
 ;;** ACS
 ;; here is a typical url http://pubs.acs.org/doi/abs/10.1021/nl500037x
 ;; the pdf is found at http://pubs.acs.org/doi/pdf/10.1021/nl500037x
-
 ;; we just change /abs/ to /pdf/.
 (defun acs-pdf-url-1 (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
@@ -362,6 +366,7 @@ REDIRECT-URL is where the pdf url will be in."
     (org-ref-doi-utils-get-science-direct-pdf-url *org-ref-doi-utils-redirect*)
     *org-ref-doi-utils-pdf-url*))
 
+
 ;; sometimes I get
 ;; http://linkinghub.elsevier.com/retrieve/pii/S0927025609004558
 ;; which actually redirect to
@@ -376,13 +381,13 @@ REDIRECT-URL is where the pdf url will be in."
                             *org-ref-doi-utils-redirect*)))
       *org-ref-doi-utils-pdf-url*)))
 
+
 ;;** PNAS
 ;; http://www.pnas.org/content/early/2014/05/08/1319030111
 ;; http://www.pnas.org/content/early/2014/05/08/1319030111.full.pdf
 
 ;; with supporting info
 ;; http://www.pnas.org/content/early/2014/05/08/1319030111.full.pdf+html?with-ds=yes
-
 (defun pnas-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^http://www.pnas.org" *org-ref-doi-utils-redirect*)
@@ -483,12 +488,14 @@ REDIRECT-URL is where the pdf url will be in."
   (when (string-match "^http://www.jneurosci.org" *org-ref-doi-utils-redirect*)
     (concat *org-ref-doi-utils-redirect* ".full.pdf")))
 
+
 ;;** Generic .full.pdf
 (defun generic-full-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (let ((pdf (concat *org-ref-doi-utils-redirect* ".full.pdf")))
     (when (url-http-file-exists-p pdf)
       pdf)))
+
 
 ;;** IEEE
 ;; 10.1109/re.2014.6912247
@@ -508,6 +515,7 @@ REDIRECT-URL is where the pdf url will be in."
             (goto-char (point-min))
             (when (re-search-forward "<frame src=\"\\(http[[:ascii:]]*?\\)\"" nil t)
               (match-string 1))))))))
+
 
 ;; At least some IEEE papers need the following new pdf-link parsing
 ;; Example: 10.1109/35.667413
@@ -548,30 +556,53 @@ REDIRECT-URL is where the pdf url will be in."
       (when (re-search-forward "<a name=\"FullTextPDF\".*href=\"\\([[:ascii:]]*?\\)\"" nil t)
         (concat "http://dl.acm.org/" (match-string 1))))))
 
+
 ;;** Optical Society of America (OSA)
 (defun osa-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
   (when (string-match "^https://www.osapublishing.org" *org-ref-doi-utils-redirect*)
     (replace-regexp-in-string
-     "abstract.cfm" "viewmedia.cfm" *org-ref-doi-utils-redirect* )))
-
+     "abstract.cfm" "viewmedia.cfm" *org-ref-doi-utils-redirect*)))
 
 
 ;;** ASME Biomechanical Journal
+(defun asme-biomechanical-pdf-url (*org-ref-doi-utils-redirect*)
+  "Typical URL: http://biomechanical.asmedigitalcollection.asme.org/article.aspx?articleid=1427237 .
 
-(defun asme-biomechanical-pdf-url (*doi-utils-redirect*)
-  "Typical URL:  http://biomechanical.asmedigitalcollection.asme.org/article.aspx?articleid=1427237
-
-On this page the pdf might be here:     <meta name=\"citation_author\" content=\"Dalong Li\" /><meta name=\"citation_author_email\" content=\"dal40@pitt.edu\" /><meta name=\"citation_author\" content=\"Anne M. Robertson\" /><meta name=\"citation_author_email\" content=\"rbertson@pitt.edu\" /><meta name=\"citation_title\" content=\"A Structural Multi-Mechanism Damage Model for Cerebral Arterial Tissue\" /><meta name=\"citation_firstpage\" content=\"101013\" /><meta name=\"citation_doi\" content=\"10.1115/1.3202559\" /><meta name=\"citation_keyword\" content=\"Mechanisms\" /><meta name=\"citation_keyword\" content=\"Biological tissues\" /><meta name=\"citation_keyword\" content=\"Stress\" /><meta name=\"citation_keyword\" content=\"Fibers\" /><meta name=\"citation_journal_title\" content=\"Journal of Biomechanical Engineering\" /><meta name=\"citation_journal_abbrev\" content=\"J Biomech Eng\" /><meta name=\"citation_volume\" content=\"131\" /><meta name=\"citation_issue\" content=\"10\" /><meta name=\"citation_publication_date\" content=\"2009/10/01\" /><meta name=\"citation_issn\" content=\"0148-0731\" /><meta name=\"citation_publisher\" content=\"American Society of Mechanical Engineers\" /><meta name=\"citation_pdf_url\" content=\"http://biomechanical.asmedigitalcollection.asme.org/data/journals/jbendy/27048/101013_1.pdf\" />
+On this page the pdf might be here:
+<meta name=\"citation_author\" content=\"Dalong Li\" />
+<meta name=\"citation_author_email\" content=\"dal40@pitt.edu\" />
+<meta name=\"citation_author\" content=\"Anne M. Robertson\" />
+<meta name=\"citation_author_email\" content=\"rbertson@pitt.edu\" />
+<meta name=\"citation_title\"
+      content=\"A Structural Multi-Mechanism Damage Model for Cerebral Arterial Tissue\" />
+<meta name=\"citation_firstpage\" content=\"101013\" />
+<meta name=\"citation_doi\" content=\"10.1115/1.3202559\" />
+<meta name=\"citation_keyword\" content=\"Mechanisms\" />
+<meta name=\"citation_keyword\" content=\"Biological tissues\" />
+<meta name=\"citation_keyword\" content=\"Stress\" />
+<meta name=\"citation_keyword\" content=\"Fibers\" />
+<meta name=\"citation_journal_title\"
+      content=\"Journal of Biomechanical Engineering\" />
+<meta name=\"citation_journal_abbrev\" content=\"J Biomech Eng\" />
+<meta name=\"citation_volume\" content=\"131\" />
+<meta name=\"citation_issue\" content=\"10\" />
+<meta name=\"citation_publication_date\" content=\"2009/10/01\" />
+<meta name=\"citation_issn\" content=\"0148-0731\" />
+<meta name=\"citation_publisher\"
+      content=\"American Society of Mechanical Engineers\" />
+<meta name=\"citation_pdf_url\"
+      content=\"http://biomechanical.asmedigitalcollection.asme.org/data/journals/jbendy/27048/101013_1.pdf\" />
 
 It is in the citation_pdf_url.
 
 It would be better to parse this, but here I just use a regexp."
 
-  (when (string-match "^http://biomechanical.asmedigitalcollection.asme.org" *doi-utils-redirect*)
+  (when (string-match "^http://biomechanical.asmedigitalcollection.asme.org"
+                      *org-ref-doi-utils-redirect*)
     (setq *org-ref-doi-utils-waiting* 0)
     (url-retrieve
-     *doi-utils-redirect*
+     *org-ref-doi-utils-redirect*
      (lambda (status)
        (goto-char (point-min))
        (re-search-forward "citation_pdf_url\" content=\"\\(.*\\)\"" nil t)
@@ -589,8 +620,6 @@ It would be better to parse this, but here I just use a regexp."
   "Get url to the pdf from *DOI-UTILS-REDIRECT*."
   (when (string-match "^http://epubs.siam.org" *doi-utils-redirect*)
     (replace-regexp-in-string "/doi/" "/doi/pdf/" *doi-utils-redirect* )))
-
-
 
 ;;** Add all functions
 (setq org-ref-doi-utils-pdf-url-functions
@@ -626,7 +655,6 @@ It would be better to parse this, but here I just use a regexp."
        'generic-full-pdf-url))
 
 ;;** Get the pdf url for a doi
-
 (defun org-ref-doi-utils-get-pdf-url (doi)
   "Return a url to a pdf for the DOI if one can be calculated.
 Loops through the functions in `org-ref-doi-utils-pdf-url-functions'
@@ -641,7 +669,6 @@ until one is found."
         (when this-pdf-url
           (throw 'pdf-url this-pdf-url))))))
 
-;;** Finally, download the pdf
 
 ;;;###autoload
 (defun org-ref-doi-utils-get-bibtex-entry-pdf (&optional arg)
@@ -699,8 +726,8 @@ checked."
         (when (and org-ref-doi-utils-open-pdf-after-download (file-exists-p pdf-file))
           (org-open-file pdf-file))))))
 
-;;* Getting bibtex entries from a DOI
 
+;;* Getting bibtex entries from a DOI
 ;; I
 ;; [[http://homepages.see.leeds.ac.uk/~eeaol/notes/2013/02/doi-metadata/][found]]
 ;; you can download metadata about a DOI from http://dx.doi.org. You just have
@@ -722,6 +749,7 @@ checked."
             (browse-url (concat org-ref-doi-utils-dx-doi-org-url doi))
             (error "Resource not found.  Opening website"))
         (json-read-from-string json-data)))))
+
 
 ;; We can use that data to construct a bibtex entry. We do that by defining a
 ;; template, and filling it in. I wrote this template expansion code which makes
@@ -790,6 +818,7 @@ expressions."
                                                              (cdr acc))))
           (t (org-ref-doi-utils-concat-prepare (cdr lst) (cons (car lst) acc))))))
 
+
 (defmacro org-ref-doi-utils-def-bibtex-type (name matching-types &rest fields)
   "Define a BibTeX type identified by (symbol) NAME.
 MATCHING-TYPES is a list of strings.  FIELDS are symbols that
@@ -827,13 +856,16 @@ MATCHING-TYPES."
  article ("journal-article" "article-journal")
  author title journal year volume number pages doi url)
 
+
 (org-ref-doi-utils-def-bibtex-type
  inproceedings ("proceedings-article" "paper-conference")
  author title booktitle year month pages doi url)
 
+
 (org-ref-doi-utils-def-bibtex-type
  book ("book")
  author title series publisher year pages doi url)
+
 
 (org-ref-doi-utils-def-bibtex-type
  inbook ("book-chapter" "reference-entry")
@@ -878,11 +910,6 @@ Also cleans entry using ‘org-ref’, and tries to download the corresponding p
         (funcall org-ref-doi-utils-make-notes-function)))))
 
 
-;; It may be you are in some other place when you want to add a bibtex entry.
-;; This next function will open the first entry in org-ref-default-bibliography
-;; go to the end, and add the entry. You can sort it later.
-
-
 ;;;###autoload
 (defun org-ref-doi-utils-add-bibtex-entry-from-doi (doi &optional bibfile)
   "Add DOI entry to end of a file in the current directory.
@@ -894,62 +921,65 @@ DOI, then that is the intial prompt.  Otherwise, you have to type
 or paste in a DOI.
 Argument BIBFILE the bibliography to use."
   (interactive
-   (list (read-string
-          "DOI: "
-          ;; now set initial input
-          (cond
-           ;; If region is active and it starts like a doi we want it.
-           ((and  (region-active-p)
-                  (s-match "^10" (buffer-substring
-                                  (region-beginning)
-                                  (region-end))))
-            (buffer-substring (region-beginning) (region-end)))
-           ((and  (region-active-p)
-                  (s-match "^http://dx\\.doi\\.org/" (buffer-substring
-                                                      (region-beginning)
-                                                      (region-end))))
-            (replace-regexp-in-string "^http://dx\\.doi\\.org/" ""
-                                      (buffer-substring (region-beginning) (region-end))))
-           ((and  (region-active-p)
-                  (s-match "^https://dx\\.doi\\.org/" (buffer-substring
-                                                       (region-beginning)
-                                                       (region-end))))
-            (replace-regexp-in-string "^https://dx\\.doi\\.org/" ""
-                                      (buffer-substring (region-beginning) (region-end))))
-           ((and  (region-active-p)
-                  (s-match (regexp-quote doi-utils-dx-doi-org-url) (buffer-substring
-                                                                    (region-beginning)
-                                                                    (region-end))))
-            (replace-regexp-in-string  (regexp-quote doi-utils-dx-doi-org-url) ""
-                                       (buffer-substring (region-beginning) (region-end)))
-            (buffer-substring (region-beginning) (region-end)))
-           ;; if the first entry in the kill-ring looks
-           ;; like a DOI, let's use it.
-           ((and
-             ;; make sure the kill-ring has something in it
-             (stringp (car kill-ring))
-             (s-match "^10" (car kill-ring)))
-            (car kill-ring))
-           ;; maybe kill-ring matches http://dx.doi or somthing
-           ((and
-             ;; make sure the kill-ring has something in it
-             (stringp (car kill-ring))
-             (s-match "^http://dx\\.doi\\.org/" (car kill-ring)))
-            (replace-regexp-in-string "^http://dx\\.doi\\.org/" "" (car kill-ring)))
-           ((and
-             ;; make sure the kill-ring has something in it
-             (stringp (car kill-ring))
-             (s-match "^https://dx\\.doi\\.org/" (car kill-ring)))
-            (replace-regexp-in-string "^https://dx\\.doi\\.org/" "" (car kill-ring)))
-           ((and
-             ;; make sure the kill-ring has something in it
-             (stringp (car kill-ring))
-             (s-match (regexp-quote doi-utils-dx-doi-org-url) (car kill-ring)))
-            (replace-regexp-in-string (regexp-quote doi-utils-dx-doi-org-url) "" (car kill-ring)))
-           ;; otherwise, we have no initial input. You
-           ;; will have to type it in.
-           (t
-            nil)))))
+  (list
+   (read-string
+    "DOI: "
+    ;; now set initial input
+    (cond
+     ;; If region is active and it starts like a doi we want it.
+     ((and (region-active-p)
+           (s-match "^10" (buffer-substring (region-beginning) (region-end))))
+      (buffer-substring (region-beginning) (region-end)))
+     ((and (region-active-p)
+           (s-match "^http://dx\\.doi\\.org/"
+                    (buffer-substring (region-beginning) (region-end))))
+      (replace-regexp-in-string
+       "^http://dx\\.doi\\.org/" ""
+       (buffer-substring (region-beginning) (region-end))))
+     ((and (region-active-p)
+           (s-match "^https://dx\\.doi\\.org/"
+                    (buffer-substring (region-beginning) (region-end))))
+      (replace-regexp-in-string
+       "^https://dx\\.doi\\.org/" ""
+       (buffer-substring (region-beginning) (region-end))))
+     ((and  (region-active-p)
+            (s-match (regexp-quote org-ref-doi-utils-dx-doi-org-url)
+                     (buffer-substring (region-beginning) (region-end))))
+      (replace-regexp-in-string
+       (regexp-quote org-ref-doi-utils-dx-doi-org-url) ""
+       (buffer-substring (region-beginning) (region-end)))
+      (buffer-substring (region-beginning) (region-end)))
+     ;; if the first entry in the kill-ring looks
+     ;; like a DOI, let's use it.
+     ((and
+       ;; make sure the kill-ring has something in it
+       (stringp (car kill-ring))
+       (s-match "^10" (car kill-ring)))
+      (car kill-ring))
+     ;; maybe kill-ring matches http://dx.doi or somthing
+     ((and
+       ;; make sure the kill-ring has something in it
+       (stringp (car kill-ring))
+       (s-match "^http://dx\\.doi\\.org/" (car kill-ring)))
+      (replace-regexp-in-string "^http://dx\\.doi\\.org/" "" (car kill-ring)))
+     ((and
+       ;; make sure the kill-ring has something in it
+       (stringp (car kill-ring))
+       (s-match "^https://dx\\.doi\\.org/" (car kill-ring)))
+      (replace-regexp-in-string "^https://dx\\.doi\\.org/"
+                                "" (car kill-ring)))
+     ((and
+       ;; make sure the kill-ring has something in it
+       (stringp (car kill-ring))
+       (s-match (regexp-quote org-ref-doi-utils-dx-doi-org-url)
+                (car kill-ring)))
+      (replace-regexp-in-string
+       (regexp-quote org-ref-doi-utils-dx-doi-org-url) "" (car kill-ring)))
+     ;; otherwise, we have no initial input. You
+     ;; will have to type it in.
+     (t
+      nil)))))
+
   (unless bibfile
     (setq bibfile (completing-read
                    "Bibfile: "
@@ -976,11 +1006,6 @@ Argument BIBFILE the bibliography to use."
         ;; make sure we are at the beginning of a line
         (when (not (= (point) (line-beginning-position)))
           (forward-char 1))
-        <<<<<<< HEAD
-        =======
-        (when (not (looking-back "\n\n" 3))
-          (insert "\n\n"))
-        >>>>>>> Clean update formatting and remove deprecated code
         (when (not (looking-back "\n\n" (min 3 (point))))
           (insert "\n\n"))
         (org-ref-doi-utils-insert-bibtex-entry-from-doi doi)
@@ -1041,6 +1066,7 @@ Optional argument NODELIM see `bibtex-make-field'."
   "Return keys in a PLIST."
   (-slice plist 0 nil 2))
 
+
 ;;;###autoload
 (defun org-ref-doi-utils-update-bibtex-entry-from-doi (doi)
   "Update fields in a bibtex entry from the DOI.
@@ -1054,7 +1080,7 @@ Every field will be updated, so previous change will be lost."
          (type (plist-get results :type))
          (author (mapconcat
                   (lambda (x) (concat (plist-get x :given)
-                                 " " (plist-get x :family)))
+                                      " " (plist-get x :family)))
                   (plist-get results :author) " and "))
          (title (plist-get results :title))
          (journal (plist-get results :container-title))
@@ -1090,8 +1116,6 @@ Every field will be updated, so previous change will be lost."
 
 ;; A downside to updating an entry is it overwrites what you have already fixed.
 ;; So, we next develop a function to update the field at point.
-
-
 ;;;###autoload
 (defun org-ref-doi-utils-update-field ()
   "Update the field at point in the bibtex entry.
@@ -1113,23 +1137,22 @@ Data is retrieved from the doi in the entry."
      (t
       (message "%s not supported yet." field)))))
 
-;;* DOI functions for WOS
 
+;;* DOI functions for WOS
+;;
 ;; I came across this API http://wokinfo.com/media/pdf/OpenURL-guide.pdf to make
 ;; links to the things I am interested in here. Based on that document, here are
 ;; three links based on a doi:10.1021/jp047349j that take you to different Web
 ;; Of Science (WOS) pages.
-
-
+;;
 ;; 1. go to article in WOS: http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info:doi/10.1021/jp047349j
 ;; 2. citing articles: http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info%3Adoi%2F10.1021/jp047349j&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.citing=yes
 ;; 3. related articles: http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info%3Adoi%2F10.1021/jp047349j&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.related=yes
-
+;;
 ;; These are pretty easy to construct, so we can write functions that will
 ;; create them and open the url in our browser. There are some other options
 ;; that could be considered, but since we usually have a doi, it seems like the
 ;; best way to go for creating the links. Here are the functions.
-
 ;;;###autoload
 (defun org-ref-doi-utils-wos (doi)
   "Open Web of Science entry for DOI."
@@ -1138,6 +1161,7 @@ Data is retrieved from the doi in the entry."
    (format
     "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info:doi/%s"
     doi)))
+
 
 ;;;###autoload
 (defun org-ref-doi-utils-wos-citing (doi)
@@ -1149,6 +1173,7 @@ May be empty if none are found."
     "http://ws.isiknowledge.com/cps/openurl/service?url_ver=Z39.88-2004&rft_id=info%3Adoi%2F"
     doi
     "&svc_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Asch_svc&svc.citing=yes")))
+
 
 ;;;###autoload
 (defun org-ref-doi-utils-wos-related (doi)
@@ -1170,8 +1195,6 @@ May be empty if none are found."
 ;; 4. open related articles
 ;; 5. open bibtex entry
 ;; 6. get bibtex entry
-
-
 ;;;###autoload
 (defun org-ref-doi-utils-open (doi)
   "Open DOI in browser."
@@ -1214,11 +1237,6 @@ May be empty if none are found."
            (url-hexify-string doi))))
 
 
-(defvar doi-link-menu-funcs '()
-  "Functions to run in doi menu.
-Each entry is a list of (key menu-name function).  The function
-must take one argument, the doi.")
-
 (setq doi-link-menu-funcs
       '(("o" "pen" org-ref-doi-utils-open)
         ("w" "os" org-ref-doi-utils-wos)
@@ -1254,20 +1272,23 @@ Argument LINK-STRING Passed in on link click."
         2)
        link-string))))
 
-(org-ref-link-set-parameters "doi"
-  :follow #'doi-link-menu
-  :export (lambda (doi desc format)
-            (cond
-             ((eq format 'html)
-              (format "<a href=\"%s%s\">%s</a>"
-                      org-ref-doi-utils-dx-doi-org-url
-                      doi
-                      (or desc (concat "doi:" doi))))
-             ((eq format 'latex)
-              (format "\\href{%s%s}{%s}"
-                      org-ref-doi-utils-dx-doi-org-url
-                      doi
-                      (or desc (concat "doi:" doi)))))))
+
+(org-ref-link-set-parameters
+ "doi"
+ :follow #'doi-link-menu
+ :export (lambda (doi desc format)
+           (cond
+            ((eq format 'html)
+             (format "<a href=\"%s%s\">%s</a>"
+                     org-ref-doi-utils-dx-doi-org-url
+                     doi
+                     (or desc (concat "doi:" doi))))
+            ((eq format 'latex)
+             (format "\\href{%s%s}{%s}"
+                     org-ref-doi-utils-dx-doi-org-url
+                     doi
+                     (or desc (concat "doi:" doi)))))))
+
 
 ;;* Getting a doi for a bibtex entry missing one
 
@@ -1278,22 +1299,18 @@ Argument LINK-STRING Passed in on link click."
 ;; Here is our example bibtex entry.
 ;; #+BEGIN_SRC bibtex
 ;; @article{deml-2014-oxide,
-;;   author =	 {Ann M. Deml and Vladan Stevanovi{\'c} and
-;;                   Christopher L. Muhich and Charles B. Musgrave and
-;;                   Ryan O'Hayre},
-;;   title =	 {Oxide Enthalpy of Formation and Band Gap Energy As
-;;                   Accurate Descriptors of Oxygen Vacancy Formation
-;;                   Energetics},
-;;   journal =	 {Energy Environ. Sci.},
-;;   volume =	 7,
-;;   number =	 6,
-;;   pages =	 1996,
-;;   year =	 2014,
-;;   doi =		 {10.1039/c3ee43874k,
-;;   url =		 {http://dx.doi.org/10.1039/c3ee43874k}},
-
+;;   author = {Ann M. Deml and Vladan Stevanovi{\'c} and Christopher L. Muhich
+;;             and Charles B. Musgrave and Ryan O'Hayre},
+;;   title = {Oxide Enthalpy of Formation and Band Gap Energy As Accurate
+;;            Descriptors of Oxygen Vacancy Formation Energetics},
+;;   journal = {Energy Environ. Sci.},
+;;   volume = 7,
+;;   number = 6,
+;;   pages = 1996,
+;;   year = 2014,
+;;   doi = {10.1039/c3ee43874k,
+;;   url = {http://dx.doi.org/10.1039/c3ee43874k}},
 ;; }
-
 
 ;; The idea is to query Crossref in a way that is likely to give us a hit
 ;; relevant to the entry.
@@ -1301,7 +1318,6 @@ Argument LINK-STRING Passed in on link click."
 ;; According to http://search.crossref.org/help/api we can send a query with a
 ;; free form citation that may give us something back. We do this to get a list
 ;; of candidates, and run a ivy command to get the doi.
-
 
 ;;;###autoload
 (defun org-ref-doi-utils-crossref-citation-query ()
@@ -1325,15 +1341,15 @@ already a doi field, the function raises an error."
           "http://search.crossref.org/dois?q="
           (url-hexify-string (org-ref-bib-citation))))
       (save-excursion
-      	(goto-char (point-min))
-      	(while (re-search-forward "<i>\\|</i>" nil t)
-      	  (replace-match ""))
+        (goto-char (point-min))
+        (while (re-search-forward "<i>\\|</i>" nil t)
+          (replace-match ""))
         (goto-char (point-min))
         (while (re-search-forward "&amp;" nil t)
           (replace-match "&"))
-      	(goto-char (point-min))
-      	(while (re-search-forward "&quot;" nil t)
-      	  (replace-match "\\\"" nil t)))
+        (goto-char (point-min))
+        (while (re-search-forward "&quot;" nil t)
+          (replace-match "\\\"" nil t)))
       (setq raw-json-string (buffer-substring url-http-end-of-headers (point-max)))
       ;; decode json string
       (setq json-string (decode-coding-string (string-make-unibyte raw-json-string) 'utf-8))
@@ -1344,16 +1360,17 @@ already a doi field, the function raises an error."
                     json-data)))
       (ivy-read "CrossRef hits: " 'ivy-candidates
                 :action '(1
-                          ("i" (lambda (entry) (org-ref-doi-utils-add-bibtex-entry-from-doi
-                                           (replace-regexp-in-string
-                                            "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
-                                           bibtex-file))
+                          ("i" (lambda (entry)
+                                 (org-ref-doi-utils-add-bibtex-entry-from-doi
+                                  (replace-regexp-in-string
+                                   "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
+                                  bibtex-file))
                            "Save entry to bibliography")
                           ("o" (lambda (doi) (browse-url doi))))))))
 
 
 ;;* Debugging a DOI
-
+;;
 ;; I wrote this function to help debug a DOI. This function generates an
 ;; org-buffer with the doi, gets the json metadata, shows the bibtex entry, and
 ;; the pdf link for it.
@@ -1394,9 +1411,7 @@ already a doi field, the function raises an error."
           "\n\n")
   (goto-char (point-min)))
 
-;;* Adding a bibtex entry from a crossref query
 
-;; The idea here is to perform a query on Crossref, get a helm buffer of
 ;; candidates, and select the entry(ies) you want to add to your bibtex file.
 ;; You can select a region, e.g. a free form citation, or set of words, or you
 ;; can type the query in by hand.
@@ -1431,15 +1446,15 @@ already a doi field, the function raises an error."
                  (url-hexify-string query)))
       ;; replace html entities
       (save-excursion
-      	(goto-char (point-min))
-      	(while (re-search-forward "<i>\\|</i>" nil t)
-      	  (replace-match ""))
+        (goto-char (point-min))
+        (while (re-search-forward "<i>\\|</i>" nil t)
+          (replace-match ""))
         (goto-char (point-min))
         (while (re-search-forward "&amp;" nil t)
           (replace-match "&"))
-      	(goto-char (point-min))
-      	(while (re-search-forward "&quot;" nil t)
-      	  (replace-match "\\\"" nil t)))
+        (goto-char (point-min))
+        (while (re-search-forward "&quot;" nil t)
+          (replace-match "\\\"" nil t)))
       (setq raw-json-string (buffer-substring url-http-end-of-headers
                                               (point-max)))
       ;; decode json string
@@ -1452,18 +1467,16 @@ already a doi field, the function raises an error."
                     json-data)))
       (ivy-read "CrossRef hits: " ivy-candidates
                 :action '(1
-                          ("i" (lambda (entry) (org-ref-doi-utils-add-bibtex-entry-from-doi
-                                           (replace-regexp-in-string
-                                            "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
-                                           bibtex-file))
+                          ("i" (lambda (entry)
+                                 (org-ref-doi-utils-add-bibtex-entry-from-doi
+                                  (replace-regexp-in-string
+                                   "^https?://\\(dx.\\)?doi.org/" "" (cdr entry))
+                                  bibtex-file))
                            "Save entry to bibliography")
                           ("o" (lambda (entry) (browse-url (cdr entry)))
                            "Open URL"))))))
 
-(defalias 'crossref-add-bibtex-entry 'org-ref-doi-utils-add-entry-from-crossref-query
-  "Alias function for convenience.")
 
-;;* The end
 (provide 'org-ref-doi-utils)
 
 ;;; org-ref-doi-utils.el ends here

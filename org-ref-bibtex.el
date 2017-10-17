@@ -145,12 +145,6 @@ Should be one of the cars of `org-ref-formatted-citation-formats'."
   :type 'string
   :group 'org-ref-bibtex)
 
-;;* Journal abbreviations
-(defvar org-ref-bibtex-journal-abbreviations
-  '()
-  "List of (string journal-full-name journal-abbreviation).
-Find new abbreviations at http://cassi.cas.org/search.jsp.")
-
 (defcustom org-ref-bibtex-assoc-pdf-with-entry-move-function 'rename-file
   "Function to use when associating pdf files with bibtex entries.
 The value should be either `rename-file' or `copy-file'. The former will move
@@ -159,22 +153,61 @@ while creating a renamed copy in `org-ref-pdf-directory'."
   :type 'function
   :group 'org-ref-bibtex)
 
+(defcustom org-ref-title-case-types '("article" "book")
+  "List of entry types in which the title will be converted to title-case by org-ref-title-case."
+  :type '(repeat string)
+  :group 'org-ref-bibtex)
+
+;;* Title case transformations
+(defvar org-ref-lower-case-words '("a" "an" "on" "and" "for" "the" "of" "in")
+  "List of words to keep lowercase when changing case in a title.")
+
 ;;* Journal abbreviations
-(defvar org-ref-bibtex-journal-abbreviations
-  '()
+(defvar org-ref-bibtex-journal-abbreviations '()
+  "List of (string journal-full-name journal-abbreviation).
+Find new abbreviations at http://cassi.cas.org/search.jsp.")
+
+;;* Journal abbreviations
+(defvar org-ref-bibtex-journal-abbreviations '()
   "List of (string journal-full-name journal-abbreviation).
 Find new abbreviations at http://cassi.cas.org/search.jsp.")
 
 ;;* Title case transformations
-(defvar org-ref-lower-case-words
-  '("a" "an" "on" "and" "for" "the" "of" "in")
+(defvar org-ref-lower-case-words '("a" "an" "on" "and" "for" "the" "of" "in")
   "List of words to keep lowercase when changing case in a title.")
 
 ;;* Non-ascii character replacement
 ;; see https://github.com/fxcoudert/tools/blob/master/doi2bib for more replacements
-(defvar org-ref-nonascii-latex-replacements
-  '()
+(defvar org-ref-nonascii-latex-replacements '()
   "Cons list of non-ascii characters and their LaTeX representations.")
+
+;;* org-ref bibtex cache
+(defvar org-ref-bibtex-cache-data '((hashes . ()) (candidates . ()))
+  "Cache data as an alist.
+'hashes is a list of cons cells (bibfile . hash)
+'candidates is a list of cons cells (bibfile . candidates).
+Stored persistently in `org-ref-bibtex-cache-file'.")
+
+(defvar org-ref-bibtex-cache-file "~/.cache/org-ref-bibtex-cache"
+  "File to store cached data in.")
+
+(defvar org-ref-bibtex-files nil
+  "List of bibtex files to get entries from.
+This is set internally.")
+
+(defvar org-ref-candidate-formats
+  '(("article" . "${pdf}${notes}|${=key=}| ${author}, ${title}, ${journal} (${year}). ${keywords}")
+    ("book" . "  |${=key=}| ${author}, ${title} (${year}) ${keywords}.")
+    ("inbook" . "  |${=key=}| ${author}, ${chapter} in ${title} (${year}) ${keywords}")
+    ("techreport" . "  |${=key=}| ${title}, ${institution} (${year}). ${keywords}")
+    ("inproceedings" . "  |${=key=}| ${author}, ${title} in ${booktitle} (${year}). ${keywords}")
+    ("incollection" . "  |${=key=}| ${author}, ${title} in ${booktitle} (${year}). ${keywords}")
+    ("phdthesis" . "  |${=key=}| ${author}, ${title}, ${school} (${year}). Phd thesis. ${keywords}")
+    ("mastersthesis" . "  |${=key=}| ${author}, ${title}, ${school} (${year}). MS thesis. ${keywords}")
+    ("misc" . "  |${=key=}| ${author}, ${title}")
+    ("unpublished" . "  |${=key=}| ${author}, ${title}"))
+  "Formats for candidates.
+It is an alist of (=type= . s-format-string).")
 
 (setq org-ref-nonascii-latex-replacements
       '(("í" . "{\\\\'i}")
@@ -542,8 +575,6 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
         ("’" . "'")
         ("”" . "\"")))
 
-=======
->>>>>>> Clean update formatting and remove deprecated code
 
 ;;;###autoload
 (defun org-ref-replace-nonascii ()
@@ -629,6 +660,7 @@ and books."
        "title"
        title)
       (bibtex-fill-entry))))
+
 
 ;;;###autoload
 (defun org-ref-title-case-article (&optional key start end)
@@ -778,9 +810,9 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
   (let ((doi (org-ref-bibtex-entry-doi)))
     (org-ref-doi-utils-google-scholar
      (if (string= "" doi)
-	 (save-excursion
-	   (bibtex-beginning-of-entry)
-	   (reftex-get-bib-field "title" (bibtex-parse-entry t)))
+         (save-excursion
+           (bibtex-beginning-of-entry)
+           (reftex-get-bib-field "title" (bibtex-parse-entry t)))
        doi))))
 
 
@@ -931,14 +963,14 @@ _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
   ("T" org-ref-title-case-article)
   ("S" org-ref-sentence-case-article)
   ("y" (save-excursion
-	 (bibtex-beginning-of-entry)
-	 (when (looking-at bibtex-entry-maybe-empty-head)
-	   (kill-new (bibtex-key-in-head)))))
+         (bibtex-beginning-of-entry)
+         (when (looking-at bibtex-entry-maybe-empty-head)
+           (kill-new (bibtex-key-in-head)))))
   ("f" (progn
-	 (bibtex-beginning-of-entry)
-	 (kill-new
-	  (org-ref-format-entry
-	   (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
+         (bibtex-beginning-of-entry)
+         (kill-new
+          (org-ref-format-entry
+           (cdr (assoc "=key=" (bibtex-parse-entry t)))))))
   ("k" (lambda ()
          (interactive)
          (org-ref-set-bibtex-keywords
@@ -1074,41 +1106,6 @@ keywords.  Optional argument ARG prefix arg to replace keywords."
                (save-buffer)))))
 
 
-;;* org-ref bibtex cache
-(defvar org-ref-bibtex-cache-data
-  '((hashes . ())
-    (candidates . ()))
-  "Cache data as an alist.
-'hashes is a list of cons cells (bibfile . hash)
-'candidates is a list of cons cells (bibfile . candidates).
-Stored persistently in `org-ref-bibtex-cache-file'.")
-
-
-(defvar org-ref-bibtex-cache-file
-  "~/.cache/org-ref-bibtex-cache"
-  "File to store cached data in.")
-
-
-(defvar org-ref-bibtex-files nil
-  "List of bibtex files to get entries from.
-This is set internally.")
-
-
-(defvar org-ref-candidate-formats
-  '(("article" . "${pdf}${notes}|${=key=}| ${author}, ${title}, ${journal} (${year}). ${keywords}")
-    ("book" . "  |${=key=}| ${author}, ${title} (${year}) ${keywords}.")
-    ("inbook" . "  |${=key=}| ${author}, ${chapter} in ${title} (${year}) ${keywords}")
-    ("techreport" . "  |${=key=}| ${title}, ${institution} (${year}). ${keywords}")
-    ("inproceedings" . "  |${=key=}| ${author}, ${title} in ${booktitle} (${year}). ${keywords}")
-    ("incollection" . "  |${=key=}| ${author}, ${title} in ${booktitle} (${year}). ${keywords}")
-    ("phdthesis" . "  |${=key=}| ${author}, ${title}, ${school} (${year}). Phd thesis. ${keywords}")
-    ("mastersthesis" . "  |${=key=}| ${author}, ${title}, ${school} (${year}). MS thesis. ${keywords}")
-    ("misc" . "  |${=key=}| ${author}, ${title}")
-    ("unpublished" . "  |${=key=}| ${author}, ${title}"))
-  "Formats for candidates.
-It is an alist of (=type= . s-format-string).")
-
-
 ;; when you load, we should check the hashes and files
 (defun org-ref-load-cache-file ()
   "Load the cache file to set `org-ref-bibtex-cache-data'."
@@ -1147,6 +1144,7 @@ the cache."
            (or (cdr (assoc
                      bibfile
                      (cdr (assoc 'hashes org-ref-bibtex-cache-data)))) "")))))
+
 
 (defun org-ref-bibtex-field-formatter (field entry)
   "Format FIELD in a bibtex parsed ENTRY.
@@ -1231,17 +1229,15 @@ when called, it resets the cache for the BIBFILE."
                                                       (and (s-starts-with? "\"" s)
                                                            (s-ends-with? "\"" s)))
                                                   (substring s 1 -1)
-                                                s))))))
-                     ;; (key (cdr (assoc "=key=" entry)))
-                     )
+                                                s)))))))
                 (cons
                  ;; this is the display string for helm. We try to use the formats
-                 ;; in `orhc-candidate-formats', but if there isn't one we just put
+                 ;; in `org-ref-candidate-formats', but if there isn't one we just put
                  ;; all the fields in.
                  (s-format
                   (or (cdr (assoc (downcase entry-type) org-ref-candidate-formats))
                       (format "%s: %s" (cdr (assoc "=key=" entry)) entry))
-                  'orhc-bibtex-field-formatter
+                  'org-ref-bibtex-field-formatter
                   entry)
                  ;; this is the candidate that is returned, the entry a-list +
                  ;; file and position.
@@ -1266,6 +1262,7 @@ when called, it resets the cache for the BIBFILE."
         (with-temp-file org-ref-bibtex-cache-file
           (print org-ref-bibtex-cache-data (current-buffer)))))
     (unless bibfile-open (kill-buffer (find-buffer-visiting bibfile)))))
+
 
 (defun org-ref-update-bibtex-cache ()
   "Conditionally update cache for all files in `org-ref-bibtex-files'.
@@ -1413,6 +1410,7 @@ file."
     (with-temp-file bibfile
       (insert contents))))
 
+
 (defun org-ref-bibtex-key-from-doi (doi &optional bib)
   "Return a bibtex entry's key from a DOI.
 BIB is an optional filename to get the entry from. Defaults to
@@ -1424,7 +1422,7 @@ the first entry of `org-ref-default-bibliography'."
       (bibtex-beginning-of-entry)
       (cdr (assoc "=key=" (bibtex-parse-entry))))))
 
-;;* The end
+
 (provide 'org-ref-bibtex)
 
 ;;; org-ref-bibtex.el ends here

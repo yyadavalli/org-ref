@@ -107,7 +107,7 @@
     "Ac"
     "acp"
     "Acp")
-  "Acronym link types")
+  "Acronym link types.")
 
 (defconst org-ref-glossary-links
   '("gls"
@@ -116,7 +116,7 @@
     "Glspl"
     "glssymbol"
     "glsdesc")
-  "Glossary link types")
+  "Glossary link types.")
 
 
 (defun org-ref-find-closing-curly-bracket (&optional limit)
@@ -241,7 +241,6 @@ Entry gets added after the last #+latex_header line."
              (format "\\glslink{%s}{%s}" path desc))
             (t
              (format "%s" path)))))
-
 
 
 (defun org-ref-glossary-tooltip (_window _object position)
@@ -423,6 +422,7 @@ WINDOW and OBJECT are ignored."
 
 ;;;###autoload
 (defun org-ref-add-glossary-or-acronym-entries ()
+  "Insert glossary or acronym entries."
   (interactive)
   (ivy-read "Add new entry: "
             '(("Acronym" . org-ref-add-acronym-entry)

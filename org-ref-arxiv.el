@@ -41,6 +41,30 @@
 (declare-function parsebib-find-bibtex-dialect "parsebib")
 (declare-function org-ref-clean-bibtex-entry "org-ref-core")
 
+;;* Getting a bibtex entry for an arXiv article using arXiv API:
+;; Retrieves the meta data of an article view arXiv's http API,
+;; extracts the necessary information, and formats a new BibTeX entry.
+(defvar arxiv-entry-format-string "@article{%s,
+  journal = {CoRR},
+  title = {%s},
+  author = {%s},
+  archivePrefix = {arXiv},
+  year = {%s},
+  eprint = {%s},
+  primaryClass = {%s},
+  abstract = {%s},
+  url = {%s},
+}"
+  "Template for BibTeX entries of arXiv articles.")
+
+(require 'bibtex)
+(require 'dash)
+(require 'f)
+(require 'org)
+(require 'parsebib)
+(require 's)
+(require 'org-ref-utils)
+
 ;;* The org-mode link
 ;; this just makes a clickable link that opens the entry.
 ;; example: arxiv:cond-mat/0410285
@@ -90,23 +114,6 @@
           (buffer-substring (point) (point-max)))
       (error "Did not get one entry: %s"
              (buffer-substring (point) (point-max))))))
-
-
-;;* Getting a bibtex entry for an arXiv article using arXiv API:
-;; Retrieves the meta data of an article view arXiv's http API,
-;; extracts the necessary information, and formats a new BibTeX entry.
-(defvar arxiv-entry-format-string "@article{%s,
-  journal = {CoRR},
-  title = {%s},
-  author = {%s},
-  archivePrefix = {arXiv},
-  year = {%s},
-  eprint = {%s},
-  primaryClass = {%s},
-  abstract = {%s},
-  url = {%s},
-}"
-	"Template for BibTeX entries of arXiv articles.")
 
 
 (defun org-ref-arxiv-get-bibtex-entry-via-arxiv-api (arxiv-number)

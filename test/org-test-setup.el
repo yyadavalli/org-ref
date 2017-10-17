@@ -115,7 +115,7 @@ org-test searches this directory up the directory tree.")
 (defconst org-id-locations-file
   (expand-file-name ".test-org-id-locations" org-test-dir))
 
-
+
 ;;; Functions for writing tests
 (put 'missing-test-dependency
      'error-conditions
@@ -142,7 +142,7 @@ If file is not given, search for a file named after the test
 currently executed.")
 
 (defmacro org-test-at-id (id &rest body)
-  "Run body after placing the point in the headline identified by ID."
+  "After placing the point in the headline identified by ID, run BODY."
   (declare (indent 1))
   `(let* ((id-location (org-id-find ,id))
           (id-file (car id-location))
@@ -164,7 +164,7 @@ currently executed.")
 (def-edebug-spec org-test-at-id (form body))
 
 (defmacro org-test-in-example-file (file &rest body)
-  "Execute body in the Org-mode example file."
+  "In the Org-mode example FILE, execute BODY."
   (declare (indent 1))
   `(let* ((my-file (or ,file org-test-file))
           (visited-p (get-file-buffer my-file))
@@ -188,8 +188,9 @@ currently executed.")
 (def-edebug-spec org-test-in-example-file (form body))
 
 (defmacro org-test-at-marker (file marker &rest body)
-  "Run body after placing the point at MARKER in FILE.
-Note the uuidgen command-line command can be useful for
+  "Run BODY after placing the point at MARKER in FILE.
+
+Note the uuidgen `command-line' command can be useful for
 generating unique markers for insertion as anchors into org
 files."
   (declare (indent 2))
@@ -200,8 +201,8 @@ files."
 (def-edebug-spec org-test-at-marker (form form body))
 
 (defmacro org-test-with-temp-text (text &rest body)
-  "Run body in a temporary buffer with Org-mode as the active
-mode holding TEXT.  If the string \"<point>\" appears in TEXT
+  "Run BODY in a temporary buffer with Org-mode as the active mode holding TEXT.
+If the string \"<point>\" appears in TEXT
 then remove it and place the point there before running BODY,
 otherwise place the point at the beginning of the inserted text."
   (declare (indent 1))
@@ -220,7 +221,7 @@ otherwise place the point at the beginning of the inserted text."
 (def-edebug-spec org-test-with-temp-text (form body))
 
 (defmacro org-test-with-temp-text-in-file (text &rest body)
-  "Run body in a temporary file buffer with Org-mode as the active mode."
+  "Run BODY in a temporary file buffer with Org-mode as the active mode."
   (declare (indent 1))
   (let ((results (gensym)))
     `(let ((file (make-temp-file "org-test"))
@@ -356,7 +357,7 @@ setting `pp-escape-newlines' to nil manually."
 
 ;;; Load and Run tests
 (defun org-test-load ()
-  "Load up the org-mode test suite."
+  "Load up the `org-mode' test suite."
   (interactive)
   (cl-flet ((rld (base)
                  ;; Recursively load all files, if files throw errors

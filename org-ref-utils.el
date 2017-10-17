@@ -62,20 +62,17 @@ Copies the string to the clipboard."
          org-version
          git-commit
          version-string)
-
     (setq org-version (with-temp-buffer
                         (insert-file-contents org-ref-el)
                         (goto-char (point-min))
                         (re-search-forward ";; Version:")
                         (s-trim (buffer-substring (point)
                                                   (line-end-position)))))
-
     (setq git-commit
           ;; If in git, get current commit
           (let ((default-directory org-ref-dir))
             (when (= 0 (shell-command "git rev-parse --git-dir"))
               (s-trim (shell-command-to-string "git rev-parse HEAD")))))
-
     (setq version-string (format "org-ref: Version %s%s" org-version
                                  (if git-commit
                                      (format " (git-commit %s)" git-commit)
@@ -139,8 +136,8 @@ You set pdftotext-executable to ${pdftotext-executable} (exists: ${pdftotext-exe
 org-latex-pdf-process:
 ${org-latex-pdf-process}"
     'aget
-    `(("org-ref-completion-library" . ,(format "%s"  org-ref-completion-library))
-      ("org-ref-bibliography-notes" . ,(format "%s"org-ref-bibliography-notes))
+    `(("org-ref-completion-library" . ,(format "%s" org-ref-completion-library))
+      ("org-ref-bibliography-notes" . ,(format "%s" org-ref-bibliography-notes))
       ("orbn-p" . ,(format "%s" (file-exists-p org-ref-bibliography-notes)))
       ("org-ref-version" . ,(org-ref-version))
       ("org-latex-pdf-process" . ,(format "%S" org-latex-pdf-process))
@@ -802,7 +799,9 @@ From the PDF specification 1.7:
   (declare (indent 1))
   (if (fboundp 'org-link-set-parameters)
       `(org-link-set-parameters ,type ,@parameters)
-    `(org-add-link-type ,type ,(plist-get parameters :follow) ,(plist-get parameters :export))))
+    `(org-add-link-type ,type
+                        ,(plist-get parameters :follow)
+                        ,(plist-get parameters :export))))
 
 (provide 'org-ref-utils)
 ;;; org-ref-utils.el ends here

@@ -266,8 +266,8 @@ returns the style with the override."
     ;; get labels. This function is where you would, for example, create
     ;; hyperlinks to the bibliography. This function should return a list of
     ;; strings
-    (setq labels (mapcar (lambda (key) (funcall label-func key
-                                           *orcp-unique-entries*))
+    (setq labels (mapcar (lambda (key)
+                           (funcall label-func key *orcp-unique-entries*))
                          keys))
     ;; collapse range - not used yet.
     ;; now get a string collecting everything
@@ -345,7 +345,7 @@ returns the style with the override."
                           ;; It doesn't make sense to do this for all formats, e.g.HTML.
                           ;; commenting out for now.
                           ;; (increase-left-margin
-                          ;;	(point-min) (point-max) hanging-indent)
+                          ;;  (point-min) (point-max) hanging-indent)
                           ;; (fill-region (point-min) (point-max) justification)
                           (buffer-string)))))
            ;; Here we put in the separator between entries
@@ -869,7 +869,6 @@ documents."
        (when link-replacements
          (message "Warning: No bibliography link found although there are citations to process"))))))
 
-;; * the end
 
 (provide 'org-ref-citeproc)
 

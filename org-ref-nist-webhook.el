@@ -30,12 +30,10 @@
            "&Units=SI")))
 
 (org-ref-link-set-parameters "nist-wb-name"
-  :follow (lambda (name)
-            (org-ref-nist-webbook-name name)))
+  :follow (lambda (name) (org-ref-nist-webbook-name name)))
 
 (org-ref-link-set-parameters "nist-wb-formula"
-  :follow (lambda (formula)
-            (org-ref-nist-webbook-formula formula)))
+  :follow (lambda (formula) (org-ref-nist-webbook-formula formula)))
 
 (provide 'nist-webbook)
 

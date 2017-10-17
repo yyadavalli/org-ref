@@ -56,33 +56,32 @@ The entries in this list are cons cells where the car is the field name
 and cdr is the replacement name."
   :group 'org-ref-isbn
   :type '(repeat (cons (string :tag "Field name")
-		       (string :tag "Field name replacement"))))
+                       (string :tag "Field name replacement"))))
 
 (defun oricb-replace-field-names ()
-  "Replace bibtex field names defined in
-`org-ref-isbn-field-name-replacements'."
+  "Replace bibtex field names defined in `org-ref-isbn-field-name-replacements'."
   (when org-ref-isbn-field-name-replacements
     (mapcar (lambda (field)
-	      (bibtex-beginning-of-entry)
-	      (let ((f (bibtex-autokey-get-field (car field))))
-		(unless (string= "" f)
-		  (goto-char (cadr (bibtex-search-forward-field (car field) t)))
-		  (bibtex-kill-field)
-		  (bibtex-make-field (cdr field))
-		  (backward-char)
-		  (insert f))))
-	    org-ref-isbn-field-name-replacements)))
+              (bibtex-beginning-of-entry)
+              (let ((f (bibtex-autokey-get-field (car field))))
+                (unless (string= "" f)
+                  (goto-char (cadr (bibtex-search-forward-field (car field) t)))
+                  (bibtex-kill-field)
+                  (bibtex-make-field (cdr field))
+                  (backward-char)
+                  (insert f))))
+            org-ref-isbn-field-name-replacements)))
 
 (defun oricb-kill-fields ()
   "Kill all bibtex fields defined in `org-ref-isbn-exclude-fields'."
   (when org-ref-isbn-exclude-fields
     (mapcar (lambda (field)
-	      (bibtex-beginning-of-entry)
-	      (let ((f (bibtex-autokey-get-field field)))
-		(unless (string= "" f)
-		  (goto-char (cadr (bibtex-search-forward-field field t)))
-		  (bibtex-kill-field))))
-	    org-ref-isbn-exclude-fields)))
+              (bibtex-beginning-of-entry)
+              (let ((f (bibtex-autokey-get-field field)))
+                (unless (string= "" f)
+                  (goto-char (cadr (bibtex-search-forward-field field t)))
+                  (bibtex-kill-field))))
+            org-ref-isbn-exclude-fields)))
 
 (defun oricb-remove-enclosing-brackets ()
   "Remove enclosing brackets from fields."
