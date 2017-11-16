@@ -1,4 +1,4 @@
-;;; nist-webbook.el --- Integration of Emacs with NIST Webbook
+;;; org-ref-nist-webbook.el --- Integration of Emacs with NIST Webbook
 ;; Integration of Emacs with NIST webbook
 
 ;;; Commentary:
@@ -29,12 +29,13 @@
            (url-hexify-string name)
            "&Units=SI")))
 
+
 (org-ref-link-set-parameters "nist-wb-name"
   :follow (lambda (name) (org-ref-nist-webbook-name name)))
 
 (org-ref-link-set-parameters "nist-wb-formula"
   :follow (lambda (formula) (org-ref-nist-webbook-formula formula)))
 
-(provide 'nist-webbook)
+(provide 'org-ref-nist-webbook)
 
-;;; nist-webbook.el ends here
+;;; org-ref-nist-webbook.el ends here
