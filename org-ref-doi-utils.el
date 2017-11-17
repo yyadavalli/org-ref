@@ -1205,6 +1205,77 @@ May be empty if none are found."
            (url-hexify-string doi))))
 
 
+(defun org-ref-get-doi-at-point ()
+  "Get doi for key at point."
+  (let* ((results (org-ref-get-bibtex-key-and-file))
+         (key (car results))
+         (bibfile (cdr results))
+         doi)
+    (save-excursion
+      (with-temp-buffer
+        (insert-file-contents bibfile)
+        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
+        (bibtex-search-entry key)
+        (setq doi (bibtex-autokey-get-field "doi"))
+        ;; in case doi is a url, remove the url part.
+        (replace-regexp-in-string "^http://dx.doi.org/" "" doi)))))
+
+
+;;**** functions that operate on key at point for click menu
+;;;###autoload
+(defun org-ref-wos-at-point ()
+  "Open the doi in wos for bibtex key under point."
+  (interactive)
+  (org-ref-doi-utils-wos (org-ref-get-doi-at-point)))
+
+
+;;;###autoload
+(defun org-ref-wos-citing-at-point ()
+  "Open the doi in wos citing articles for bibtex key under point."
+  (interactive)
+  (org-ref-doi-utils-wos-citing (org-ref-get-doi-at-point)))
+
+
+;;;###autoload
+(defun org-ref-wos-related-at-point ()
+  "Open the doi in wos related articles for bibtex key under point."
+  (interactive)
+  (org-ref-doi-utils-wos-related (org-ref-get-doi-at-point)))
+
+
+;;;###autoload
+(defun org-ref-google-scholar-at-point ()
+  "Search google scholar for bibtex key under point using the title."
+  (interactive)
+  (browse-url
+   (format
+    "http://scholar.google.com/scholar?q=%s"
+    (let* ((key-file (org-ref-get-bibtex-key-and-file))
+           (key (car key-file))
+           (file (cdr key-file))
+           entry)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
+        (bibtex-search-entry key nil 0)
+        (setq entry (bibtex-parse-entry))
+        (org-ref-reftex-get-bib-field "title" entry))))))
+
+
+;;;###autoload
+(defun org-ref-pubmed-at-point ()
+  "Open the doi in pubmed for bibtex key under point."
+  (interactive)
+  (org-ref-doi-utils-pubmed (org-ref-get-doi-at-point)))
+
+
+;;;###autoload
+(defun org-ref-crossref-at-point ()
+  "Open the doi in crossref for bibtex key under point."
+  (interactive)
+  (org-ref-doi-utils-crossref (org-ref-get-doi-at-point)))
+
+
 (setq doi-link-menu-funcs
       '(("o" "pen" org-ref-doi-utils-open)
         ("w" "os" org-ref-doi-utils-wos)
@@ -1225,11 +1296,10 @@ Argument LINK-STRING Passed in on link click."
   (interactive)
   (message
    (concat
-    (mapconcat
-     (lambda (tup)
-       (concat "[" (elt tup 0) "]"
-               (elt tup 1) " "))
-     doi-link-menu-funcs "") ": "))
+    (mapconcat (lambda (tup)
+                 (concat "[" (elt tup 0) "]"
+                         (elt tup 1) " "))
+               doi-link-menu-funcs "") ": "))
   (let* ((input (read-char-exclusive))
          (choice (assoc
                   (char-to-string input) doi-link-menu-funcs)))

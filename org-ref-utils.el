@@ -506,92 +506,6 @@ directory.  You can also specify a new file."
           (save-buffer))))))
 
 
-(defun org-ref-get-doi-at-point ()
-  "Get doi for key at point."
-  (let* ((results (org-ref-get-bibtex-key-and-file))
-         (key (car results))
-         (bibfile (cdr results))
-         doi)
-    (save-excursion
-      (with-temp-buffer
-        (insert-file-contents bibfile)
-        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
-        (bibtex-search-entry key)
-        (setq doi (bibtex-autokey-get-field "doi"))
-        ;; in case doi is a url, remove the url part.
-        (replace-regexp-in-string "^http://dx.doi.org/" "" doi)))))
-
-
-;;**** functions that operate on key at point for click menu
-;;;###autoload
-(defun org-ref-wos-at-point ()
-  "Open the doi in wos for bibtex key under point."
-  (interactive)
-  (org-ref-doi-utils-wos (org-ref-get-doi-at-point)))
-
-
-;;;###autoload
-(defun org-ref-wos-citing-at-point ()
-  "Open the doi in wos citing articles for bibtex key under point."
-  (interactive)
-  (org-ref-doi-utils-wos-citing (org-ref-get-doi-at-point)))
-
-
-;;;###autoload
-(defun org-ref-wos-related-at-point ()
-  "Open the doi in wos related articles for bibtex key under point."
-  (interactive)
-  (org-ref-doi-utils-wos-related (org-ref-get-doi-at-point)))
-
-
-;;;###autoload
-(defun org-ref-google-scholar-at-point ()
-  "Search google scholar for bibtex key under point using the title."
-  (interactive)
-  (browse-url
-   (format
-    "http://scholar.google.com/scholar?q=%s"
-    (let* ((key-file (org-ref-get-bibtex-key-and-file))
-           (key (car key-file))
-           (file (cdr key-file))
-           entry)
-      (with-temp-buffer
-        (insert-file-contents file)
-        (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
-        (bibtex-search-entry key nil 0)
-        (setq entry (bibtex-parse-entry))
-        (org-ref-reftex-get-bib-field "title" entry))))))
-
-
-;;;###autoload
-(defun org-ref-pubmed-at-point ()
-  "Open the doi in pubmed for bibtex key under point."
-  (interactive)
-  (org-ref-doi-utils-pubmed (org-ref-get-doi-at-point)))
-
-
-;;;###autoload
-(defun org-ref-crossref-at-point ()
-  "Open the doi in crossref for bibtex key under point."
-  (interactive)
-  (org-ref-doi-utils-crossref (org-ref-get-doi-at-point)))
-
-
-;;* General org-ref utilities
-(defun org-ref-strip-string (string)
-  "Strip leading and trailing whitespace from the STRING."
-  (replace-regexp-in-string
-   (concat search-whitespace-regexp "$" ) ""
-   (replace-regexp-in-string
-    (concat "^" search-whitespace-regexp ) "" string)))
-
-
-(defun org-ref-split-and-strip-string (string)
-  "Split key-string and strip keys in STRING.
-Assumes the key-string is comma delimited."
-  (mapcar 'org-ref-strip-string (split-string string ",")))
-
-
 (defun org-ref-get-bibtex-keys (&optional sort)
   "Return a list of unique keys in the buffer.
 Use SORT to specify alphabetical order by key."
@@ -778,30 +692,6 @@ some things are escaped since odt is an xml format."
                    (xml-escape-string (org-ref-get-bibtex-entry-ascii x)))
                  keys "\n"))))
 
-
-(defun org-ref-pdf-p (filename)
-  "Check if FILENAME is PDF file.
-
-From the PDF specification 1.7:
-
-    The first line of a PDF file shall be a header consisting of
-    the 5 characters %PDF- followed by a version number of the
-    form 1.N, where N is a digit between 0 and 7."
-  (let ((header (with-temp-buffer
-                  (set-buffer-multibyte nil)
-                  (insert-file-contents-literally filename nil 0 5)
-                  (buffer-string))))
-    (string-equal (encode-coding-string header 'utf-8) "%PDF-")))
-
-;;;###autoload
-(defmacro org-ref-link-set-parameters (type &rest parameters)
-  "Set link TYPE properties to PARAMETERS."
-  (declare (indent 1))
-  (if (fboundp 'org-link-set-parameters)
-      `(org-link-set-parameters ,type ,@parameters)
-    `(org-add-link-type ,type
-                        ,(plist-get parameters :follow)
-                        ,(plist-get parameters :export))))
 
 (provide 'org-ref-utils)
 ;;; org-ref-utils.el ends here

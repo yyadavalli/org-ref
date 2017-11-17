@@ -518,6 +518,21 @@ label link."
         org-ref-show-citation-on-enter nil))
 
 
+;;* General org-ref utilities
+(defun org-ref-strip-string (string)
+  "Strip leading and trailing whitespace from the STRING."
+  (replace-regexp-in-string
+   (concat search-whitespace-regexp "$" ) ""
+   (replace-regexp-in-string
+    (concat "^" search-whitespace-regexp ) "" string)))
+
+
+(defun org-ref-split-and-strip-string (string)
+  "Split key-string and strip keys in STRING.
+Assumes the key-string is comma delimited."
+  (mapcar 'org-ref-strip-string (split-string string ",")))
+
+
 ;;* Updating bibtex entries
 
 ;; I wrote this code because it is pretty common for me to copy bibtex entries
@@ -824,6 +839,20 @@ Add tooltip to the link."
         (org-ref-match-next-bibliographystyle-link (0  'org-link t)))
       t))))
 
+
+(defun org-ref-pdf-p (filename)
+  "Check if FILENAME is PDF file.
+
+From the PDF specification 1.7:
+
+    The first line of a PDF file shall be a header consisting of
+    the 5 characters %PDF- followed by a version number of the
+    form 1.N, where N is a digit between 0 and 7."
+  (let ((header (with-temp-buffer
+                  (set-buffer-multibyte nil)
+                  (insert-file-contents-literally filename nil 0 5)
+                  (buffer-string))))
+    (string-equal (encode-coding-string header 'utf-8) "%PDF-")))
 
 ;;* Links
 ;;** bibliography and bibliographystyle

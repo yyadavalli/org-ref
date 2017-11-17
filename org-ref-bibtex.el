@@ -925,6 +925,23 @@ This function is copied from `ivy-bibtex'."
   (kill-buffer))
 
 
+;;** Open pdf in bibtex entry
+(defun org-ref-bibtex-open-pdf ()
+  "Open pdf for a bibtex entry, if it exists.
+assumes point is in
+the entry of interest in the bibfile.  but does not check that."
+  (interactive)
+  (save-excursion
+    (bibtex-beginning-of-entry)
+    (let* ((bibtex-expand-strings t)
+           (entry (bibtex-parse-entry t))
+           (key (reftex-get-bib-field "=key=" entry))
+           (pdf (funcall org-ref-get-pdf-filename-function key)))
+      (if (file-exists-p pdf)
+          (org-open-link-from-string (format "[[file:%s]]" pdf))
+        (ding)))))
+
+
 ;;* Hydra menus
 ;;** Hydra menu for bibtex entries
 ;; hydra menu for actions on bibtex entries
@@ -939,7 +956,7 @@ _u_: Update entry  _T_: Title case     _A_: Remove nonascii       _r_: Crossref
 _U_: Update field  _S_: Sentence case  _F_: File funcs            _q_: quit
 "
 
-  ("p" org-ref-open-bibtex-pdf)
+  ("p" org-ref-bibtex-open-pdf)
   ("b" org-ref-open-in-browser)
   ("n" (progn
          (bibtex-beginning-of-entry)
