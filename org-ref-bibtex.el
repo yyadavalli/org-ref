@@ -1315,12 +1315,6 @@ Update the cache if necessary."
                     collect (cdr (assoc bibfile candidates))))))
 
 
-;; Now load files and update them if needed. We do this when you load the
-;; library so they are available later.
-(org-ref-load-cache-file)
-(org-ref-update-bibtex-cache)
-
-
 ;;* org-ref bibtex formatted citation
 (defun org-ref-format-bibtex-entry (entry)
   "Return a formatted citation for the bibtex ENTRY at point.

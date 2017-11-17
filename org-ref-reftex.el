@@ -32,16 +32,13 @@
 (setq org-ref-show-citation-on-enter nil)
 
 ;;* org-mode / reftex setup
-(defun org-mode-reftex-setup ()
+(defun org-ref-reftex-setup ()
   "Setup `org-mode' and reftex for `org-ref'."
   (and (buffer-file-name)
        (file-exists-p (buffer-file-name))
        (global-auto-revert-mode t))
   (make-local-variable 'reftex-cite-format)
   (setq reftex-cite-format 'org))
-
-(add-hook 'org-mode-hook 'org-mode-reftex-setup)
-
 
 (eval-after-load 'reftex-vars
   '(progn

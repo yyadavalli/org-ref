@@ -139,8 +139,6 @@ LIMIT can be used to bound the search."
    nil
    '((org-ref-next-latex-cite 3 font-lock-constant-face))))
 
-(add-hook 'latex-mode-hook 'org-ref-latex-cite-on)
-
 (provide 'org-ref-latex)
 
 ;;; org-ref-latex.el ends here

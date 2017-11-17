@@ -206,6 +206,7 @@ otherwise place the point at the beginning of the inserted text."
          (org-mode-hook nil))
      (with-temp-buffer
        (org-mode)
+       (org-ref-mode)
        (let ((point (string-match "<point>" inside-text)))
          (if point
              (progn
