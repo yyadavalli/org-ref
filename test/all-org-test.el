@@ -756,7 +756,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-clean-year "2015")
+      (org-ref-clean-year "2015")
       (bibtex-autokey-get-field "year")))))
 
 (ert-deftest clean-year-2 ()
@@ -780,7 +780,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-clean-year "2014")
+      (org-ref-clean-year "2014")
       (bibtex-autokey-get-field "year")))))
 
 (ert-deftest clean-& ()
@@ -804,7 +804,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-&)
+      (org-ref-&)
       (bibtex-autokey-get-field "title")))))
 
 (ert-deftest clean-comma ()
@@ -828,7 +828,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-key-comma)
+      (org-ref-key-comma)
       (buffer-substring-no-properties (point-min)
                                       (line-end-position))))))
 
@@ -854,7 +854,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-clean-pages)
+      (org-ref-clean-pages)
       (bibtex-autokey-get-field "pages")))))
 
 (ert-deftest clean-doi-1 ()
@@ -879,7 +879,7 @@ eprint =	 { http://dx.doi.org/10.1021/acscatal.5b00538 },
       (bibtex-mode)
       (bibtex-set-dialect (parsebib-find-bibtex-dialect) t)
       (goto-char (point-min))
-      (orcb-clean-doi)
+      (org-ref-clean-doi)
       (bibtex-autokey-get-field "doi")))))
 
 (ert-deftest bib-1 ()

@@ -445,7 +445,7 @@ START and END allow you to use this with `bibtex-map-entries'"
                      (cdr (assoc journal full-names))
                      (cdr (assoc journal abbrev-names)))))
       (when bstring
-        (bibtex-set-field "journal" bstring t)
+        (org-ref-bibtex-set-field "journal" bstring t)
         (bibtex-fill-entry)))))
 
 
@@ -454,7 +454,7 @@ START and END allow you to use this with `bibtex-map-entries'"
   "Ivy interface to set a journal string in a bibtex entry.
 Entries come from `org-ref-bibtex-journal-abbreviations'."
   (interactive)
-  (bibtex-set-field
+  (org-ref-bibtex-set-field
    "journal"
    (ivy-read "Title: "
              `((candidates . ,(mapcar
@@ -485,7 +485,8 @@ This is defined in `org-ref-bibtex-journal-abbreviations'."
                 (lambda (x)
                   (cons (nth 1 x) (nth 0 x)))
                 org-ref-bibtex-journal-abbreviations)))
-    (bibtex-set-field "journal" (cdr (assoc full-journal-name alist)) t)
+    (org-ref-bibtex-set-field
+     "journal" (cdr (assoc full-journal-name alist)) t)
     (bibtex-fill-entry)
     (bibtex-clean-entry)))
 
@@ -656,9 +657,7 @@ and books."
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
       ;; this is defined in org-ref-doi-utils
-      (bibtex-set-field
-       "title"
-       title)
+      (org-ref-bibtex-set-field "title" title)
       (bibtex-fill-entry))))
 
 
@@ -706,7 +705,7 @@ all the title entries in articles."
                 (format "%s" (upcase char)))
           (setq start (match-end 1))))
       ;; this is defined in org-ref-doi-utils
-      (bibtex-set-field "title" title)
+      (org-ref-bibtex-set-field "title" title)
       ;; clean and refill entry so it looks nice
       (bibtex-clean-entry)
       (bibtex-fill-entry))))
@@ -772,7 +771,7 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
   (if (eq (org-ref-bibtex-entry-doi) "") nil
     (let ((front-url "https://doi.org/")
           (doi (org-ref-bibtex-entry-doi)))
-      (bibtex-set-field "url" (concat front-url doi)))))
+      (org-ref-bibtex-set-field "url" (concat front-url doi)))))
 
 
 ;;;###autoload
@@ -1079,7 +1078,7 @@ keywords.  Optional argument ARG prefix arg to replace keywords."
    (list
     (completing-read "Keyword: " (org-ref-bibtex-keywords))
     current-prefix-arg))
-  (bibtex-set-field
+  (org-ref-bibtex-set-field
    "keywords"
    (if arg
        ;; replace with arg

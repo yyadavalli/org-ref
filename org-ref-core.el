@@ -390,16 +390,16 @@ http://ctan.mirrorcatalogs.com/macros/latex/contrib/biblatex/doc/biblatex.pdf"
 
 (defcustom org-ref-clean-bibtex-entry-hook
   '(org-ref-bibtex-format-url-if-doi
-    orcb-key-comma
+    org-ref-key-comma
     org-ref-replace-nonascii
-    orcb-&
-    orcb-%
+    org-ref-&
+    org-ref-%
     org-ref-title-case-article
-    orcb-clean-year
-    orcb-key
-    orcb-clean-doi
-    orcb-clean-pages
-    orcb-check-journal
+    org-ref-clean-year
+    org-ref-key
+    org-ref-clean-doi
+    org-ref-clean-pages
+    org-ref-check-journal
     org-ref-sort-bibtex-entry)
   "Hook that is run in `org-ref-clean-bibtex-entry'.
 The functions should have no arguments, and
@@ -409,7 +409,7 @@ at the beginning of the entry. These functions are wrapped in
 save the point position.
 
 Org ref contains some functions that are not included by default
-such as `orcb-clean-nil' or `orcb-clean-nil-opinionated' that
+such as `org-ref-clean-nil' or `org-ref-clean-nil-opinionated' that
 users may be interested in adding themselves."
   :group 'org-ref
   :type 'hook)
@@ -526,6 +526,41 @@ label link."
   (setq org-ref-message-timer nil
         org-ref-show-citation-on-enter nil))
 
+
+;;* Updating bibtex entries
+
+;; I wrote this code because it is pretty common for me to copy bibtex entries
+;; from ASAP articles that are incomplete, e.g. no page numbers because it is
+;; not in print yet. I wanted a convenient way to update an entry from its DOI.
+;; Basically, we get the metadata, and update the fields in the entry.
+
+;; There is not bibtex set field function, so I wrote this one.
+;;
+;; Moved from doi-utils.el
+;;;###autoload
+(defun org-ref-bibtex-set-field (field value &optional nodelim)
+  "Set FIELD to VALUE in bibtex file.  create field if it does not exist.
+Optional argument NODELIM see `bibtex-make-field'."
+  (interactive "sfield: \nsvalue: ")
+  (bibtex-beginning-of-entry)
+  (let ((found))
+    (if (setq found (bibtex-search-forward-field field t))
+        ;; we found a field
+        (progn
+          (goto-char (car (cdr found)))
+          (when value
+            (bibtex-kill-field)
+            (bibtex-make-field field nil nil nodelim)
+            (backward-char)
+            (insert value)))
+      ;; make a new field
+      (bibtex-beginning-of-entry)
+      (forward-line) (beginning-of-line)
+      (bibtex-next-field nil)
+      (forward-char)
+      (bibtex-make-field field nil nil nodelim)
+      (backward-char)
+      (insert value))))
 
 (when org-ref-show-citation-on-enter
   (org-ref-show-link-messages))
@@ -2730,7 +2765,7 @@ where the file in the link does not exist."
 
 ;;** Clean a bibtex entry
 ;; These functions operate on a bibtex entry and "clean" it in some way.
-(defun orcb-clean-nil (arg)
+(defun org-ref-clean-nil (arg)
   "Remove nil from some article fields.
 The removal is conditional. Sometimes it is useful to have nil
 around, e.g. for ASAP articles where the fields are not defined
@@ -2751,12 +2786,12 @@ With \\[univeral-argument], run `bibtex-clean-entry' after."
              (not (string= (cdr (assoc "volume" entry)) "{nil}"))
              (not (string= (cdr (assoc "pages" entry)) "{nil}"))
              (string= (cdr (assoc "number" entry)) "{nil}"))
-        (bibtex-set-field "number" "")
+        (org-ref-bibtex-set-field "number" "")
         (if arg
             (bibtex-clean-entry)))))))
 
 
-(defun orcb-clean-nil-opinionated ()
+(defun org-ref-clean-nil-opinionated ()
   "Remove nil from all article fields.
 
 Note that by default, this will leave the entry empty, which may
@@ -2770,10 +2805,10 @@ will leave the empty entries so that you may fill them in later."
     (when (string= type "article")
       (cl-loop for (field . text) in entry do
                (if (string= text "{nil}")
-                   (bibtex-set-field field ""))))))
+                   (org-ref-bibtex-set-field field ""))))))
 
 
-(defun orcb-clean-doi ()
+(defun org-ref-clean-doi ()
   "Remove http://dx.doi.org/ in the doi field."
   (let ((doi (bibtex-autokey-get-field "doi")))
     (when (string-match "^http://dx.doi.org/" doi)
@@ -2785,7 +2820,7 @@ will leave the empty entries so that you may fill them in later."
       (insert (replace-regexp-in-string "^http://dx.doi.org/" "" doi)))))
 
 
-(defun orcb-clean-year (&optional new-year)
+(defun org-ref-clean-year (&optional new-year)
   "Fix years set to 0.
 If optional NEW-YEAR set it to that, otherwise prompt for it."
   ;; asap articles often set year to 0, which messes up key
@@ -2800,16 +2835,16 @@ If optional NEW-YEAR set it to that, otherwise prompt for it."
       (insert (or new-year (read-string "Enter year: "))))))
 
 
-(defun orcb-clean-pages ()
+(defun org-ref-clean-pages ()
   "Check for empty pages, and put eid in its place if it exists."
   (let ((pages (bibtex-autokey-get-field "pages"))
         (eid (bibtex-autokey-get-field "eid")))
     (when (and (not (string= "" eid))
                (or (string= "" pages)))
-      (bibtex-set-field "pages" eid))))
+      (org-ref-bibtex-set-field "pages" eid))))
 
 
-(defun orcb-& ()
+(defun org-ref-& ()
   "Replace naked & with \& in a bibtex entry."
   (save-restriction
     (bibtex-narrow-to-entry)
@@ -2818,7 +2853,7 @@ If optional NEW-YEAR set it to that, otherwise prompt for it."
       (replace-match " \\\\& "))))
 
 
-(defun orcb-% ()
+(defun org-ref-% ()
   "Replace naked % with % in a bibtex entry."
   (save-restriction
     (bibtex-narrow-to-entry)
@@ -2827,7 +2862,7 @@ If optional NEW-YEAR set it to that, otherwise prompt for it."
       (replace-match " \\\\%"))))
 
 
-(defun orcb-key-comma ()
+(defun org-ref-key-comma ()
   "Make sure there is a comma at the end of the first line."
   (bibtex-beginning-of-entry)
   (end-of-line)
@@ -2838,7 +2873,7 @@ If optional NEW-YEAR set it to that, otherwise prompt for it."
     (insert ",")))
 
 
-(defun orcb-key ()
+(defun org-ref-key ()
   "Replace the key in the entry."
   (let ((key (funcall org-ref-clean-bibtex-key-function
                       (bibtex-generate-autokey))))
@@ -2861,8 +2896,8 @@ If optional NEW-YEAR set it to that, otherwise prompt for it."
     (kill-new key)))
 
 
-(defun orcb-check-journal ()
-  "Check entry at point to see if journal exists in `org-ref-bibtex-journal-abbreviations'.
+(defun org-ref-check-journal ()
+  "Check if journal exists in `org-ref-bibtex-journal-abbreviations'.
 If not, issue a warning."
   (interactive)
   (when

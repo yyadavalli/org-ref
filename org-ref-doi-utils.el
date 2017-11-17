@@ -893,8 +893,9 @@ Also cleans entry using ‘org-ref’, and tries to download the corresponding p
   (backward-char)
   ;; set date added for the record
   (when org-ref-doi-utils-timestamp-format-function
-    (bibtex-set-field org-ref-doi-utils-timestamp-field
-                      (funcall org-ref-doi-utils-timestamp-format-function)))
+    (org-ref-bibtex-set-field
+     org-ref-doi-utils-timestamp-field
+     (funcall org-ref-doi-utils-timestamp-format-function)))
   ;; Clean the record
   (org-ref-clean-bibtex-entry)
   ;; try to get pdf
@@ -1024,41 +1025,6 @@ Argument BIBFILE the bibliography to use."
   (org-metaright)
   (org-metaright))
 
-;;* Updating bibtex entries
-
-;; I wrote this code because it is pretty common for me to copy bibtex entries
-;; from ASAP articles that are incomplete, e.g. no page numbers because it is
-;; not in print yet. I wanted a convenient way to update an entry from its DOI.
-;; Basically, we get the metadata, and update the fields in the entry.
-
-;; There is not bibtex set field function, so I wrote this one.
-
-
-;;;###autoload
-(defun bibtex-set-field (field value &optional nodelim)
-  "Set FIELD to VALUE in bibtex file.  create field if it does not exist.
-Optional argument NODELIM see `bibtex-make-field'."
-  (interactive "sfield: \nsvalue: ")
-  (bibtex-beginning-of-entry)
-  (let ((found))
-    (if (setq found (bibtex-search-forward-field field t))
-        ;; we found a field
-        (progn
-          (goto-char (car (cdr found)))
-          (when value
-            (bibtex-kill-field)
-            (bibtex-make-field field nil nil nodelim)
-            (backward-char)
-            (insert value)))
-      ;; make a new field
-      (bibtex-beginning-of-entry)
-      (forward-line) (beginning-of-line)
-      (bibtex-next-field nil)
-      (forward-char)
-      (bibtex-make-field field nil nil nodelim)
-      (backward-char)
-      (insert value))))
-
 
 ;; The updating function for a whole entry looks like this. We get all the keys
 ;; from the json plist metadata, and update the fields if they exist.
@@ -1097,15 +1063,16 @@ Every field will be updated, so previous change will be lost."
          mapping)
     ;; map the json fields to bibtex fields. The code each field is mapped to is
     ;; evaluated.
-    (setq mapping '((:author . (bibtex-set-field "author" author))
-                    (:title . (bibtex-set-field "title" title))
-                    (:container-title . (bibtex-set-field "journal" journal))
-                    (:issued . (bibtex-set-field "year" year))
-                    (:volume . (bibtex-set-field "volume" volume))
-                    (:issue . (bibtex-set-field "number" number))
-                    (:page . (bibtex-set-field "pages" pages))
-                    (:DOI . (bibtex-set-field "doi" doi))
-                    (:URL . (bibtex-set-field "url" url))))
+    (setq mapping '((:author . (org-ref-bibtex-set-field "author" author))
+                    (:title . (org-ref-bibtex-set-field "title" title))
+                    (:container-title . (org-ref-bibtex-set-field
+                                         "journal" journal))
+                    (:issued . (org-ref-bibtex-set-field "year" year))
+                    (:volume . (org-ref-bibtex-set-field "volume" volume))
+                    (:issue . (org-ref-bibtex-set-field "number" number))
+                    (:page . (org-ref-bibtex-set-field "pages" pages))
+                    (:DOI . (org-ref-bibtex-set-field "doi" doi))
+                    (:URL . (org-ref-bibtex-set-field "url" url))))
     ;; now we have code to run for each entry. we map over them and evaluate the code
     (mapc
      (lambda (key)
@@ -1126,14 +1093,15 @@ Data is retrieved from the doi in the entry."
          (field (car (bibtex-find-text-internal nil nil ","))))
     (cond
      ((string= field "volume")
-      (bibtex-set-field field (plist-get results :volume)))
+      (org-ref-bibtex-set-field field (plist-get results :volume)))
      ((string= field "number")
-      (bibtex-set-field field (plist-get results :issue)))
+      (org-ref-bibtex-set-field field (plist-get results :issue)))
      ((string= field "pages")
-      (bibtex-set-field field (or (plist-get results :page)
-                                  (plist-get results :article-number))))
+      (org-ref-bibtex-set-field
+       field (or (plist-get results :page)
+                 (plist-get results :article-number))))
      ((string= field "year")
-      (bibtex-set-field field (plist-get results :year)))
+      (org-ref-bibtex-set-field field (plist-get results :year)))
      (t
       (message "%s not supported yet." field)))))
 

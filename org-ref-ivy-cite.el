@@ -151,7 +151,7 @@ ENTRY is selected from `org-ref-bibtex-candidates'."
     (save-window-excursion
       (org-ref-ivy-bibtex-open-entry entry)
       (setq entry-keywords (bibtex-autokey-get-field "keywords"))
-      (bibtex-set-field
+      (org-ref-bibtex-set-field
        "keywords"
        (if (> (length entry-keywords) 0)
            (concat entry-keywords ", " keywords)
