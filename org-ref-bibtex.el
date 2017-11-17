@@ -52,15 +52,15 @@
 ;; org-ref-bibtex-file/body gives a hydra menu of actions for the bibtex file
 
 ;;; Code:
+
 (require 'bibtex)
-(require 'dash)
 (require 'hydra)
 (require 'ivy)
 (require 'message)
-(require 's)
 
 (require 'org-ref-citeproc)
 (require 'org-ref-doi-utils)
+(require 'org-ref-core)
 
 (defvar org-ref-pdf-directory)
 (defvar org-ref-notes-directory)
@@ -738,14 +738,6 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
     (bibtex-beginning-of-entry)))
 
 
-(defun org-ref-bibtex-mode-keys ()
-  "Modify keymaps used by `bibtex-mode'."
-  (local-set-key (kbd "M-n") 'org-ref-bibtex-next-entry)
-  (local-set-key (kbd "M-p") 'org-ref-bibtex-previous-entry))
-
-;; add to bibtex-mode-hook
-(add-hook 'bibtex-mode-hook 'org-ref-bibtex-mode-keys)
-
 ;;* Functions to act on an entry with a doi
 ;;;###autoload
 (defun org-ref-bibtex-entry-doi ()
@@ -768,7 +760,8 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
 (defun org-ref-bibtex-format-url-if-doi ()
   "Hook function to format url to follow the current DOI conventions."
   (interactive)
-  (if (eq (org-ref-bibtex-entry-doi) "") nil
+  (if (eq (org-ref-bibtex-entry-doi) "")
+      nil
     (let ((front-url "https://doi.org/")
           (doi (org-ref-bibtex-entry-doi)))
       (org-ref-bibtex-set-field "url" (concat front-url doi)))))

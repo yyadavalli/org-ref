@@ -39,28 +39,14 @@
 
 ;;; Code:
 
-(defvar org-ref-pdf-directory)
-(defvar org-ref-bibliography-notes)
-(defvar org-ref-default-bibliography)
-(defvar reftex-default-bibliography)
-(defvar url-http-end-of-headers)
-(declare-function org-ref-bib-citation "org-ref-core")
-(declare-function org-ref-find-bibliography "org-ref-core")
-(declare-function org-ref-clean-bibtex-entry "org-ref-core")
-(declare-function reftex-get-bib-field "reftex-cite")
-(declare-function bibtex-completion-edit-notes "bibtex-completion")
-
-(require 'bibtex)
-(require 'dash)
-(require 'f)
-(require 'ivy)
 (require 'json)
-(require 'org)                          ; org-add-link-type
-(require 'org-bibtex)                   ; org-bibtex-yank
-(require 'reftex-cite)
 (require 'url-http)
+(require 'org-bibtex)
 
+(require 'org-ref-core)
 (require 'org-ref-utils)
+
+(defvar url-http-end-of-headers)
 
 ;;* Customization
 (defgroup org-ref-doi-utils nil

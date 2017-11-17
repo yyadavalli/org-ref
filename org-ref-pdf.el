@@ -27,19 +27,8 @@
 ;; get a doi. This needs a reliable title/citation.
 
 ;;; Code:
-(declare-function org-ref-doi-utils-add-bibtex-entry-from-doi "org-ref-doi-utils.el")
-(declare-function org-ref-doi-utils-get-json-metadata "org-ref-doi-utils.el")
-(declare-function org-ref-bibtex-key-from-doi "org-ref-bibtex.el")
 
-(declare-function pdf-view-assert-active-region "pdf-view")
-(declare-function pdf-view-active-region-text "pdf-view")
-(declare-function pdf-view-deactivate-region "pdf-view")
-
-(defvar org-ref-pdf-directory)
-
-(require 'bibtex)
-(require 'cl-lib)
-(require 'f)
+(require 'org-ref-bibtex)
 
 (defgroup org-ref-pdf nil
   "Customization group for org-ref-pdf"

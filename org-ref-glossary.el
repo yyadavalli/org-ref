@@ -71,6 +71,8 @@
 ;; Acp:label (exports to \Glspl{label})
 
 (require 'cl-lib)
+(require 'ivy)
+
 (require 'org-ref-core)
 
 ;;; Code:

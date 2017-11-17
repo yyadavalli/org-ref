@@ -23,8 +23,9 @@
 ;; Provides functions to download bibtex entries from isbn numbers.
 
 ;;; Code:
-(require 'f)
-(require 'org)
+
+(require 'json)
+
 (require 'org-ref-core)
 
 (defvar url-http-end-of-headers)

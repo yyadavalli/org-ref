@@ -1,4 +1,4 @@
-;;;; org-test.el --- Tests for Org-mode
+;;; org-test.el --- Tests for Org-mode
 
 ;; Copyright (c) 2010-2015 Sebastian Rose, Eric Schulte
 ;; Authors:
@@ -12,7 +12,7 @@
 ;; Definition of `special-mode' copied from Emacs23's simple.el to be
 ;; provide a testing environment for Emacs22.
 
-;;;; Comments:
+;;; Commentary:
 
 ;; Interactive testing for Org mode.
 
@@ -28,11 +28,7 @@
 ;; $ git submodule init
 ;; $ git submodule update
 
-
-;;;; Code:
-
-;;; Ob constants
-
+;;; Code:
 (defconst org-test-file-ob-anchor
   "94839181-184f-4ff4-a72f-94214df6f5ba")
 

@@ -32,13 +32,6 @@
 ;; DOIs at a URL, you can press Meta during the drag-n-drop.
 
 ;;; Code:
-(defvar org-ref-bibliography-entry-format)
-(defvar org-ref-get-pdf-filename-function)
-(defvar org-ref-notes-function)
-(defvar org-ref-cite-types)
-
-(require 'cl-lib)
-(require 'f)
 
 (require 'org-ref-doi-utils)
 

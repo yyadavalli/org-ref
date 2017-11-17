@@ -3,8 +3,8 @@
 
 (setq package-archives
       '(("org" . "http://orgmode.org/elpa/")
-	("gnu" . "http://elpa.gnu.org/packages/")
-	("melpa" . "http://melpa.org/packages/")))
+        ("gnu" . "http://elpa.gnu.org/packages/")
+        ("melpa" . "http://melpa.org/packages/")))
 
 (package-initialize)
 (package-refresh-contents)
@@ -26,12 +26,12 @@
  'org-babel-load-languages '((python . t)))
 
 (setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f" 
-	"bibtex %b"
-	"pdflatex -interaction nonstopmode -output-directory %o %f" 
-	"pdflatex -interaction nonstopmode -output-directory %o %f"))
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"
+        "bibtex %b"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"))
 
-(require 'org-ref)
+(require 'org-ref-ivy)
 (require 'org-ref-pdf)
 (require 'org-ref-url-utils)
 (require 'org-ref-latex)

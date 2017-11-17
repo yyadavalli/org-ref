@@ -7,27 +7,23 @@
 
 ;;; Code:
 
-(require 'org)
-(require 'org-ref-utils)
+(require 'org-ref-core)
 
 ;;;###autoload
 (defun org-ref-nist-webbook-formula (formula)
   "Search NIST webbook for FORMULA."
   (interactive "sFormula: ")
-  (browse-url
-   (concat
-    "http://webbook.nist.gov/cgi/cbook.cgi?Formula="
-    formula
-    "&NoIon=on&Units=SI")))
+  (browse-url (concat "http://webbook.nist.gov/cgi/cbook.cgi?Formula="
+                      formula
+                      "&NoIon=on&Units=SI")))
 
 ;;;###autoload
 (defun org-ref-nist-webbook-name (name)
   "Search NIST webbook for NAME."
   (interactive "sChemical Name: ")
-  (browse-url
-   (concat "http://webbook.nist.gov/cgi/cbook.cgi?Name="
-           (url-hexify-string name)
-           "&Units=SI")))
+  (browse-url (concat "http://webbook.nist.gov/cgi/cbook.cgi?Name="
+                      (url-hexify-string name)
+                      "&Units=SI")))
 
 
 (org-ref-link-set-parameters "nist-wb-name"

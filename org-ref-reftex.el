@@ -24,25 +24,6 @@
 ;; vanilla Emacs functions. It is not being further developed.
 
 ;;; Code:
-(declare-function org-ref-find-bibliography "org-ref-core.el")
-(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
-(declare-function org-ref-bib-citation "org-ref-core.el")
-
-(defvar org-ref-cite-types)
-(defvar org-ref-bibliography-notes)
-(defvar org-ref-default-citation-link)
-(defvar org-ref-open-notes-function)
-(defvar org-ref-get-pdf-filename-function)
-(defvar org-ref-open-pdf-function)
-(defvar org-ref-show-citation-on-enter)
-
-(require 'bibtex)
-(require 'cl-lib)
-(require 'dash)
-(require 'org-element)
-(require 'parsebib)
-(require 'reftex)
-(require 'reftex-cite)
 
 (require 'org-ref-utils)
 
@@ -66,8 +47,8 @@
   '(progn
      (add-to-list 'reftex-cite-format-builtin
                   '(org "Org-mode citation"
-                        ((?\C-m . "cite:%l") ; default
-                         (?d . ",%l")        ; for appending
+                        ((?\C-m . "cite:%l")  ; default
+                         (?d . ",%l")         ; for appending
                          (?a . "autocite:%l")
                          (?t . "citet:%l")
                          (?T . "citet*:%l")

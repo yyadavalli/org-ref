@@ -19,6 +19,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
 ;; Hopefully this eventually integrates the Scifinder API into Emacs. For now,
 ;; there is just one function that opens Scifinder for you.
 

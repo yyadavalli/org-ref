@@ -23,30 +23,18 @@
 ;;
 
 ;;; Code:
-(defvar org-latex-pdf-process)
-(defvar org-ref-bibliography-notes)
-(defvar org-ref-cite-types)
-(defvar org-ref-default-bibliography)
-(defvar org-ref-get-pdf-filename-function)
-(defvar org-ref-notes-function)
-(defvar org-ref-bibliography-entry-format)
-(defvar org-ref-pdf-directory)
-(defvar pdftotext-executable)
-(defvar reftex-comment-citations)
-(defvar reftex-cite-comment-format)
-
-(declare-function org-ref-doi-utils-crossref "org-ref-doi-utils.el")
-(declare-function org-ref-doi-utils-pubmed "org-ref-doi-utils.el")
-(declare-function org-ref-doi-utils-wos "org-ref-doi-utils.el")
-(declare-function org-ref-doi-utils-wos-citing "org-ref-doi-utils.el")
-(declare-function org-ref-doi-utils-wos-related "org-ref-doi-utils.el")
-(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
-(declare-function org-ref-key-in-file-p "org-ref-core.el")
-(declare-function org-ref-find-bibliography "org-ref-core.el")
-(declare-function org-ref-bib-citation "org-ref-core.el")
-(declare-function org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
-(declare-function org-ref-format-entry "org-ref-bibtex.el")
 (declare-function xml-escape-string "xml-rpc")
+(declare-function org-ref-format-entry "org-ref-bibtex")
+
+(require 'org-ref-core)
+
+(defvar pdftotext-executable)
+(defvar org-latex-pdf-process)
+
+(defcustom org-ref-bib-html "<h1 class='org-ref-bib-h1'>Bibliography</h1>\n"
+  "HTML header to use for bibliography in HTML export."
+  :type 'string
+  :group 'org-ref)
 
 ;;;###autoload
 (defun org-ref-version ()
@@ -259,8 +247,8 @@ environment, only %l is available."
                           (reftex-get-bib-names "editor" entry)
                           (or n 2)))
                ((= l ?E) (car (reftex-get-bib-names "editor" entry)))
-	       ((= l ?f) (concat (org-ref-reftex-get-bib-field "=key=" entry) ".pdf"))
-	       ((= l ?F) (concat org-ref-pdf-directory (org-ref-reftex-get-bib-field "=key=" entry) ".pdf"))
+               ((= l ?f) (concat (org-ref-reftex-get-bib-field "=key=" entry) ".pdf"))
+               ((= l ?F) (concat org-ref-pdf-directory (org-ref-reftex-get-bib-field "=key=" entry) ".pdf"))
                ((= l ?h) (org-ref-reftex-get-bib-field "howpublished" entry))
                ((= l ?i) (org-ref-reftex-get-bib-field "institution" entry))
                ((= l ?j) (let ((jt (reftex-get-bib-field "journal" entry)))
@@ -270,7 +258,7 @@ environment, only %l is available."
                ((= l ?k) (org-ref-reftex-get-bib-field "=key=" entry))
                ((= l ?m) (org-ref-reftex-get-bib-field "month" entry))
                ((= l ?n) (org-ref-reftex-get-bib-field "number" entry))
-	       ((= l ?N) (org-ref-reftex-get-bib-field "note" entry))
+               ((= l ?N) (org-ref-reftex-get-bib-field "note" entry))
                ((= l ?o) (org-ref-reftex-get-bib-field "organization" entry))
                ((= l ?p) (org-ref-reftex-get-bib-field "pages" entry))
                ((= l ?P) (car (split-string
@@ -359,9 +347,9 @@ Format according to the type in `org-ref-bibliography-entry-format'."
 If `org-ref-pdf-directory' is non-nil, put filename there."
   (if org-ref-pdf-directory
       (let ((pdf (-first 'f-file?
-			 (--map (f-join it (concat key ".pdf"))
-				(-flatten (list org-ref-pdf-directory))))))
-	(format "%s" pdf))
+                         (--map (f-join it (concat key ".pdf"))
+                                (-flatten (list org-ref-pdf-directory))))))
+        (format "%s" pdf))
     (format "%s.pdf" key)))
 
 
@@ -383,7 +371,7 @@ Argument KEY is the bibtex key."
             (let ((clean-field (replace-regexp-in-string "{\\|}\\|\\\\" "" e)))
               (let ((first-file (car (split-string clean-field ";" t))))
                 (format "/%s" (substring first-file 1
-					 (- (length first-file) 4)))))
+                                         (- (length first-file) 4)))))
           (format (concat
                    (file-name-as-directory org-ref-pdf-directory)
                    "%s.pdf")
@@ -511,16 +499,16 @@ directory.  You can also specify a new file."
 Use SORT to specify alphabetical order by key."
   (let ((keys '()))
     (org-element-map (org-element-parse-buffer) 'link
-      (lambda (link)
-        (let ((plist (nth 1 link)))
-          (when (-contains? org-ref-cite-types (plist-get plist ':type))
-            (dolist
-                (key
-                 (org-ref-split-and-strip-string (plist-get plist ':path)))
-              (when (not (-contains? keys key))
-                (setq keys (append keys (list key))))))))
-      ;; set with-affiliated to get keys in captions
-      nil nil nil t)
+                     (lambda (link)
+                       (let ((plist (nth 1 link)))
+                         (when (-contains? org-ref-cite-types (plist-get plist ':type))
+                           (dolist
+                               (key
+                                (org-ref-split-and-strip-string (plist-get plist ':path)))
+                             (when (not (-contains? keys key))
+                               (setq keys (append keys (list key))))))))
+                     ;; set with-affiliated to get keys in captions
+                     nil nil nil t)
     (when sort
       ;; Sort keys alphabetically
       (setq keys (cl-sort keys 'string-lessp :key 'downcase)))
@@ -606,7 +594,7 @@ If SORT is non-nil the bibliography is alphabetically sorted."
                           (if (org-ref-key-in-file-p key (file-truename file))
                               (throw 'result file)
                             (message "%s not found in %s" key
-				     (file-truename file))))))
+                                     (file-truename file))))))
 
     (with-temp-buffer
       (insert-file-contents file)
@@ -617,15 +605,16 @@ If SORT is non-nil the bibliography is alphabetically sorted."
   :PROPERTIES:
 %s
   :END:
-" (org-ref-reftex-get-bib-field "author" entry)
-(org-ref-reftex-get-bib-field "title" entry)
-(concat "   :CUSTOM_ID: " (org-ref-reftex-get-bib-field "=key=" entry) "\n"
-        (mapconcat
-         (lambda (element) (format "   :%s: %s"
-                                   (upcase (car element))
-                                   (cdr element)))
-         entry
-         "\n"))))))
+"
+              (org-ref-reftex-get-bib-field "author" entry)
+              (org-ref-reftex-get-bib-field "title" entry)
+              (concat "   :CUSTOM_ID: " (org-ref-reftex-get-bib-field "=key=" entry) "\n"
+                      (mapconcat
+                       (lambda (element) (format "   :%s: %s"
+                                            (upcase (car element))
+                                            (cdr element)))
+                       entry
+                       "\n"))))))
 
 
 (defun org-ref-get-org-bibliography (&optional sort)

@@ -23,17 +23,8 @@
 ;;
 
 ;;; Code:
-(declare-function org-ref-insert-key-at-point "org-ref-core.el")
-(declare-function org-ref-find-bibliography "org-ref-core.el")
-(declare-function org-ref-get-labels "org-ref-core.el")
-(declare-function org-ref-get-bibtex-key-and-file "org-ref-core.el")
-(declare-function org-ref-get-bibtex-key-under-cursor "org-ref-core.el")
 
-(require 'cl-lib)
-(require 'hydra)
-(require 'ivy)
 (require 'org-ref-bibtex)
-(require 'org-ref-citeproc)
 
 (defvar org-ref-ivy-cite-marked-candidates '()
   "Holds entries marked in `org-ref-ivy-insert-cite-link'.")

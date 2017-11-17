@@ -24,10 +24,10 @@
 ;; We use font-lock to add some functionality to the
 
 ;;; Code:
+
 (require 'org-ref-core)
 
 (defvar latex-mode-map)
-(defvar org-ref-cite-types)
 
 (defvar org-ref-latex-cite-re
   (concat "\\\\\\(" (mapconcat

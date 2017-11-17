@@ -27,27 +27,22 @@
 ;; org-ref.org in this package for details.
 
 ;;; Code:
-(declare-function org-ref-email-bibtex-entry "org-ref-bibtex.el")
+(declare-function org-ref-format-entry "org-ref-bibtex.el")
+
 (defvar org-export-exclude-tags)
 (defvar warning-suppress-types)
+(defvar org-ref-bibtex-journal-abbreviations)
 
 (require 'cl-lib)
 (require 'dash)
 (require 'f)
 (require 'org)
+(require 'org-bibtex)
 (require 'org-element)
 (require 'ox)
 (require 'parsebib)
 (require 'reftex-cite)
 (require 's)
-
-(require 'org-ref-doi-utils)
-(require 'org-ref-bibtex)
-(require 'org-ref-utils)
-(require 'org-ref-arxiv)
-
-(declare-function bibtex-completion-get-entry "bibtex-completion")
-(declare-function bibtex-completion-edit-notes "bibtex-completion")
 
 (add-to-list 'load-path
              (expand-file-name
@@ -421,18 +416,6 @@ have fields sorted alphabetically."
   :type 'boolean
   :group 'org-ref)
 
-(defvar org-ref-bibliography-files
-  nil
-  "Variable to hold bibliography files to be searched.")
-
-;;* Messages for link at cursor
-(defvar org-ref-message-timer nil
-  "Variable to store the link message timer in.")
-
-;;** Messages for context under mouse pointer
-(defvar org-ref-last-mouse-pos nil
-  "Stores last mouse position for use in `org-ref-mouse-message'.")
-
 ;;* font lock for org-ref
 (defcustom org-ref-colorize-links
   t
@@ -458,12 +441,26 @@ have fields sorted alphabetically."
   :type 'string
   :group 'org-ref)
 
+;;* Messages for link at cursor
+(defvar org-ref-message-timer nil
+  "Variable to store the link message timer in.")
+
+;;** Messages for context under mouse pointer
+(defvar org-ref-last-mouse-pos nil
+  "Stores last mouse position for use in `org-ref-mouse-message'.")
+
+(defvar org-ref-bibliography-files
+  nil
+  "Variable to hold bibliography files to be searched.")
+
 (defvar org-ref-cite-re
-  (concat "\\(" (mapconcat
-                 (lambda (x)
-                   (replace-regexp-in-string "\*" "\\\\*" x))
-                 org-ref-cite-types "\\|") ":\\)"
-                 "\\([a-zA-Z0-9-_:\\./]+,?\\)+")
+  (concat "\\("
+          (mapconcat
+           (lambda (x) (replace-regexp-in-string "\*" "\\\\*" x))
+           org-ref-cite-types
+           "\\|")
+          ":\\)"
+          "\\([a-zA-Z0-9-_:\\./]+,?\\)+")
   "Regexp for cite links.")
 
 (defvar org-ref-label-re
@@ -496,6 +493,16 @@ have fields sorted alphabetically."
 (defvar org-ref-mouse-message-interval 0.5
   "How often to run the mouse message timer in seconds.")
 
+
+;;;###autoload
+(defmacro org-ref-link-set-parameters (type &rest parameters)
+  "Set link TYPE properties to PARAMETERS."
+  (declare (indent 1))
+  (if (fboundp 'org-link-set-parameters)
+      `(org-link-set-parameters ,type ,@parameters)
+    `(org-add-link-type ,type
+                        ,(plist-get parameters :follow)
+                        ,(plist-get parameters :export))))
 
 ;;;###autoload
 (defun org-ref-show-link-messages ()
@@ -810,15 +817,12 @@ Add tooltip to the link."
             (end (match-end 0))
             (cite-re (format "^\\(%s:\\)"
                              (regexp-opt (-sort
-                                          (lambda (a b)
-                                            (> (length a) (length b)))
+                                          (lambda (a b) (> (length a) (length b)))
                                           org-ref-cite-types))))
             cite-type)
-
         (when (and s (string-match cite-re s))
           (setq cite-type (match-string 1 s))
-          (remove-text-properties beg end
-                                  '(invisible))
+          (remove-text-properties beg end '(invisible))
           (add-text-properties
            beg end
            `(face (:foreground ,org-ref-cite-color))))))))
@@ -902,8 +906,7 @@ PREDICATE."
   ;; beginning of the line, and then search forward
   (if (not (eq major-mode 'org-mode))
       (org-ref-open-bibliography-no-org link-string)
-    (let* ((bibfile)
-           ;; object is the link you clicked on
+    (let* ((bibfile) ;; object is the link you clicked on
            (object (org-element-context))
            (link-string-beginning)
            (link-string-end)
@@ -978,12 +981,13 @@ prompted for a file."
                                  (f-entries "." (lambda (f) (f-ext? f "bib")))))
          (found '()))
     ;; remove bib links
-    (org-element-map (org-element-parse-buffer)
-                     'link (lambda (link)
-                             (when (string= "bibliography" (org-element-property :type link))
-                               (setf (buffer-substring (org-element-property :begin link)
-                                                       (org-element-property :end link))
-                                     ""))))
+    (org-element-map
+     (org-element-parse-buffer)
+     'link (lambda (link)
+             (when (string= "bibliography" (org-element-property :type link))
+               (setf (buffer-substring (org-element-property :begin link)
+                                       (org-element-property :end link))
+                     ""))))
     ;; Get bibfiles
     (setq found (-uniq
                  (cl-loop for key in keys
@@ -1018,19 +1022,20 @@ org-link if the files exist.
       'font-lock-warning-face))))
 
 
-(org-ref-link-set-parameters "bibliography"
-                             :follow #'org-ref-open-bibliography
-                             :export #'org-ref-bibliography-format
-                             :complete #'org-bibliography-complete-link
-                             :help-echo (lambda (window object position)
-                                          (save-excursion
-                                            (goto-char position)
-                                            (let ((s (org-ref-link-message)))
-                                              (with-temp-buffer
-                                                (insert s)
-                                                (fill-paragraph)
-                                                (buffer-string)))))
-                             :face #'org-ref-bibliography-face-fn)
+(org-ref-link-set-parameters
+ "bibliography"
+ :follow #'org-ref-open-bibliography
+ :export #'org-ref-bibliography-format
+ :complete #'org-bibliography-complete-link
+ :help-echo (lambda (window object position)
+              (save-excursion
+                (goto-char position)
+                (let ((s (org-ref-link-message)))
+                  (with-temp-buffer
+                    (insert s)
+                    (fill-paragraph)
+                    (buffer-string)))))
+ :face #'org-ref-bibliography-face-fn)
 
 
 (defun org-ref-nobibliography-format (keyword desc format)
@@ -1052,46 +1057,50 @@ Bibliography given with KEYWORD is formatted with description DESC in FORMAT"
                         ","))))))
 
 
-(org-ref-link-set-parameters "bibliography"
-                             :follow #'org-ref-open-bibliography
-                             :export #'org-ref-bibliography-format
-                             :complete #'org-bibliography-complete-link
-                             :help-echo (lambda (window object position)
-                                          (save-excursion
-                                            (goto-char position)
-                                            (let ((s (org-ref-link-message)))
-                                              (with-temp-buffer
-                                                (insert s)
-                                                (fill-paragraph)
-                                                (buffer-string))))))
+(org-ref-link-set-parameters
+ "bibliography"
+ :follow #'org-ref-open-bibliography
+ :export #'org-ref-bibliography-format
+ :complete #'org-bibliography-complete-link
+ :help-echo (lambda (window object position)
+              (save-excursion
+                (goto-char position)
+                (let ((s (org-ref-link-message)))
+                  (with-temp-buffer
+                    (insert s)
+                    (fill-paragraph)
+                    (buffer-string))))))
 
 
-(org-ref-link-set-parameters "nobibliography"
-                             :follow #'org-ref-open-bibliography
-                             :export #'org-ref-nobibliography-format)
+(org-ref-link-set-parameters
+ "nobibliography"
+ :follow #'org-ref-open-bibliography
+ :export #'org-ref-nobibliography-format)
 
 
-(org-ref-link-set-parameters "printbibliography"
-                             :follow #'org-ref-open-bibliography
-                             :export (lambda (keyword desc format)
-                                       (cond
-                                        ((eq format 'org) (org-ref-get-org-bibliography))
-                                        ((eq format 'html) (org-ref-get-html-bibliography))
-                                        ((eq format 'latex)
-                                         ;; write out the biblatex bibliography command
-                                         "\\printbibliography"))))
+(org-ref-link-set-parameters
+ "printbibliography"
+ :follow #'org-ref-open-bibliography
+ :export (lambda (keyword desc format)
+           (cond
+            ((eq format 'org) (org-ref-get-org-bibliography))
+            ((eq format 'html) (org-ref-get-html-bibliography))
+            ((eq format 'latex)
+             ;; write out the biblatex bibliography command
+             "\\printbibliography"))))
 
 
-(org-ref-link-set-parameters "bibliographystyle"
-                             :export (lambda (keyword desc format)
-                                       (cond
-                                        ((or (eq format 'latex)
-                                             (eq format 'beamer))
-                                         ;; write out the latex bibliography command
-                                         (format "\\bibliographystyle{%s}" keyword))
-                                        ;; Other styles should not have an output for this
-                                        (t
-                                         ""))))
+(org-ref-link-set-parameters
+ "bibliographystyle"
+ :export (lambda (keyword desc format)
+           (cond
+            ((or (eq format 'latex)
+                 (eq format 'beamer))
+             ;; write out the latex bibliography command
+             (format "\\bibliographystyle{%s}" keyword))
+            ;; Other styles should not have an output for this
+            (t
+             ""))))
 
 
 ;;;###autoload
@@ -1141,14 +1150,15 @@ Bibliography given with KEYWORD is formatted with description DESC in FORMAT"
       (find-file bibfile))))
 
 
-(org-ref-link-set-parameters "addbibresource"
-                             :follow #'org-ref-follow-addbibresource
-                             :export (lambda (keyword desc format)
-                                       (cond
-                                        ((eq format 'html) (format "")) ; no output for html
-                                        ((eq format 'latex)
-                                         ;; write out the latex addbibresource command
-                                         (format "\\addbibresource{%s}" keyword)))))
+(org-ref-link-set-parameters
+ "addbibresource"
+ :follow #'org-ref-follow-addbibresource
+ :export (lambda (keyword desc format)
+           (cond
+            ((eq format 'html) (format "")) ; no output for html
+            ((eq format 'latex)
+             ;; write out the latex addbibresource command
+             (format "\\addbibresource{%s}" keyword)))))
 
 
 ;;** List of figures
@@ -1210,12 +1220,13 @@ Ignore figures in COMMENTED sections."
       (local-set-key "q" #'(lambda () (interactive) (kill-buffer))))))
 
 
-(org-ref-link-set-parameters "list-of-figures"
-                             :follow #'org-ref-list-of-figures
-                             :export (lambda (keyword desc format)
-                                       (cond
-                                        ((eq format 'latex)
-                                         (format "\\listoffigures")))))
+(org-ref-link-set-parameters
+ "list-of-figures"
+ :follow #'org-ref-list-of-figures
+ :export (lambda (keyword desc format)
+           (cond
+            ((eq format 'latex)
+             (format "\\listoffigures")))))
 
 
 ;;** List of tables
@@ -1266,12 +1277,13 @@ Ignore figures in COMMENTED sections."
       (local-set-key "q" #'(lambda () (interactive) (kill-buffer))))))
 
 
-(org-ref-link-set-parameters "list-of-tables"
-                             :follow #'org-ref-list-of-tables
-                             :export (lambda (keyword desc format)
-                                       (cond
-                                        ((eq format 'latex)
-                                         (format "\\listoftables")))))
+(org-ref-link-set-parameters
+ "list-of-tables"
+ :follow #'org-ref-list-of-tables
+ :export (lambda (keyword desc format)
+           (cond
+            ((eq format 'latex)
+             (format "\\listoftables")))))
 
 
 ;;** label link
@@ -1395,30 +1407,25 @@ Navigate back with \`\\[org-mark-ring-goto]'."
        (progn
          (goto-char (point-min))
          (re-search-forward (format "label:%s\\b" (regexp-quote label)) nil t))
-
        ;; a latex label
        (progn
          (goto-char (point-min))
          (re-search-forward (format "\\label{%s}" (regexp-quote label)) nil t))
-
        ;; #+label: name  org-definition
        (progn
          (goto-char (point-min))
          (re-search-forward
           (format "^\\( \\)*#\\+label:\\s-*\\(%s\\)\\b" (regexp-quote label)) nil t))
-
        ;; org tblname
        (progn
          (goto-char (point-min))
          (re-search-forward
           (format "^\\( \\)*#\\+tblname:\\s-*\\(%s\\)\\b" (regexp-quote label)) nil t))
-
        ;; a #+name
        (progn
          (goto-char (point-min))
          (re-search-forward
           (format "^\\( \\)*#\\+name:\\s-*\\(%s\\)\\b" (regexp-quote label)) nil t))
-
        ;; CUSTOM_ID
        (progn
          (goto-char (point-min))
@@ -1433,7 +1440,6 @@ Navigate back with \`\\[org-mark-ring-goto]'."
          (goto-char (point-min))
          (re-search-forward
           (format "<<%s>>" (regexp-quote label)) nil t)))
-
     ;; we did not find anything, so go back to where we came
     (org-mark-ring-goto)
     (error "%s not found" label))
@@ -1481,12 +1487,13 @@ The reference given by KEYWORD is formatted with description DESC in FORMAT"
       'font-lock-warning-face))))
 
 
-(org-ref-link-set-parameters "ref"
-                             :follow #'org-ref-ref-follow
-                             :export #'org-ref-ref-export
-                             :complete #'org-ref-complete-link
-                             :face 'org-ref-ref-face-fn
-                             :help-echo #'org-ref-ref-help-echo)
+(org-ref-link-set-parameters
+ "ref"
+ :follow #'org-ref-ref-follow
+ :export #'org-ref-ref-export
+ :complete #'org-ref-complete-link
+ :face 'org-ref-ref-face-fn
+ :help-echo #'org-ref-ref-help-echo)
 
 
 (defun org-ref-get-org-labels ()
@@ -1527,9 +1534,10 @@ The reference given by KEYWORD is formatted with description DESC in FORMAT"
 
 (defun org-ref-get-tblnames ()
   "Return list of table names in the buffer."
-  (org-element-map (org-element-parse-buffer 'element) 'table
-                   (lambda (table)
-                     (org-element-property :name table))))
+  (org-element-map
+   (org-element-parse-buffer 'element)
+   'table
+   (lambda (table) (org-element-property :name table))))
 
 
 (defun org-ref-get-names ()
@@ -1693,20 +1701,22 @@ See https://www.ctan.org/tex-archive/macros/latex/contrib/cleveref"
    ((eq format 'html) (format "\\Cref{%s}" keyword))))
 
 
-(org-ref-link-set-parameters "cref"
-                             :follow #'org-ref-ref-follow
-                             :export #'org-ref-cref-export
-                             :complete #'org-ref-complete-link
-                             :face 'org-ref-ref-face-fn
-                             :help-echo #'org-ref-ref-help-echo)
+(org-ref-link-set-parameters
+ "cref"
+ :follow #'org-ref-ref-follow
+ :export #'org-ref-cref-export
+ :complete #'org-ref-complete-link
+ :face 'org-ref-ref-face-fn
+ :help-echo #'org-ref-ref-help-echo)
 
 
-(org-ref-link-set-parameters "Cref"
-                             :follow #'org-ref-ref-follow
-                             :export #'org-ref-Cref-export
-                             :complete #'org-ref-complete-link
-                             :face 'org-ref-ref-face-fn
-                             :help-echo #'org-ref-ref-help-echo)
+(org-ref-link-set-parameters
+ "Cref"
+ :follow #'org-ref-ref-follow
+ :export #'org-ref-Cref-export
+ :complete #'org-ref-complete-link
+ :face 'org-ref-ref-face-fn
+ :help-echo #'org-ref-ref-help-echo)
 
 
 ;;** cite link
@@ -1979,7 +1989,6 @@ Supported backends: 'html, 'latex, 'ascii, 'org, 'md, 'pandoc" type type)
          (let* ((text (split-string desc "::"))
                 (pre (car text))
                 (post (cadr text)))
-           <<<<<<< HEAD
            (concat
             (format "[@%s," keyword)
             (when pre (format " %s" pre))
@@ -2054,15 +2063,17 @@ creates a cite link."
                           (bibtex-autokey-titleword-case-convert-function 'identity)
                           (bibtex-autokey-titleword-length 'infty)
                           (bibtex-autokey-year-title-separator ": "))
-                      (setq org-bibtex-description (bibtex-generate-autokey)))))))
+                      (setq org-bibtex-description
+                            (bibtex-generate-autokey)))))))
 
 
-;; This suppresses showing the warning buffer. helm-bibtex seems to make this
 ;; pop up in an irritating way.
 (unless (boundp 'warning-suppress-types)
   (require 'warnings))
 
+
 (add-to-list 'warning-suppress-types '(:warning))
+
 
 (defun org-ref-cite-link-face-fn (keys)
   "Return a face for a cite link.
@@ -2133,6 +2144,7 @@ citez link, with reftex key of z, and the completion function."
           (append (nth 2 (assoc 'org reftex-cite-format-builtin))
                   `((,key  . ,(concat type ":%l")))))))
 
+
 (defun org-ref-generate-cite-links ()
   "Create all the link types and their completion functions."
   (interactive)
@@ -2151,6 +2163,16 @@ citez link, with reftex key of z, and the completion function."
   "Insert a cite link of TYPE with completion."
   (interactive (list (completing-read "Type: " org-ref-cite-types)))
   (insert (funcall (intern (format "org-%s-complete-link" type)))))
+
+;;* Index link
+(org-ref-link-set-parameters "index"
+                             :follow (lambda (path)
+                                       (occur path))
+                             :export (lambda (path desc format)
+                                       (cond
+                                        ((eq format 'latex)
+                                         (format "\\index{%s}" path)))))
+
 
 ;;;###autoload
 (defun org-ref-store-bibtex-entry-link ()
@@ -2176,21 +2198,6 @@ Save in the default link type."
            (cond
             ((eq format 'latex)
              (format "\\index{%s}" path)))))
-
-(org-ref-link-set-parameters "printindex"
-                             :follow #'org-ref-index
-                             :export (lambda (path desc format)
-                                       (cond
-                                        ((eq format 'latex)
-                                         (format "printindex")))))
-;;* Index link
-(org-ref-link-set-parameters "index"
-                             :follow (lambda (path)
-                                       (occur path))
-                             :export (lambda (path desc format)
-                                       (cond
-                                        ((eq format 'latex)
-                                         (format "\\index{%s}" path)))))
 
 
 ;; this will generate a temporary index of entries in the file when clicked on.
@@ -2248,12 +2255,13 @@ PATH is required for the org-link, but it does nothing here."
     (switch-to-buffer "*index*")))
 
 
-(org-ref-link-set-parameters "printindex"
-                             :follow #'org-ref-index
-                             :export (lambda (path desc format)
-                                       (cond
-                                        ((eq format 'latex)
-                                         (format "\\printindex")))))
+(org-ref-link-set-parameters
+ "printindex"
+ :follow #'org-ref-index
+ :export (lambda (path desc format)
+           (cond
+            ((eq format 'latex)
+             (format "printindex")))))
 
 
 ;;* Utilities
@@ -2456,35 +2464,35 @@ If BIBFILE exists, append, unless you use a prefix arg `C-u',
 which will CLOBBER the file."
   (interactive
    (list (read-file-name "Bibfile: " nil nil nil
-			 (file-name-nondirectory
-			  (concat (file-name-sans-extension
-				   (buffer-file-name))
-				  ".bib")))
-	 current-prefix-arg))
+                         (file-name-nondirectory
+                          (concat (file-name-sans-extension
+                                   (buffer-file-name))
+                                  ".bib")))
+         current-prefix-arg))
 
   (let* ((bibtex-files (org-ref-find-bibliography))
-	 (keys (reverse (org-ref-get-bibtex-keys)))
-	 (bibtex-entry-kill-ring-max (length keys))
-	 (bibtex-entry-kill-ring '())
-	 (kill-cb (not (find-buffer-visiting bibfile)))
-	 (cb (find-file-noselect bibfile))
-	 (current-bib-entries (with-current-buffer cb
-				(prog1
-				    (buffer-string)
-				  (when kill-cb (kill-buffer cb))))))
+         (keys (reverse (org-ref-get-bibtex-keys)))
+         (bibtex-entry-kill-ring-max (length keys))
+         (bibtex-entry-kill-ring '())
+         (kill-cb (not (find-buffer-visiting bibfile)))
+         (cb (find-file-noselect bibfile))
+         (current-bib-entries (with-current-buffer cb
+                                (prog1
+                                    (buffer-string)
+                                  (when kill-cb (kill-buffer cb))))))
 
     (save-window-excursion
       (cl-loop for key in keys
-	       do
-	       (bibtex-search-entry key t)
-	       (bibtex-kill-entry t)))
+               do
+               (bibtex-search-entry key t)
+               (bibtex-kill-entry t)))
 
     (with-temp-file bibfile
       (unless clobber (insert current-bib-entries))
       (insert (mapconcat
-	       'identity
-	       bibtex-entry-kill-ring
-	       "\n\n")))))
+               'identity
+               bibtex-entry-kill-ring
+               "\n\n")))))
 
 
 ;;** Find bad citations
@@ -3552,7 +3560,6 @@ provide their own version."
 (add-hook 'org-mode-hook 'org-ref-org-menu)
 
 
-;;* The end
 (provide 'org-ref-core)
 
 ;;; org-ref-core.el ends here

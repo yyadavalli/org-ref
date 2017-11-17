@@ -28,10 +28,8 @@
 
 ;;; Code:
 
-(require 'org)
-(require 'hydra)
 (require 'xml)
-(require 'org-ref-utils)
+(require 'org-ref-core)
 
 (defvar url-request-method)
 (defvar url-mime-accept-string)

@@ -25,18 +25,12 @@
 ;; An Arxiv number might look like: cond-mat/0410285 or 1503.01742
 
 ;;; Code:
-(require 'bibtex)
-(require 'dash)
-(require 'f)
-(require 'org)
-(require 's)
-(require 'org-ref-utils)
+
+(require 'org-ref-core)
 
 ;; This is a local variable defined in `url-http'.  We need it to avoid
 ;; byte-compiler errors.
 (defvar url-http-end-of-headers)
-(defvar org-ref-default-bibliography)
-(defvar org-ref-pdf-directory)
 
 (declare-function parsebib-find-bibtex-dialect "parsebib")
 (declare-function org-ref-clean-bibtex-entry "org-ref-core")
@@ -57,14 +51,6 @@
 }"
   "Template for BibTeX entries of arXiv articles.")
 
-(require 'bibtex)
-(require 'dash)
-(require 'f)
-(require 'org)
-(require 'parsebib)
-(require 's)
-(require 'org-ref-utils)
-
 ;;* The org-mode link
 ;; this just makes a clickable link that opens the entry.
 ;; example: arxiv:cond-mat/0410285
@@ -75,7 +61,7 @@
             (cond
              ((eq format 'html)
               (format "<a href=\"http://arxiv.org/abs/%s\">arxiv:%s</a>"
-                       keyword  (or desc keyword)))
+                      keyword  (or desc keyword)))
              ((eq format 'latex)
               ;; write out the latex command
               (format "\\url{http://arxiv.org/abs/%s}{%s}"
