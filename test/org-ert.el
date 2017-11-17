@@ -3,9 +3,11 @@
 
 ;;; Commentary:
 
+;;; Code:
+
 (require 'ert)
 (require 'lispy)
-;;; Code:
+(require 'org)
 
 (defun org-src-test-p ()
   "Return if the src block at point is a :test and not ignored."
@@ -24,7 +26,8 @@
 (defun org-babel-goto-nth-test-block (n)
   "Move point to the Nth test block."
   (goto-char (point-min))
-  (cl-loop for i from 1 to n do (org-goto-next-test-block))
+  (cl-loop for i from 1 to n
+           do (org-goto-next-test-block))
   (recenter-top-bottom 1))
 
 
@@ -46,21 +49,21 @@ Returns the result unless an error comes up, and then it returns 'error."
   (interactive)
   (save-excursion
     (let ((results '())
-	  (i 0))
+          (i 0))
       (while (org-goto-next-test-block)
-	(incf i)
-	(org-babel-remove-result)
-	(save-restriction
-	  (org-narrow-to-block)
-	  (setq
-	   results
-	   (append results
-		   (list (list
-			  (format "[[elisp:(org-babel-goto-nth-test-block %s)][%s]]"
-				  i
-				  (or (nth 4 (org-babel-get-src-block-info))
-				      (format "test-%s" i)))
-			  (org-babel-get-results t)))))))
+        (cl-incf i)
+        (org-babel-remove-result)
+        (save-restriction
+          (org-narrow-to-block)
+          (setq
+           results
+           (append results
+                   (list (list
+                          (format "[[elisp:(org-babel-goto-nth-test-block %s)][%s]]"
+                                  i
+                                  (or (nth 4 (org-babel-get-src-block-info))
+                                      (format "test-%s" i)))
+                          (org-babel-get-results t)))))))
       results)))
 
 
@@ -69,22 +72,22 @@ Returns the result unless an error comes up, and then it returns 'error."
   "Tangle :test blocks out to FNAME."
   (interactive
    (list (read-file-name "test file: " "."
-			 (concat (file-name-base (buffer-file-name)) ".el"))))
+                         (concat (file-name-base (buffer-file-name)) ".el"))))
   (save-excursion
     (goto-char (point-min))
     (let ((test-string "")
-	  (i 0))
+          (i 0))
       (while (org-goto-next-test-block)
-	(incf i)
-	(setq test-string
-	      (concat test-string
-		      (format "(ert-deftest %s ()\n%s)\n\n"
-			      (or (nth 4 (org-babel-get-src-block-info))
-				  (format "test-%s" i))
-			      (nth 1 (org-babel-get-src-block-info))))))
+        (cl-incf i)
+        (setq test-string
+              (concat test-string
+                      (format "(ert-deftest %s ()\n%s)\n\n"
+                              (or (nth 4 (org-babel-get-src-block-info))
+                                  (format "test-%s" i))
+                              (nth 1 (org-babel-get-src-block-info))))))
       (with-temp-file fname
-	(insert test-string)
-	(lispy--indent-region (point-min) (point-max))))))
+        (insert test-string)
+        (lispy--indent-region (point-min) (point-max))))))
 
 
 

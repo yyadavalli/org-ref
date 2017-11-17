@@ -342,11 +342,11 @@ setting `pp-escape-newlines' to nil manually."
 
 
 (defun org-test-string-exact-match (regex string &optional start)
-  "case sensative string-match"
+  "Case sensative string-match."
   (let ((case-fold-search nil)
         (case-replace nil))
-    (if(and (equal regex "")
-            (not(equal string "")))
+    (if (and (equal regex "")
+             (not(equal string "")))
         nil
       (if (equal 0 (string-match regex string start))
           t
@@ -366,8 +366,9 @@ setting `pp-escape-newlines' to nil manually."
                     (if (file-directory-p path)
                         (rld path)
                       (condition-case err
-                          (when (string-match "^[A-Za-z].*\\.el$"
-                                              (file-name-nondirectory path))
+                          (when (string-match
+                                 "^[A-Za-z].*\\.el$"
+                                 (file-name-nondirectory path))
                             (load-file path))
                         (missing-test-dependency
                          (let ((name (intern
@@ -378,7 +379,7 @@ setting `pp-escape-newlines' to nil manually."
                                     :expected-result :failed (should nil))))))))
                   (directory-files base 'full
                                    "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.el$"))))
-	  (rld (expand-file-name "lisp" org-test-dir))))
+    (rld (expand-file-name "lisp" org-test-dir))))
 
 (defun org-test-current-defun ()
   "Test the current function."

@@ -10,5 +10,6 @@
  (depends-on "ecukes")
  (depends-on "ert-runner")
  (depends-on "el-mock")
+ (depends-on "lispy")
  (depends-on "parsebib")
  (depends-on "undercover"))
