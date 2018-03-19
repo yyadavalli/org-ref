@@ -29,20 +29,22 @@
 ;;; Code:
 (declare-function org-ref-format-entry "org-ref-bibtex.el")
 
-(defvar org-export-exclude-tags)
-(defvar warning-suppress-types)
-(defvar org-ref-bibtex-journal-abbreviations)
-
-(require 'cl-lib)
+(eval-when-compile
+  (require 'cl-lib))
 (require 'dash)
 (require 'f)
+(require 'htmlize)
+(require 's)
 (require 'org)
 (require 'org-bibtex)
 (require 'org-element)
 (require 'ox)
 (require 'parsebib)
 (require 'reftex-cite)
-(require 's)
+
+(defvar org-export-exclude-tags)
+(defvar warning-suppress-types)
+(defvar org-ref-bibtex-journal-abbreviations)
 
 (add-to-list 'load-path
              (expand-file-name
