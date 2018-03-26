@@ -339,7 +339,8 @@ REDIRECT-URL is where the pdf url will be in."
    redirect-url
    (lambda (status)
      (goto-char (point-min))
-     (re-search-forward "pdfurl=\"\\([^\"]*\\)\"" nil t)
+     ;; modified the search string to reflect updated science direct
+     (re-search-forward "pdf_url\" content=\"\\([^\"]*\\)\"" nil t)
      (setq *org-ref-doi-utils-pdf-url* (match-string 1)
            *org-ref-doi-utils-waiting* nil)))
   (while *org-ref-doi-utils-waiting* (sleep-for 0.1))
@@ -359,14 +360,15 @@ REDIRECT-URL is where the pdf url will be in."
 ;; http://www.sciencedirect.com/science/article/pii/S0927025609004558
 (defun linkinghub-elsevier-pdf-url (*org-ref-doi-utils-redirect*)
   "Get url to the pdf from *ORG-REF-DOI-UTILS-REDIRECT*."
-  (when (string-match
-         "^http://linkinghub.elsevier.com/retrieve" *org-ref-doi-utils-redirect*)
-    (let ((second-redirect (replace-regexp-in-string
-                            "http://linkinghub.elsevier.com/retrieve"
-                            "http://www.sciencedirect.com/science/article"
-                            *org-ref-doi-utils-redirect*)))
-      *org-ref-doi-utils-pdf-url*)))
-
+  (when (string-match "^https://linkinghub.elsevier.com/retrieve"
+                      *org-ref-doi-utils-redirect*)
+    (org-ref-doi-utils-get-science-direct-pdf-url
+     (replace-regexp-in-string
+      ;; change URL to science direct and use function to get pdf URL
+      "https://linkinghub.elsevier.com/retrieve"
+      "https://www.sciencedirect.com/science/article"
+      *org-ref-doi-utils-redirect*))
+    *org-ref-doi-utils-pdf-url*))
 
 ;;** PNAS
 ;; http://www.pnas.org/content/early/2014/05/08/1319030111
@@ -381,60 +383,61 @@ REDIRECT-URL is where the pdf url will be in."
 
 
 ;;** Copernicus Publications
-(setq copernicus-journal-urls '(
-  "^https://www.adv-geosci.net/"
-  "^https://www.adv-radio-sci.net/"
-  "^https://www.adv-sci-res.net/"
-  "^https://www.adv-stat-clim-meteorol-oceanogr.net/"
-  "^https://www.ann-geophys.net/"
-  "^https://www.arch-anim-breed.net/"
-  "^https://www.astra-proc.net/"
-  "^https://www.atmos-chem-phys.net/"
-  "^https://www.atmos-chem-phys-discuss.net/"
-  "^https://www.atmos-meas-tech.net/"
-  "^https://www.atmos-meas-tech-discuss.net/"
-  "^https://www.biogeosciences.net/"
-  "^https://www.biogeosciences-discuss.net/"
-  "^https://www.clim-past.net/recent_papers.html"
-  "^https://www.clim-past-discuss.net/"
-  "^https://www.drink-water-eng-sci.net/"
-  "^https://www.drink-water-eng-sci-discuss.net/"
-  "^https://www.eg-quaternary-sci-j.net/"
-  "^https://www.earth-surf-dynam.net/"
-  "^https://www.earth-surf-dynam-discuss.net/"
-  "^https://www.earth-syst-dynam.net/"
-  "^https://www.earth-syst-dynam-discuss.net/"
-  "^https://www.earth-syst-sci-data.net/"
-  "^https://www.earth-syst-sci-data-discuss.net/"
-  "^https://www.foss-rec.net/"
-  "^https://www.geogr-helv.net/"
-  "^https://www.geosci-instrum-method-data-syst.net/"
-  "^https://www.geosci-instrum-method-data-syst-discuss.net/"
-  "^https://www.geosci-model-dev.net/"
-  "^https://www.geosci-model-dev-discuss.net/"
-  "^https://www.hist-geo-space-sci.net/"
-  "^https://www.hydrol-earth-syst-sci.net/"
-  "^https://www.hydrol-earth-syst-sci-discuss.net/"
-  "^https://www.j-sens-sens-syst.net/"
-  "^https://www.mech-sci.net/"
-  "^https://www.nat-hazards-earth-syst-sci.net/"
-  "^https://www.nonlin-processes-geophys-discuss.net/"
-  "^https://www.ocean-sci.net/"
-  "^https://www.ocean-sci-discuss.net/"
-  "^https://www.primate-biol.net/"
-  "^https://www.proc-iahs.net/"
-  "^https://www.sci-dril.net/"
-  "^https://www.soil-journal.net/"
-  "^https://www.soil-discuss.net/"
-  "^https://www.solid-earth.net/"
-  "^https://www.solid-earth-discuss.net/"
-  "^https://www.stephan-mueller-spec-publ-ser.net/"
-  "^https://www.the-cryosphere.net/"
-  "^https://www.the-cryosphere-discuss.net/"
-  "^https://www.web-ecol.net/"
-  "^https://www.wind-energ-sci.net/"
-  "^https://www.wind-energ-sci-discuss.net/"
-  ))
+(defvar copernicus-journal-urls '(
+                                  "^https://www.adv-geosci.net/"
+                                  "^https://www.adv-radio-sci.net/"
+                                  "^https://www.adv-sci-res.net/"
+                                  "^https://www.adv-stat-clim-meteorol-oceanogr.net/"
+                                  "^https://www.ann-geophys.net/"
+                                  "^https://www.arch-anim-breed.net/"
+                                  "^https://www.astra-proc.net/"
+                                  "^https://www.atmos-chem-phys.net/"
+                                  "^https://www.atmos-chem-phys-discuss.net/"
+                                  "^https://www.atmos-meas-tech.net/"
+                                  "^https://www.atmos-meas-tech-discuss.net/"
+                                  "^https://www.biogeosciences.net/"
+                                  "^https://www.biogeosciences-discuss.net/"
+                                  "^https://www.clim-past.net/recent_papers.html"
+                                  "^https://www.clim-past-discuss.net/"
+                                  "^https://www.drink-water-eng-sci.net/"
+                                  "^https://www.drink-water-eng-sci-discuss.net/"
+                                  "^https://www.eg-quaternary-sci-j.net/"
+                                  "^https://www.earth-surf-dynam.net/"
+                                  "^https://www.earth-surf-dynam-discuss.net/"
+                                  "^https://www.earth-syst-dynam.net/"
+                                  "^https://www.earth-syst-dynam-discuss.net/"
+                                  "^https://www.earth-syst-sci-data.net/"
+                                  "^https://www.earth-syst-sci-data-discuss.net/"
+                                  "^https://www.foss-rec.net/"
+                                  "^https://www.geogr-helv.net/"
+                                  "^https://www.geosci-instrum-method-data-syst.net/"
+                                  "^https://www.geosci-instrum-method-data-syst-discuss.net/"
+                                  "^https://www.geosci-model-dev.net/"
+                                  "^https://www.geosci-model-dev-discuss.net/"
+                                  "^https://www.hist-geo-space-sci.net/"
+                                  "^https://www.hydrol-earth-syst-sci.net/"
+                                  "^https://www.hydrol-earth-syst-sci-discuss.net/"
+                                  "^https://www.j-sens-sens-syst.net/"
+                                  "^https://www.mech-sci.net/"
+                                  "^https://www.nat-hazards-earth-syst-sci.net/"
+                                  "^https://www.nonlin-processes-geophys-discuss.net/"
+                                  "^https://www.ocean-sci.net/"
+                                  "^https://www.ocean-sci-discuss.net/"
+                                  "^https://www.primate-biol.net/"
+                                  "^https://www.proc-iahs.net/"
+                                  "^https://www.sci-dril.net/"
+                                  "^https://www.soil-journal.net/"
+                                  "^https://www.soil-discuss.net/"
+                                  "^https://www.solid-earth.net/"
+                                  "^https://www.solid-earth-discuss.net/"
+                                  "^https://www.stephan-mueller-spec-publ-ser.net/"
+                                  "^https://www.the-cryosphere.net/"
+                                  "^https://www.the-cryosphere-discuss.net/"
+                                  "^https://www.web-ecol.net/"
+                                  "^https://www.wind-energ-sci.net/"
+                                  "^https://www.wind-energ-sci-discuss.net/"
+                                  )
+  "List of Copernicus URLs.")
 
 (defun doi-utils-get-copernicus-pdf-url (redirect-url)
   "Copernicus hides the pdf url in html.  We get it out here.
@@ -454,11 +457,11 @@ REDIRECT-URL is where the pdf url will be in."
 (defun copernicus-pdf-url (*doi-utils-redirect*)
   "Get url to the pdf from *DOI-UTILS-REDIRECT*."
 
-  (car (loop for copurl in copernicus-journal-urls
-	when (string-match copurl *doi-utils-redirect*)
-	collect
-	(progn (doi-utils-get-copernicus-pdf-url *doi-utils-redirect*)
-	 *doi-utils-pdf-url*))))
+  (car (cl-loop for copurl in copernicus-journal-urls
+	        when (string-match copurl *doi-utils-redirect*)
+	        collect
+	        (progn (doi-utils-get-copernicus-pdf-url *doi-utils-redirect*)
+	               *doi-utils-pdf-url*))))
 
 
 ;;** Sage
@@ -908,65 +911,62 @@ DOI, then that is the intial prompt.  Otherwise, you have to type
 or paste in a DOI.
 Argument BIBFILE the bibliography to use."
   (interactive
-  (list
-   (read-string
-    "DOI: "
-    ;; now set initial input
-    (cond
-     ;; If region is active and it starts like a doi we want it.
-     ((and (region-active-p)
-           (s-match "^10" (buffer-substring (region-beginning) (region-end))))
-      (buffer-substring (region-beginning) (region-end)))
-     ((and (region-active-p)
-           (s-match "^http://dx\\.doi\\.org/"
-                    (buffer-substring (region-beginning) (region-end))))
-      (replace-regexp-in-string
-       "^http://dx\\.doi\\.org/" ""
-       (buffer-substring (region-beginning) (region-end))))
-     ((and (region-active-p)
-           (s-match "^https://dx\\.doi\\.org/"
-                    (buffer-substring (region-beginning) (region-end))))
-      (replace-regexp-in-string
-       "^https://dx\\.doi\\.org/" ""
-       (buffer-substring (region-beginning) (region-end))))
-     ((and  (region-active-p)
-            (s-match (regexp-quote org-ref-doi-utils-dx-doi-org-url)
-                     (buffer-substring (region-beginning) (region-end))))
-      (replace-regexp-in-string
-       (regexp-quote org-ref-doi-utils-dx-doi-org-url) ""
-       (buffer-substring (region-beginning) (region-end)))
-      (buffer-substring (region-beginning) (region-end)))
-     ;; if the first entry in the kill-ring looks
-     ;; like a DOI, let's use it.
-     ((and
-       ;; make sure the kill-ring has something in it
-       (stringp (car kill-ring))
-       (s-match "^10" (car kill-ring)))
-      (car kill-ring))
-     ;; maybe kill-ring matches http://dx.doi or somthing
-     ((and
-       ;; make sure the kill-ring has something in it
-       (stringp (car kill-ring))
-       (s-match "^http://dx\\.doi\\.org/" (car kill-ring)))
-      (replace-regexp-in-string "^http://dx\\.doi\\.org/" "" (car kill-ring)))
-     ((and
-       ;; make sure the kill-ring has something in it
-       (stringp (car kill-ring))
-       (s-match "^https://dx\\.doi\\.org/" (car kill-ring)))
-      (replace-regexp-in-string "^https://dx\\.doi\\.org/"
-                                "" (car kill-ring)))
-     ((and
-       ;; make sure the kill-ring has something in it
-       (stringp (car kill-ring))
-       (s-match (regexp-quote org-ref-doi-utils-dx-doi-org-url)
-                (car kill-ring)))
-      (replace-regexp-in-string
-       (regexp-quote org-ref-doi-utils-dx-doi-org-url) "" (car kill-ring)))
-     ;; otherwise, we have no initial input. You
-     ;; will have to type it in.
-     (t
-      nil)))))
-
+   (list (read-string
+          "DOI: "
+          ;; now set initial input
+          (cond
+           ;; If region is active and it starts like a doi we want it.
+           ((and (region-active-p)
+                 (s-match "^10"
+                          (buffer-substring (region-beginning)
+                                            (region-end))))
+            (buffer-substring (region-beginning) (region-end)))
+           ((and (region-active-p)
+                 (s-match "^http://dx\\.doi\\.org/"
+                          (buffer-substring (region-beginning)
+                                            (region-end))))
+            (replace-regexp-in-string "^http://dx\\.doi\\.org/" ""
+                                      (buffer-substring (region-beginning)
+                                                        (region-end))))
+           ((and (region-active-p)
+                 (s-match "^https://dx\\.doi\\.org/"
+                          (buffer-substring (region-beginning)
+                                            (region-end))))
+            (replace-regexp-in-string "^https://dx\\.doi\\.org/" ""
+                                      (buffer-substring (region-beginning)
+                                                        (region-end))))
+           ((and (region-active-p)
+                 (s-match (regexp-quote doi-utils-dx-doi-org-url)
+                          (buffer-substring (region-beginning)
+                                            (region-end))))
+            (replace-regexp-in-string (regexp-quote doi-utils-dx-doi-org-url) ""
+                                      (buffer-substring (region-beginning)
+                                                        (region-end)))
+            (buffer-substring (region-beginning) (region-end)))
+           ;; if the first entry in the kill-ring looks
+           ;; like a DOI, let's use it.
+           ;; make sure the kill-ring has something in it
+           ((and (stringp (car kill-ring))
+                 (s-match "^10" (car kill-ring)))
+            (car kill-ring))
+           ;; maybe kill-ring matches http://dx.doi or somthing
+           ((and (stringp (car kill-ring))
+                 (s-match "^http://dx\\.doi\\.org/" (car kill-ring)))
+            (replace-regexp-in-string "^http://dx\\.doi\\.org/" ""
+                                      (car kill-ring)))
+           ((and (stringp (car kill-ring))
+                 (s-match "^https://dx\\.doi\\.org/" (car kill-ring)))
+            (replace-regexp-in-string "^https://dx\\.doi\\.org/" ""
+                                      (car kill-ring)))
+           ((and (stringp (car kill-ring))
+                 (s-match (regexp-quote doi-utils-dx-doi-org-url)
+                          (car kill-ring)))
+            (replace-regexp-in-string (regexp-quote doi-utils-dx-doi-org-url) ""
+                                      (car kill-ring)))
+           ;; otherwise, we have no initial input. You
+           ;; will have to type it in.
+           (t
+            nil)))))
   (unless bibfile
     (setq bibfile (completing-read
                    "Bibfile: "

@@ -322,9 +322,9 @@ Format according to the type in `org-ref-bibliography-entry-format'."
 
 
 (defun org-ref-get-bibtex-entry (key)
-  "Return the bibtex entry as a string."
+  "Return the bibtex entry with KEY as a string."
   (let ((org-ref-bibliography-files (org-ref-find-bibliography))
-        (file) (entry) (bibtex-entry) (entry-type) (format))
+        (file) (entry))
     (setq file (catch 'result
                  (cl-loop for file in org-ref-bibliography-files do
                           (if (org-ref-key-in-file-p key (file-truename file))
