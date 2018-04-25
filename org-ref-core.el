@@ -1772,7 +1772,6 @@ set in `org-ref-default-bibliography'"
     ;; If you call this in a bibtex file, assume we want this file
     (when (and buffer-file-name (f-ext? buffer-file-name "bib"))
       (throw 'result (setq org-ref-bibliography-files (list buffer-file-name))))
-
     ;; otherwise, check current file for a bibliography source
     (save-excursion
       (save-restriction
@@ -1784,7 +1783,7 @@ set in `org-ref-default-bibliography'"
                 ;; I added the + here to avoid matching +bibliography: keywords.
                 "\\(?:^[\[]\\{2\\}\\)?\\(bibliography\\|addbibresource\\):\\([^\]\|\n]+\\)"
                 nil t)
-          (dolist (bibfile (org-ref-split-and-strip-string (match-string 2)))
+          (dolist (bibfile (org-ref-split-and-strip-string (match-string-no-properties 2)))
             (let ((bibf (org-ref-find-bibfile bibfile)))
               (when bibf
                 (push bibf org-ref-bibliography-files)))))
@@ -1792,7 +1791,6 @@ set in `org-ref-default-bibliography'"
           (throw 'result
                  (setq org-ref-bibliography-files
                        (nreverse (delete-dups org-ref-bibliography-files)))))
-
         ;; Try addbibresource as a latex command. It appears that reftex does
         ;; not do this correctly, it only finds the first one but there could be
         ;; many.
@@ -1801,12 +1799,10 @@ set in `org-ref-default-bibliography'"
                 "\\\\addbibresource{\\(.*\\)?}"
                 nil t)
           (push (match-string 1) org-ref-bibliography-files))
-
         (when org-ref-bibliography-files
           (throw 'result
                  (setq org-ref-bibliography-files
                        (nreverse org-ref-bibliography-files))))
-
         ;; we did not find org-ref links. now look for latex links
         (goto-char (point-min))
         (setq org-ref-bibliography-files
