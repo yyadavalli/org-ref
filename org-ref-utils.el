@@ -36,6 +36,21 @@
   :type 'string
   :group 'org-ref)
 
+;;*** cite menu
+(defvar org-ref-cite-menu-funcs '()
+  "Functions to run on cite click menu.
+Each entry is a list of (key menu-name function).  The function
+must take no arguments and work on the key at point.  Do not
+modify this variable, it is set to empty in the menu click
+function, and functions are conditionally added to it.")
+
+(defvar org-ref-user-cite-menu-funcs
+  '(("C" "rossref" org-ref-crossref-at-point)
+    ("y" "Copy entry to file" org-ref-copy-entry-at-point-to-file)
+    ("s" "Copy summary" org-ref-copy-entry-as-summary))
+  "User-defined functions to run on bibtex key at point.")
+
+
 ;;;###autoload
 (defun org-ref-version ()
   "Provide a version string for org-ref.
@@ -168,6 +183,7 @@ and quotes in FIELD in the bibtex ENTRY."
     (when (and (not (string= result "")) (string= "\"" (substring result 0 1)))
       (setq result (substring result 1 -1)))
     result))
+
 
 (defun org-ref-reftex-format-citation (entry format)
   "Format the bibtex ENTRY according to the FORMAT argument.
@@ -442,20 +458,6 @@ Can also be called with THEKEY in a program."
          (bibfile (cdr results)))
     (find-file bibfile)
     (bibtex-search-entry key)))
-
-;;*** cite menu
-(defvar org-ref-cite-menu-funcs '()
-  "Functions to run on cite click menu.
-Each entry is a list of (key menu-name function).  The function
-must take no arguments and work on the key at point.  Do not
-modify this variable, it is set to empty in the menu click
-function, and functions are conditionally added to it.")
-
-(defvar org-ref-user-cite-menu-funcs
-  '(("C" "rossref" org-ref-crossref-at-point)
-    ("y" "Copy entry to file" org-ref-copy-entry-at-point-to-file)
-    ("s" "Copy summary" org-ref-copy-entry-as-summary))
-  "User-defined functions to run on bibtex key at point.")
 
 
 ;;;###autoload

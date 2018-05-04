@@ -28,6 +28,13 @@
 
 ;;; Code:
 (declare-function org-ref-format-entry "org-ref-bibtex.el")
+(declare-function org-ref-get-ascii-bibliography "org-ref-utils.el")
+(declare-function org-ref-get-html-bibliography "org-ref-utils.el")
+(declare-function org-ref-get-md-bibliography "org-ref-utils.el")
+(declare-function org-ref-get-odt-bibliography "org-ref-utils.el")
+(declare-function org-ref-get-org-bibliography "org-ref-utils.el")
+(declare-function org-ref-get-bibtex-keys "org-ref-utils.el")
+(declare-function org-ref-reftex-format-citation "org-ref-utils.el")
 
 (eval-when-compile
   (require 'cl-lib))
@@ -197,7 +204,6 @@ codes."
   "HTML code to represent a reference."
   :type 'string
   :group 'org-ref)
-
 
 (defcustom org-ref-notes-function #'org-ref-notes-function-one-file
   "Function to open the notes for the bibtex key in a cite link at point.
@@ -429,6 +435,16 @@ have fields sorted alphabetically."
   "\\(eq\\)?ref:\\([a-zA-Z0-9-_:]+,?\\)+"
   "Regexp for ref links.")
 
+;;** Messages for context under mouse pointer
+(defvar org-ref-last-mouse-pos nil
+  "Stores last mouse position for use in `org-ref-mouse-message'.")
+
+(defvar org-ref-message-timer-mouse nil
+  "Store mouse timer.")
+
+(defvar org-ref-mouse-message-interval 0.5
+  "How often to run the mouse message timer in seconds.")
+
 (defface org-ref-cite-face
   `((t (:inherit org-link :foreground ,org-ref-cite-color)))
   "Color for cite-like links in org-ref.")
@@ -441,17 +457,6 @@ have fields sorted alphabetically."
   `((t (:inherit org-link :foreground ,org-ref-ref-color)))
   "Face for ref links in org-ref.")
 
-;;** Messages for context under mouse pointer
-(defvar org-ref-last-mouse-pos nil
-  "Stores last mouse position for use in `org-ref-mouse-message'.")
-
-(defvar org-ref-message-timer-mouse nil
-  "Store mouse timer.")
-
-(defvar org-ref-mouse-message-interval 0.5
-  "How often to run the mouse message timer in seconds.")
-
-
 ;;;###autoload
 (defmacro org-ref-link-set-parameters (type &rest parameters)
   "Set link TYPE properties to PARAMETERS."
@@ -461,6 +466,7 @@ have fields sorted alphabetically."
     `(org-add-link-type ,type
                         ,(plist-get parameters :follow)
                         ,(plist-get parameters :export))))
+
 
 ;;;###autoload
 (defun org-ref-show-link-messages ()
@@ -1003,7 +1009,7 @@ Bibliography given with KEYWORD is formatted with description DESC in FORMAT"
   (cond
    ((eq format 'org) (org-ref-get-org-bibliography))
    ((eq format 'ascii) (org-ref-get-ascii-bibliography))
-   ((eq format 'odt) (org-ref-get-ascii-bibliography))
+   ((eq format 'odt) (org-ref-get-odt-bibliography))
    ((eq format 'html) (org-ref-get-html-bibliography))
    ((eq format 'latex)
     ;; write out the latex bibliography command
