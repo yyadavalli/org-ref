@@ -394,13 +394,13 @@ have fields sorted alphabetically."
   :group 'org-ref)
 
 (defcustom org-ref-ref-color
-  "dark red"
+  "#AF3A03"
   "Color of ref like links."
   :type 'string
   :group 'org-ref)
 
 (defcustom org-ref-label-color
-  "dark magenta"
+  "#8F3F71"
   "Color of label links."
   :type 'string
   :group 'org-ref)
