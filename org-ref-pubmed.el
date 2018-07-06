@@ -118,7 +118,7 @@
 (defun pubmed-pmid-to-bibtex (pmid)
   "Convert a PMID to a bibtex entry."
   (let* ((data (pubmed-parse-medline pmid))
-         (type (cdr (assoc "PT" data)))
+         (type (downcase (cdr (assoc "PT" data))))
          (title (cdr (assoc "TI" data)))
          (authors (mapconcat 'cdr (-filter (lambda (x) (string= (car x) "FAU")) data)
                              " and "))
@@ -130,7 +130,7 @@
          (pages (cdr (assoc "PG" data)))
          (aid (cdr (assoc "AID" data))))
     (cond
-     ((string= type "JOURNAL ARTICLE")
+     ((string= type "journal article")
       (concat "@article{,
  author = {" authors "},
  title = {" title "},
