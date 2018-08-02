@@ -423,9 +423,11 @@ have fields sorted alphabetically."
            (lambda (x) (replace-regexp-in-string "\*" "\\\\*" x))
            org-ref-cite-types
            "\\|")
-          ":\\)"
+          "\\):"
           "\\([a-zA-Z0-9-_:\\./]+,?\\)+")
-  "Regexp for cite links.")
+  "Regexp for cite links.
+Group 1 contains the cite type.
+Group 2 contains the keys.")
 
 (defvar org-ref-label-re
   "label:\\([a-zA-Z0-9-_:]+,?\\)+"
@@ -597,8 +599,6 @@ If so return the position for `goto-char'."
   (setq org-ref-message-timer-mouse nil)
   (message "Mouse messages are off"))
 
-
-;;** Font-lock org-ref links
 
 ;; We use functions to search for the next link, and then use org-mode to find
 ;; the boundaries. I wasn't able to figure out robust regexps for these links
