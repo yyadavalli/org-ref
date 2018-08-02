@@ -3258,7 +3258,7 @@ move to the beginning of the previous cite link after this one."
                          (buffer-substring key-beginning key-end)))
                   (let ((file (org-ref-find-bibfile bibfile)))
                     (message (if file "%s exists." "!!! %s NOT FOUND !!!")
-                             file))))))))))))
+                             (or file bibfile)))))))))))))
 
 
 (defun org-ref-delete-cite-at-point ()
