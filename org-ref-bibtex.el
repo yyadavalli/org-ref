@@ -817,7 +817,7 @@ N is a prefix argument.  If it is numeric, jump that many entries back."
 
 
 ;;;###autoload
-(defun org-ref-bibtex-pdf (doi)
+(defun org-ref-bibtex-pdf (&optional _)
   "Open the pdf for the bibtex entry at point.
 Thin wrapper to get `org-ref-bibtex' to open pdf, because it
 calls functions with a DOI argument."
